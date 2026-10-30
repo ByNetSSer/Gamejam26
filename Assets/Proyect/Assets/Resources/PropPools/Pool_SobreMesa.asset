@@ -13,21 +13,15 @@ MonoBehaviour:
   m_Name: Pool_SobreMesa
   m_EditorClassIdentifier: 
   entries:
-  - prefab: {fileID: 7627553040356998852, guid: a13a12d4788335f48a4f482b42fe26d4, type: 3}
-    size: 1
-    weight: 1
-  - prefab: {fileID: 3840900492329973987, guid: 933f6895dbad4e84ea5000350fdbeab1, type: 3}
-    size: 1
-    weight: 1
   - prefab: {fileID: 5467742403382622935, guid: 4ad8b34e05c2f37438aa6a370124d561, type: 3}
     size: 1
     weight: 1
   - prefab: {fileID: 6689844903589265544, guid: 295d9c3a98da27b4297564db10686e34, type: 3}
-    size: 2
-    weight: 1
-  - prefab: {fileID: 2218198903803302462, guid: 32e99453e5577e04c947a18fa2456569, type: 3}
-    size: 4
+    size: 1
     weight: 1
   - prefab: {fileID: 8272266168215789335, guid: 5290db435f448c94ea056ba132c0e317, type: 3}
+    size: 1
+    weight: 1
+  - prefab: {fileID: 3267207596841785241, guid: 0479d5bf06942c343b454d0309813ce7, type: 3}
     size: 1
     weight: 1

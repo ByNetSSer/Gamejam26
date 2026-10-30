@@ -10,6 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ba03b5ff58754b6a9ec26b7b20723c49, type: 3}
-  m_Name: Pool_PilaCajas
+  m_Name: Pool_Esquinas
   m_EditorClassIdentifier: 
-  entries: []
+  entries:
+  - prefab: {fileID: 2218198903803302462, guid: 32e99453e5577e04c947a18fa2456569, type: 3}
+    size: 1
+    weight: 5

@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ba03b5ff58754b6a9ec26b7b20723c49, type: 3}
   m_Name: Pool_PilaLibros1
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   entries:
   - prefab: {fileID: 3840900492329973987, guid: 933f6895dbad4e84ea5000350fdbeab1, type: 3}
     size: 1
