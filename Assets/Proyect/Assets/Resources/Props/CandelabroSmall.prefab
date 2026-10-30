@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 204035492591207734}
   - component: {fileID: 7877387134419255179}
   - component: {fileID: 8100000000000000001}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: CandelabroSmall
   m_TagString: Untagged
   m_Icon: {fileID: 0}

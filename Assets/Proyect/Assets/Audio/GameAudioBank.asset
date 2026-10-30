@@ -73,3 +73,7 @@ MonoBehaviour:
     cue: {fileID: 11400000, guid: bd4f0f3efd84467cb19e42d5440b087a, type: 2}
   - id: footstep.lava
     cue: {fileID: 11400000, guid: 38fa25bdf933455e99c5ed5db2700666, type: 2}
+  - id: music.gameplay
+    cue: {fileID: 11400000, guid: 09c3d276430e58f44a06803b077b4186, type: 2}
+  - id: music.gameplay
+    cue: {fileID: 11400000, guid: 4be60e4a032e0074daa089cd0df7c34c, type: 2}

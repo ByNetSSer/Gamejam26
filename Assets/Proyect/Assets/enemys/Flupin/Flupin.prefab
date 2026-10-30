@@ -150,7 +150,7 @@ MonoBehaviour:
         Active: 1
         UniqueID: 0
         Label: MMFeedback
-        OriginalLabel: 
+        OriginalLabel: Scale
         ChannelMode: 0
         Channel: 0
         MMChannelDefinition: {fileID: 0}
@@ -521,7 +521,7 @@ MonoBehaviour:
         Active: 1
         UniqueID: 0
         Label: MMFeedback
-        OriginalLabel: 
+        OriginalLabel: Scale
         ChannelMode: 0
         Channel: 0
         MMChannelDefinition: {fileID: 0}
@@ -772,7 +772,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.5, z: 3.2}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3134372005585176462}
@@ -890,15 +890,15 @@ MonoBehaviour:
   faceCamera: 1
   skins:
   - name: Gato
-    weight: 90
+    weight: 60
     idle: {fileID: 21300000, guid: 055d149d2410b204cb44b3e6c87d7795, type: 3}
     attack: {fileID: 21300000, guid: 3dfb022c9e317b742bcc016e69b14f48, type: 3}
   - name: Carita sonriente
-    weight: 9
+    weight: 25
     idle: {fileID: 21300000, guid: 2cb11b1c7883f8f43896744e44786cba, type: 3}
     attack: {fileID: 21300000, guid: e81d438d4b373f740b2c32aec02dc31c, type: 3}
   - name: Variant2
-    weight: 1
+    weight: 15
     idle: {fileID: 21300000, guid: 7e5a953014fbc2f43834f41dbf07d6fa, type: 3}
     attack: {fileID: 0}
 --- !u!1 &5265346316289147656
@@ -1051,7 +1051,7 @@ MonoBehaviour:
         Active: 1
         UniqueID: 0
         Label: MMFeedback
-        OriginalLabel: 
+        OriginalLabel: Scale
         ChannelMode: 0
         Channel: 0
         MMChannelDefinition: {fileID: 0}

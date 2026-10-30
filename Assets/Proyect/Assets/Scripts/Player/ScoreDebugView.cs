@@ -39,6 +39,6 @@ public sealed class ScoreDebugView : MonoBehaviour
         if (surfaceSensor != null) GUI.Label(new Rect(22, 152, 300, 20), $"Suelo: {surfaceSensor.SurfaceNames}");
         GUI.Label(new Rect(22, 174, 290, 20), "Amarillo: velocidad | Azul: combo");
         GUI.Label(new Rect(22, 196, 300, 20), "Verde: puntos | Espacio + Ctrl: pisotón");
-        if (enemies != null) GUI.Label(new Rect(22, 218, 300, 20), enemies.IsThreatActive ? "¡Enemigo prepara ataque! Pulsa G" : "G: repeler alrededor");
+        if (enemies != null) GUI.Label(new Rect(22, 218, 300, 20), enemies.IsThreatActive ? "¡Enemigo prepara ataque! Clic derecho" : "Clic derecho: repeler alrededor");
     }
 }

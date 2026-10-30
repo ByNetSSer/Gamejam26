@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
+  m_Name: trofeo_del_corredor
+  m_EditorClassIdentifier: 
+  displayName: "Trofeo del corredor"
+  visualDescription: 
+  effectDescription: "+10 % de puntos."
+  tier: 2
+  category: 0
+  disposition: 0
+  requiredEnemy: 0
+  designNotes: 
+  icon: {fileID: 21300000, guid: 807df85ded7421b40b9e011199cf9f8d, type: 3}
+  legendaryModel: {fileID: 0}

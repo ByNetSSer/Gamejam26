@@ -40,19 +40,30 @@ public sealed class ComboHud : MonoBehaviour
         var r = go.GetComponent<RectTransform>(); r.anchorMin = r.anchorMax = new Vector2(0, 1); r.pivot = new Vector2(0, 1); r.anchoredPosition = position; r.sizeDelta = size;
         var text = go.GetComponent<Text>(); text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); text.fontSize = fontSize; text.color = Color.white; text.supportRichText = false; text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Truncate; return text;
     }
-    void OnEnable() { score.Awarded += OnAward; score.ComboPaid += OnPaid; score.CoinsChanged += OnCoins; score.ComboLost += OnLost; }
-    void OnDisable() { score.Awarded -= OnAward; score.ComboPaid -= OnPaid; score.CoinsChanged -= OnCoins; score.ComboLost -= OnLost; }
+    void OnEnable() { score.Awarded += OnAward; score.ComboPaid += OnPaid; score.CoinsChanged += OnCoins; }
+    void OnDisable() { score.Awarded -= OnAward; score.ComboPaid -= OnPaid; score.CoinsChanged -= OnCoins; }
     void OnDestroy() { if (canvasObject != null) Destroy(canvasObject); }
     void OnAward(ScoreAward award)
     {
-        GameSfx.Play("combo.add");
+        int soundTier = 0;
+        if (tierThresholds != null)
+            for (int i = 0; i < tierThresholds.Length && i < tierNames.Length; i++)
+                if (score.ComboPoints >= tierThresholds[i]) soundTier = i;
+        GameSfx.PlayCombo(soundTier, tierNames.Length - 1);
         if (award.ComboCount == 1) entries.Clear();
         entries.Enqueue($"{award.Reason}  +{award.Points}");
         while (entries.Count > Mathf.Max(1, visibleEntries)) entries.Dequeue();
         window = Mathf.Max(0.01f, score.ComboDuration); Refresh();
     }
-    void OnPaid(long points, long coins) { GameSfx.Play("combo.end"); if (coins > 0) GameSfx.Play("coins.gain"); entries.Clear(); entries.Enqueue($"Combo: {points}  →  +{coins} monedas"); Refresh(); }
-    void OnLost() { GameSfx.Play("combo.damage"); entries.Clear(); entries.Enqueue("Combo perdido por daño"); Refresh(); }
+    void OnPaid(long points, long coins)
+    {
+        bool damaged = score.LastComboEndReason == ComboEndReason.Damage;
+        GameSfx.Play(damaged ? "combo.damage" : "combo.end");
+        if (coins > 0) GameSfx.Play("coins.gain");
+        entries.Clear();
+        entries.Enqueue($"{(damaged ? "Combo cerrado por daño" : "Combo")}: {points}  →  +{coins} monedas");
+        Refresh();
+    }
     void OnCoins(long coins) => Refresh();
     void Update() { if (timer != null) timer.fillAmount = score.ComboCount > 0 ? Mathf.Clamp01(score.ComboRemaining / Mathf.Max(0.01f, window)) : 0f; }
     void Refresh()

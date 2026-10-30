@@ -32,6 +32,14 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField, Min(1f)] float slideStartSpeedMultiplier = 1.1f;
     [SerializeField, Min(0f)] float slideBoostDuration = 0.3f;
 
+    [Header("Sensación de movimiento (cámara)")]
+    [SerializeField, Min(0.01f)] float crouchCameraTime = 0.12f;
+    [SerializeField, Min(0f)] float movementBobAmount = 0.035f;
+    [SerializeField, Min(0f)] float movementBobFrequency = 8f;
+    [SerializeField, Min(0f)] float speedFovIncrease = 6f;
+    [SerializeField, Min(0.01f)] float speedForFullFov = 30f;
+    [SerializeField, Min(0.01f)] float movementFeedbackTime = 0.25f;
+
     [Header("Seguridad de colisiones")]
     [SerializeField, Min(0.01f)] float maxStepDistance = 0.2f;
     [SerializeField, Range(1, 256)] int maxStepsPerFrame = 128;
@@ -45,12 +53,23 @@ public sealed class PlayerController : MonoBehaviour
     float standingHeight;
     Vector3 standingCenter, cameraStandingPosition;
     Transform playerCamera;
+    Camera movementCamera;
+    float cameraBaseFov, cameraHeightOffset, cameraHeightVelocity;
+    float bobPhase, bobWeight, fovOffset, landingOffset;
     int roomsCleared;
     bool groundedForSweep;
     readonly RaycastHit[] sweepBuffer = new RaycastHit[32];
     static readonly IComparer<RaycastHit> HitDistanceComparer = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
     public Vector3 Velocity => velocity;
     public float HorizontalSpeed => new Vector2(velocity.x, velocity.z).magnitude;
+    float firstTowerSpeed;
+    public float DestructibleTowerScale { get; private set; } = 1f;
+    public void SnapshotTowerSpeed()
+    {
+        float speed = Mathf.Max(0.01f, TargetSpeed * sprintSpeedMultiplier);
+        if (firstTowerSpeed <= 0f) firstTowerSpeed = speed;
+        DestructibleTowerScale = Mathf.Max(1f, speed / firstTowerSpeed);
+    }
     public float TargetSpeed => stats.Evaluate(PlayerStat.MoveSpeed, baseSpeed + stats.Evaluate(PlayerStat.SpeedPerRoom, speedPerRoom) * roomsCleared);
     // Conservative starting point for encounter timing; actual travel depends on input and surfaces.
     public float GroundAcceleration => Mathf.Min(stats.Evaluate(PlayerStat.Acceleration, acceleration), stats.Evaluate(PlayerStat.TurnAcceleration, turnAcceleration));
@@ -60,6 +79,8 @@ public sealed class PlayerController : MonoBehaviour
     public bool IsPounding => pounding;
     public bool IsCrouching => crouching;
     public bool IsSliding => sliding;
+    public bool IsSprinting { get; private set; }
+    public bool HasMovementInput { get; private set; }
     public event Action<int> RoomCleared;
     public event Action<float, bool> Landed;
 
@@ -69,7 +90,7 @@ public sealed class PlayerController : MonoBehaviour
         standingHeight = controller.height;
         standingCenter = controller.center;
         var camera = GetComponentInChildren<Camera>();
-        if (camera != null) { playerCamera = camera.transform; cameraStandingPosition = playerCamera.localPosition; }
+        if (camera != null) { movementCamera = camera; cameraBaseFov = camera.fieldOfView; playerCamera = camera.transform; cameraStandingPosition = playerCamera.localPosition; }
         stats = GetComponent<PlayerStats>();
         if (GetComponent<GroundSurfaceSensor>() == null) gameObject.AddComponent<GroundSurfaceSensor>();
         if (GetComponent<EnemyDirector>() == null) gameObject.AddComponent<EnemyDirector>();
@@ -106,6 +127,8 @@ public sealed class PlayerController : MonoBehaviour
         bool crouchPressed = keyboard != null && keyboard.cKey.wasPressedThisFrame;
         bool pound = keyboard != null && (keyboard.leftCtrlKey.wasPressedThisFrame || keyboard.rightCtrlKey.wasPressedThisFrame);
         bool sprint = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+        IsSprinting = sprint;
+        HasMovementInput = horizontal != 0f || forward != 0f;
         UpdateCrouch(crouch, crouchPressed);
         Tick(new Vector2(horizontal, forward), jump, pound, sprint, Time.deltaTime);
     }
@@ -126,7 +149,33 @@ public sealed class PlayerController : MonoBehaviour
         float height = crouching ? Mathf.Max(controller.radius * 2f, standingHeight * crouchHeightFraction) : standingHeight;
         controller.height = height;
         controller.center = standingCenter + Vector3.down * ((standingHeight - height) * 0.5f);
-        if (playerCamera != null) playerCamera.localPosition = cameraStandingPosition + Vector3.down * ((standingHeight - height) * 0.5f);
+    }
+    // Presentation only: the capsule still changes immediately so low passages stay responsive.
+    void LateUpdate()
+    {
+        if (playerCamera == null || movementCamera == null || Time.deltaTime <= 0f) return;
+        float dt = Time.deltaTime;
+        float targetHeight = -(standingHeight - controller.height) * 0.5f;
+        cameraHeightOffset = Mathf.SmoothDamp(cameraHeightOffset, targetHeight, ref cameraHeightVelocity,
+            Mathf.Max(0.01f, crouchCameraTime), Mathf.Infinity, dt);
+        float speed = HorizontalSpeed;
+        float targetBob = grounded && !sliding ? Mathf.Clamp01(speed / 6f) : 0f;
+        float blend = 1f - Mathf.Exp(-dt / Mathf.Max(0.01f, movementFeedbackTime));
+        bobWeight = Mathf.Lerp(bobWeight, targetBob, blend);
+        bobPhase += dt * movementBobFrequency * Mathf.Lerp(0.75f, 1.5f, Mathf.Clamp01(speed / 15f));
+        landingOffset = Mathf.Lerp(landingOffset, 0f, 1f - Mathf.Exp(-dt / 0.16f));
+        float bob = Mathf.Sin(bobPhase) * movementBobAmount * bobWeight;
+        playerCamera.localPosition = cameraStandingPosition + Vector3.up * (cameraHeightOffset + bob + landingOffset);
+        float targetFov = speedFovIncrease * Mathf.Clamp01(speed / Mathf.Max(0.01f, speedForFullFov));
+        fovOffset = Mathf.Lerp(fovOffset, targetFov, blend);
+        movementCamera.fieldOfView = cameraBaseFov + fovOffset;
+    }
+    void OnDisable()
+    {
+        if (playerCamera != null) playerCamera.localPosition = cameraStandingPosition;
+        if (movementCamera != null) movementCamera.fieldOfView = cameraBaseFov;
+        IsSprinting = false; HasMovementInput = false;
+        cameraHeightOffset = cameraHeightVelocity = bobWeight = fovOffset = landingOffset = 0f;
     }
     bool CanStand()
     {
@@ -167,7 +216,7 @@ public sealed class PlayerController : MonoBehaviour
         if (jumpBuffered > 0f && coyoteRemaining > 0f && !pounding)
         {
             velocity.y = stats.Evaluate(PlayerStat.JumpSpeed, jumpSpeed);
-            GameSfx.Play("player.jump");
+            GameSfx.PlayJump(velocity.y);
             jumpBuffered = coyoteRemaining = 0f;
             wasGrounded = false;
         }
@@ -208,6 +257,7 @@ public sealed class PlayerController : MonoBehaviour
                 {
                     landedThisFrame = true;
                     pounding = false;
+                    landingOffset = -Mathf.Min(0.09f, impactSpeed * 0.003f);
                     Landed?.Invoke(impactSpeed, impactWasPound);
                 }
                 if (velocity.y < 0f) velocity.y = -stats.Evaluate(PlayerStat.GroundStickSpeed, groundStickSpeed);

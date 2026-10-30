@@ -278,7 +278,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 211997918}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1d478341122d0ac4eb37177e88053184, type: 3}
   m_Name: 
@@ -297,6 +297,14 @@ MonoBehaviour:
   coyoteTime: 0.1
   jumpBufferTime: 0.12
   groundStickSpeed: 2
+  sprintSpeedMultiplier: 1.15
+  sprintAccelerationMultiplier: 1.1
+  crouchHeightFraction: 0.6
+  crouchSpeedFraction: 0.6
+  slideMinimumSpeed: 5
+  slideBraking: 3
+  slideStartSpeedMultiplier: 1.1
+  slideBoostDuration: 0.3
   maxStepDistance: 0.2
   maxStepsPerFrame: 128
 --- !u!114 &211997920
@@ -323,6 +331,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b8ff718803408c44947f7736c2df8ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScore
+  pointsPerCoin: 10
   baseComboDuration: 4
   baseMultiplierGrowth: 0.1
   baseScoreAmplification: 1
@@ -420,6 +429,11 @@ MonoBehaviour:
   radius: 4.5
   cooldown: 0.65
   repelPower: 1
+  propHitRange: 3
+  propHitDamage: 20
+  propHitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &211997928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -856,6 +870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlupinVisual
   faceCamera: 1
+  skins: []
 --- !u!114 &338780540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -869,6 +884,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flupin
   director: {fileID: 0}
+  aggressiveness: 1
   approachStartDistance: 12
   initialDelay: 0.8
   radialApproachSpeed: 4
@@ -1863,10 +1879,20 @@ MonoBehaviour:
   - {fileID: 5714452624410628677, guid: 9966979326d946842b5683946596edd7, type: 3}
   hatchPrefab: {fileID: 8245477011193201474, guid: 4b803b3dc034d4647870aed420fe28cd, type: 3}
   doorPrefab: {fileID: 8258804729266605407, guid: da30da5704295cb4f918d3a8bd482f0f, type: 3}
+  towerTimeSeconds: 180
   roomsPerTower: 8
+  totalTowers: 12
+  difficulty:
+    extraRoomsPerTower: 1
+    maximumRooms: 20
+    speedPercentPerTower: 0.03
+    spawnChancePerTower: 0.1
+    initialLargeRoomChance: 0
+    largeRoomChancePerTower: 0.1
   useFixedSeed: 0
   seed: 12345
   hatchRotations: -1
+  hatchVerticalGap: 0.05
   roomPrefabs: []
 --- !u!4 &1861908750
 Transform:

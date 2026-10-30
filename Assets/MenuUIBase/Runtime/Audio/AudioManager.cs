@@ -21,6 +21,8 @@ namespace MenuUIBase.Audio
         private float[] voiceVolumes;
         private float[] voiceFades;
         private AudioSource surfaceSource;
+        private AudioSource footstepsSource;
+        private float footstepsVolume;
         private float surfaceVolume;
         private float surfaceFade = 1f;
         private bool fadingSurface;
@@ -106,6 +108,12 @@ namespace MenuUIBase.Audio
                 PlayMusic(cue.Clip, cue.Loop, cue.FadeDuration, cue.Volume);
             else
                 PlayPooled(cue.Clip, cue.Volume, Vector3.zero, false, cue);
+        }
+
+        public void PlayAdjusted(AudioCue cue, float volumeScale, float pitch)
+        {
+            if (cue == null || cue.Clip == null || cue.Channel != AudioChannel.SoundEffects) return;
+            PlayPooled(cue.Clip, cue.Volume * Mathf.Clamp01(volumeScale), Vector3.zero, false, cue, null, Mathf.Clamp(pitch, 0.5f, 2f));
         }
 
         public void PlayMusic(
@@ -212,7 +220,7 @@ namespace MenuUIBase.Audio
             ApplyVolumes();
         }
 
-        private void PlayPooled(AudioClip clip, float volume, Vector3 position, bool spatial, AudioCue cue = null, Transform target = null)
+        private void PlayPooled(AudioClip clip, float volume, Vector3 position, bool spatial, AudioCue cue = null, Transform target = null, float pitch = 1f)
         {
             EnsureSources();
             int emitter = target != null ? target.GetInstanceID() : 0;
@@ -256,7 +264,7 @@ namespace MenuUIBase.Audio
             voiceFollows[slot] = target != null;
             voiceEmitters[slot] = emitter;
             voiceRequested[slot] = Time.unscaledTime;
-            voice.pitch = 1f;
+            voice.pitch = pitch;
             voice.spatialBlend = spatial ? 1f : 0f;
             voice.ignoreListenerPause = !spatial;
             voice.transform.position = position;
@@ -265,6 +273,27 @@ namespace MenuUIBase.Audio
             voiceStarted[slot] = ++playSequence;
             voice.volume = sfxAttack > 0f ? 0f : masterVolume * soundEffectsVolume * voiceVolumes[slot];
             voice.Play();
+        }
+
+        // One reusable loop prevents overlapping and stops when movement ends.
+        public void SetFootsteps(AudioCue cue, float volumeScale)
+        {
+            if (cue == null || cue.Clip == null)
+            {
+                if (footstepsSource != null) { footstepsSource.Stop(); footstepsSource.clip = null; }
+                return;
+            }
+            if (footstepsSource == null)
+            {
+                footstepsSource = gameObject.AddComponent<AudioSource>();
+                footstepsSource.playOnAwake = false;
+                footstepsSource.loop = true;
+                footstepsSource.spatialBlend = 0f;
+            }
+            footstepsVolume = cue.Volume * Mathf.Clamp01(volumeScale);
+            footstepsSource.volume = masterVolume * soundEffectsVolume * footstepsVolume;
+            if (footstepsSource.clip == cue.Clip && footstepsSource.isPlaying) return;
+            footstepsSource.Stop(); footstepsSource.clip = cue.Clip; footstepsSource.Play();
         }
 
         // Dedicated contact loop: never competes with pooled one-shot voices.
@@ -293,6 +322,7 @@ namespace MenuUIBase.Audio
         public void FadeCurrentEffects(float duration)
         {
             EnsureSources();
+            SetFootsteps(null, 0f);
             fadingSurface = surfaceSource != null && surfaceSource.isPlaying;
             foreach (var room in roomLoops) room.Retiring = true;
             StartCoroutine(FadeVoices(Mathf.Max(0.01f, duration), (double[])voiceStarted.Clone()));
@@ -317,6 +347,7 @@ namespace MenuUIBase.Audio
         public void StopSoundEffects()
         {
             fadingSurface = false;
+            SetFootsteps(null, 0f);
             if (tails != null) foreach (var tail in tails) tail.Stop();
             if (roomLoops != null) foreach (var room in roomLoops) { room.Source.Stop(); room.Owner = null; }
             SetSurfaceLoop(null);
@@ -466,7 +497,7 @@ namespace MenuUIBase.Audio
             // Bounded reserve: never allocate more sources during a burst.
             if (index < 0) return;
             var tail = tails[index];
-            tail.clip = source.clip; tail.timeSamples = source.timeSamples;
+            tail.clip = source.clip; tail.timeSamples = source.timeSamples; tail.pitch = source.pitch;
             tail.transform.position = source.transform.position;
             tail.spatialBlend = source.spatialBlend; tail.rolloffMode = source.rolloffMode;
             tail.minDistance = source.minDistance; tail.maxDistance = source.maxDistance;
@@ -502,6 +533,7 @@ namespace MenuUIBase.Audio
             if (voices != null)
                 for (int i = 0; i < voices.Length; i++)
                     voices[i].volume = masterVolume * soundEffectsVolume * voiceVolumes[i] * voiceFades[i] * VoiceEnvelope(i);
+            if (footstepsSource != null) footstepsSource.volume = masterVolume * soundEffectsVolume * footstepsVolume;
             if (surfaceSource != null) surfaceSource.volume = masterVolume * soundEffectsVolume * surfaceVolume * surfaceFade;
             if (musicSource != null)
                 musicSource.volume = masterVolume * musicVolume * musicGain;

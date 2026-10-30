@@ -24,6 +24,7 @@ public sealed class ImpactTarget : MonoBehaviour
     float nextImpactTime;
     float maxHealth;
     bool broken;
+    bool towerScaled;
     bool breakLocked;
     public void SetBreakLocked(bool locked) => breakLocked = locked;
     GameObject fallingVisual;
@@ -43,13 +44,25 @@ public sealed class ImpactTarget : MonoBehaviour
         return player.Stats.Evaluate(PlayerStat.ImpactDamage, damage);
     }
 
-    // Entry point for a future punch controller. No input or animation is installed here.
+    void ApplyTowerScale(PlayerController player)
+    {
+        if (towerScaled || hatch || !proportionalSpeedDamage || player == null) return;
+        towerScaled = true;
+        float scale = player.DestructibleTowerScale;
+        maxHealth *= scale;
+        health *= scale;
+        breakSpeed *= scale;
+    }
+
+    // The same damage stat affects axe strikes and collisions.
     public void ReceivePunch(PlayerController player, float damage) => ReceivePunch(player, damage, player != null ? player.transform.forward : Vector3.zero);
     public void ReceivePunch(PlayerController player, float damage, Vector3 direction)
     {
-        if (broken || hatch || player == null || damage <= 0f || float.IsNaN(damage)) return;
+        if (broken || breakLocked || hatch || player == null || damage <= 0f || float.IsNaN(damage)) return;
+        ApplyTowerScale(player);
+        damage = player.Stats.Evaluate(PlayerStat.ImpactDamage, damage);
         ApplyDamage(player, damage);
-        if (!broken) SurvivedHit?.Invoke(direction, damage);
+        if (!broken) { SurvivedHit?.Invoke(direction, damage); PlayHitFeedback(direction); }
     }
     void ApplyDamage(PlayerController player, float damage)
     {
@@ -67,6 +80,7 @@ public sealed class ImpactTarget : MonoBehaviour
     public bool WillBreak(PlayerController player, Vector3 velocity, Vector3 normal, bool pounding)
     {
         if (broken || breakLocked || player == null) return false;
+        ApplyTowerScale(player);
         float speed = Mathf.Max(0f, -Vector3.Dot(velocity, normal));
         bool downwardPound = pounding && normal.y > 0.5f && speed > 0f;
         if (hatch) return downwardPound;
@@ -79,6 +93,7 @@ public sealed class ImpactTarget : MonoBehaviour
     public void ReceiveImpact(PlayerController player, Vector3 velocity, Vector3 normal, bool pounding)
     {
         if (broken || breakLocked || player == null) return;
+        ApplyTowerScale(player);
         float impactSpeed = Mathf.Max(0f, -Vector3.Dot(velocity, normal));
         bool downwardPound = pounding && normal.y > 0.5f && impactSpeed > 0f;
         if (hatch)
@@ -92,7 +107,7 @@ public sealed class ImpactTarget : MonoBehaviour
         nextImpactTime = Time.time + impactCooldown;
         float damage = ImpactDamage(player, impactSpeed, downwardPound);
         ApplyDamage(player, damage);
-        if (!broken && damage > 0f && !float.IsNaN(damage)) SurvivedHit?.Invoke(-normal, impactSpeed);
+        if (!broken && damage > 0f && !float.IsNaN(damage)) { SurvivedHit?.Invoke(-normal, impactSpeed); PlayHitFeedback(-normal); }
     }
 
     void Break(PlayerController player)
@@ -104,6 +119,7 @@ public sealed class ImpactTarget : MonoBehaviour
         // break the supporting parent or unrelated props elsewhere in the room.
         var stacked = GetComponentsInChildren<ImpactTarget>();
         PlayDestructionFeedback();
+        GameSfx.PlayAt("impact.break", transform.position);
         if (fallingVisual != null)
         {
             fallingVisual.transform.SetParent(null, true);
@@ -120,6 +136,25 @@ public sealed class ImpactTarget : MonoBehaviour
                 child.Break(player);
         Broken?.Invoke(this);
         gameObject.SetActive(false);
+    }
+    void PlayHitFeedback(Vector3 direction)
+    {
+        if (!destructionFeedback) return;
+        var go = new GameObject("Impacto de destructible");
+        go.transform.position = transform.position;
+        foreach (var renderer in GetComponentsInChildren<Renderer>())
+            if (renderer.GetComponentInParent<ImpactTarget>() == this) { go.transform.position = renderer.bounds.center; break; }
+        go.transform.rotation = direction.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(direction) : Quaternion.identity;
+        var particles = go.AddComponent<ParticleSystem>();
+        particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var main = particles.main; main.loop = false; main.startLifetime = 0.3f; main.startSpeed = 1.5f; main.startSize = 0.07f;
+        main.startColor = paperFragments ? new Color(1f, 0.92f, 0.7f) : new Color(0.8f, 0.63f, 0.4f);
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        var emission = particles.emission; emission.enabled = false;
+        var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader == null) shader = Shader.Find("Sprites/Default");
+        if (shader != null) { var material = new Material(shader); go.GetComponent<ParticleSystemRenderer>().sharedMaterial = material; Destroy(material, 1f); }
+        particles.Play(); particles.Emit(5); Destroy(go, 1f);
     }
     void PlayDestructionFeedback()
     {

@@ -44,7 +44,7 @@ public sealed class RoomEnemyRoster : MonoBehaviour
             return encounter != null && encounter.HasPrefab && (!dontseeSelected || encounter.SpawnChance < 0.999f || encounter.SafeRoomsBetween > 0);
         }
     }
-    public bool EnemiesReady => eligible && Time.time >= readyAt;
+    public bool EnemiesReady => eligible && rooms != null && !rooms.IsFinished && !rooms.IsLost && Time.time >= readyAt;
     void Awake()
     {
         rooms = GetComponent<RoomManager>();
@@ -100,7 +100,11 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     {
         if (enemy == null || enemy.gameObject.activeSelf) return;
         enemy.transform.SetParent(null, true);
-        enemy.transform.position = player.transform.position + Vector3.up * 0.5f + SpawnDirection(index, maskCount) * 10f;
+        Vector3 forward = Vector3.ProjectOnPlane(player.Velocity, Vector3.up);
+        if (forward.sqrMagnitude < 0.25f) forward = Vector3.ProjectOnPlane(player.transform.forward, Vector3.up);
+        if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
+        float angle = maskCount <= 1 ? 45f : Mathf.Lerp(-65f, 65f, index / (float)(maskCount - 1));
+        enemy.transform.position = player.transform.position + Vector3.up * 0.5f + Quaternion.Euler(0f, angle, 0f) * forward.normalized * 8f;
         enemy.SetDirector(director);
         enemy.gameObject.SetActive(true);
     }

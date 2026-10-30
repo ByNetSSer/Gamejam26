@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1688752809153142177}
   - component: {fileID: 8100000000000000001}
   - component: {fileID: 7500000000000000000}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: CofreMadera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -170,7 +170,7 @@ GameObject:
   - component: {fileID: 4723973707194366808}
   - component: {fileID: 1571878381552487326}
   - component: {fileID: 7232000745217936820}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: SM_Prop_Chest_01_Handle_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -260,7 +260,7 @@ GameObject:
   - component: {fileID: 5657981215600063081}
   - component: {fileID: 3429252607321041730}
   - component: {fileID: 4030339121938528125}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: SM_Prop_Chest_01_Latch_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -350,7 +350,7 @@ GameObject:
   - component: {fileID: 8362031325737456922}
   - component: {fileID: 1238177432504417017}
   - component: {fileID: 4201019951262939893}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: SM_Prop_Chest_01_Handle_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -440,7 +440,7 @@ GameObject:
   - component: {fileID: 5316155559677287729}
   - component: {fileID: 3028978036239203980}
   - component: {fileID: 3890226982551993999}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: SM_Prop_Chest_01_Lid_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}

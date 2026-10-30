@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5b7832dae79461b840ea5e912f8f381, type: 3}
   m_Name: IntensePlaylist
   m_EditorClassIdentifier: 
-  tracks: []
+  tracks:
+  - {fileID: 11400000, guid: 9867e155cc744079863fa1ffec606fa0, type: 2}
+  - {fileID: 11400000, guid: e0aabbdb9c4748dfbe3b511433a50484, type: 2}
   crossfadeSeconds: 4

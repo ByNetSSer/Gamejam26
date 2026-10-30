@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7056173803145905079}
   - component: {fileID: 195106032963621912}
   - component: {fileID: 8100000000000000001}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: CandelabroMid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,3 +135,7 @@ MonoBehaviour:
   hatch: 0
   scoreReason: Candelabro derribado
   scorePoints: 3
+  destructionFeedback: 1
+  paperFragments: 0
+  destructionParticles: {fileID: 0}
+  feedbackLifetime: 3

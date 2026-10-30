@@ -11,8 +11,12 @@ public sealed class TowerDifficulty
     [SerializeField, Min(0f)] float spawnChancePerTower = 0.1f;
     [SerializeField, Range(0f, 1f)] float initialLargeRoomChance = 0f;
     [SerializeField, Range(0f, 1f)] float largeRoomChancePerTower = 0.1f;
+    [SerializeField, Min(1)] int mediumRoomsStartTower = 4;
+    [SerializeField, Range(0f, 1f)] float initialMediumRoomChance = 0.1f;
+    [SerializeField, Range(0f, 1f)] float mediumRoomChancePerTower = 0.07f;
     public int Rooms(int baseRooms, int tower) => Mathf.Clamp(baseRooms + Mathf.Max(0, tower - 1) * extraRoomsPerTower, 2, Mathf.Max(2, maximumRooms));
     public float SpeedBonus(int tower) => Mathf.Max(0, tower - 1) * Mathf.Clamp(speedPercentPerTower, 0f, 0.05f);
     public float SpawnMultiplier(int tower) => 1f + Mathf.Max(0, tower - 1) * spawnChancePerTower;
     public float LargeRoomChance(int tower) => Mathf.Clamp01(initialLargeRoomChance + Mathf.Max(0, tower - 1) * largeRoomChancePerTower);
+    public float MediumRoomChance(int tower) => tower < mediumRoomsStartTower ? 0f : Mathf.Clamp01(initialMediumRoomChance + (tower - mediumRoomsStartTower) * mediumRoomChancePerTower);
 }

@@ -51,7 +51,7 @@ La primera y la última sala cuentan dentro del número total de salas de la tor
 | Ctrl en el aire | Pisotón vertical. |
 | C | Agacharse; con velocidad suficiente al pulsar, deslizarse con un breve impulso. |
 | E, mirando una puerta cercana | Abrir puerta. |
-| G | Repeler enemigos dentro del radio, sin necesidad de mirarlos. |
+| Clic derecho | Repeler enemigos dentro del radio, sin necesidad de mirarlos. |
 | Escape / clic izquierdo | Liberar / capturar el cursor. |
 
 Estos controles describen el prototipo; se pueden ajustar después de probar la sensación. La cámara pierde capacidad de giro progresivamente con la velocidad y esa capacidad es una estadística modificable.
@@ -86,9 +86,9 @@ Los peligros deben poder distinguirse con rapidez desde primera persona. Su aspe
 
 ### Primer enemigo: Flupin, la pelota orbital
 
-Una pelota es atraída hacia el jugador. El jugador puede repelerla en área con G, incluso sin mirarla; al recibir el golpe sale impulsada y después vuelve a acercarse gradualmente. Si alcanza al jugador, quita un tercio de su vida actual y se aleja con más fuerza y distancia. El prototipo usa movimiento vectorial simple, sin pathfinding complejo.
+Una pelota es atraída hacia el jugador. El jugador puede repelerla en área con clic derecho, incluso sin mirarla; al recibir el golpe sale impulsada y después vuelve a acercarse gradualmente. Si alcanza al jugador, quita un tercio de su vida actual y se aleja con más fuerza y distancia. El prototipo usa movimiento vectorial simple, sin pathfinding complejo.
 
-**Estado:** Flupin y G están implementados como prototipo; la órbita sigue al jugador en espacio del mundo y respeta el material asignado. Falta validarlos en Play Mode. La apariencia medieval mágica y el nombre final quedan abiertos al equipo.
+**Estado:** Flupin y el clic derecho están implementados como prototipo; la órbita sigue al jugador en espacio del mundo y respeta el material asignado. Falta validarlos en Play Mode. La apariencia medieval mágica y el nombre final quedan abiertos al equipo.
 
 ## 6. Salas y generación
 

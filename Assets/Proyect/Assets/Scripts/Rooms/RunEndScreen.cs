@@ -148,7 +148,7 @@ public sealed class RunEndScreen : MonoBehaviour
         switch (reason)
         {
             case RunLossReason.TimeExpired: return "El tiempo te ha alcanzado.\nLlega a la sala final antes de que termine la cuenta atrás.";
-            case RunLossReason.Flupin: return "Flupin te ha golpeado.\nPulsa G cuando esté cerca para repelerlo.";
+            case RunLossReason.Flupin: return "Flupin te ha golpeado.\nClic derecho cuando esté cerca para repelerlo.";
             case RunLossReason.Dontsee: return "Dontsee te ha alcanzado.\nMantenlo a la vista para detener su avance.";
             case RunLossReason.MaskCharger: return "La máscara te ha arrollado.\nSal de la línea de aviso antes de su embestida.";
             case RunLossReason.Crusher: return "La aplanadora te ha aplastado.\nSal de debajo de ella durante el aviso.";

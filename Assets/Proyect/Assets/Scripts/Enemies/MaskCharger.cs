@@ -4,7 +4,7 @@ using MoreMountains.Feedbacks;
 using UnityEngine;
 
 public enum MaskChargerState { Following, Telegraph, Charging, Recovery, Braking }
-public enum MaskChargerStat { Aggressiveness, FollowSpeed, CatchUpBonus, AttackRange, AttackInterval, TelegraphDuration, ChargeSpeed, ChargeDuration, ContactRadius, CurrentHealthFraction, RecoveryDuration, BrakingDuration }
+public enum MaskChargerStat { Aggressiveness, FollowSpeed, CatchUpBonus, AttackRange, AttackInterval, TelegraphDuration, ChargeSpeed, ChargeDuration, ContactRadius, CurrentHealthFraction, RecoveryDuration, BrakingDuration, OrbitSpeed }
 
 public readonly struct MaskChargerStateChangedEvent
 {
@@ -40,6 +40,8 @@ public sealed class MaskCharger : EnemyAgent
     [Tooltip("Ángulo máximo a cada lado de la dirección de avance del jugador.")]
     [SerializeField, Range(0f, 85f)] float stalkingArc = 65f;
     [SerializeField, Min(0f)] float attackInterval = 4f;
+    [Tooltip("Multiplica el intervalo configurado, también en prefabs existentes. La recuperación cuenta dentro de esa espera.")]
+    [SerializeField, Range(0.1f, 1f)] float attackCadenceMultiplier = 0.5f;
     [Header("Embestida")]
     [SerializeField, Min(0f)] float telegraphDuration = 1f;
     [SerializeField, Min(0.1f)] float chargeSpeed = 16f;
@@ -61,6 +63,7 @@ public sealed class MaskCharger : EnemyAgent
     readonly Dictionary<MaskChargerStat, StatValue> modifiers = new Dictionary<MaskChargerStat, StatValue>();
     EventStream events;
     MaskChargerState state;
+    float attackCooldown;
     float aimSoundAt;
     bool aimSoundPlayed;
     float timer, chargeRemaining, lockedChargeSpeed, lockedBrakingDuration, brakingElapsed, orbitPhase;
@@ -79,7 +82,7 @@ public sealed class MaskCharger : EnemyAgent
     public Vector3 ChargeDirection => chargeDirection;
     public float Aggressiveness => Mathf.Max(0.1f, Evaluate(MaskChargerStat.Aggressiveness, aggressiveness));
     public override AttackRequirement Requirement => AttackRequirement.Any;
-    public override bool CanRequestAttack => state == MaskChargerState.Following && timer <= 0f && Player != null &&
+    public override bool CanRequestAttack => state == MaskChargerState.Following && attackCooldown <= 0f && Player != null &&
         (PlayerCenter() - transform.position).sqrMagnitude <= Mathf.Pow(Evaluate(MaskChargerStat.AttackRange, attackRange), 2f) &&
         IsAhead(PlayerCenter());
     public override bool CanBeRepelled => false;
@@ -99,10 +102,10 @@ public sealed class MaskCharger : EnemyAgent
         base.OnEnable();
         PrepareCollision();
         state = MaskChargerState.Following;
-        timer = Evaluate(MaskChargerStat.AttackInterval, attackInterval);
+        attackCooldown = AttackCooldown;
         hasPrevious = false;
-        orbitPhase = 0f;
-        orbitSide = 1f;
+        orbitPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+        orbitSide = Player != null && Vector3.Dot(transform.position - PlayerCenter(), Vector3.Cross(Vector3.up, TravelForward())) < 0f ? -1f : 1f;
     }
     protected override void OnDisable()
     {
@@ -115,6 +118,7 @@ public sealed class MaskCharger : EnemyAgent
         base.OnDisable();
     }
     void OnDestroy() { events?.Clear(); if (lineMaterial != null) Destroy(lineMaterial); }
+    float AttackCooldown => Mathf.Max(0.25f, Evaluate(MaskChargerStat.AttackInterval, attackInterval) * attackCadenceMultiplier);
     Vector3 PlayerCenter() => Player.transform.position + Vector3.up * 0.5f;
     void Update()
     {
@@ -123,11 +127,16 @@ public sealed class MaskCharger : EnemyAgent
         float dt = Time.deltaTime;
         Vector3 center = PlayerCenter();
         if (!hasPrevious) { previousPlayer = center; hasPrevious = true; }
+        if (state == MaskChargerState.Following || state == MaskChargerState.Recovery)
+        {
+            // Track translation (including descent) while stalking, not during a committed attack.
+            transform.position += center - previousPlayer;
+            attackCooldown = Mathf.Max(0f, attackCooldown - dt * Aggressiveness);
+        }
         switch (state)
         {
             case MaskChargerState.Following:
                 Follow(center, dt);
-                timer = Mathf.Max(0f, timer - dt * Aggressiveness);
                 if (CanRequestAttack) RequestAttack();
                 break;
             case MaskChargerState.Telegraph:
@@ -165,11 +174,12 @@ public sealed class MaskCharger : EnemyAgent
                 Brake(dt, previousPlayer, center);
                 break;
             case MaskChargerState.Recovery:
-                timer -= dt;
+                Follow(center, dt);
+                timer -= dt * Aggressiveness;
                 if (timer <= 0f)
                 {
-                    timer = Evaluate(MaskChargerStat.AttackInterval, attackInterval);
                     SetState(MaskChargerState.Following);
+                    if (CanRequestAttack) RequestAttack();
                 }
                 break;
         }
@@ -194,19 +204,21 @@ public sealed class MaskCharger : EnemyAgent
         Vector3 offset = Vector3.ProjectOnPlane(transform.position - center, Vector3.up);
         Vector3 radial = offset.sqrMagnitude > 0.001f ? offset.normalized : -forward;
         float radius = Mathf.Min(Mathf.Max(0.5f, preferredDistance), Mathf.Max(0.5f, Evaluate(MaskChargerStat.AttackRange, attackRange) * 0.8f));
-        orbitPhase += dt * Mathf.Max(0f, orbitDegreesPerSecond) * Mathf.Deg2Rad * 0.35f;
+        float angularSpeed = Mathf.Max(0f, Evaluate(MaskChargerStat.OrbitSpeed, orbitDegreesPerSecond)) * Aggressiveness;
+        orbitPhase += dt * angularSpeed * Mathf.Deg2Rad * 0.35f;
         float angle = orbitSide * Mathf.Clamp(stalkingArc, 0f, 85f) * (0.65f + 0.35f * Mathf.Sin(orbitPhase));
         Vector3 desiredRadial = Quaternion.AngleAxis(angle, Vector3.up) * forward;
         float signedAngle = Vector3.SignedAngle(radial, desiredRadial, Vector3.up);
         // Resolve the ambiguous directly-behind case consistently to the chosen side.
         if (Mathf.Abs(signedAngle) > 179f) signedAngle = 180f * orbitSide;
-        float turn = Mathf.Clamp(signedAngle, -orbitDegreesPerSecond * dt, orbitDegreesPerSecond * dt);
+        float turn = Mathf.Clamp(signedAngle, -angularSpeed * dt, angularSpeed * dt);
         Vector3 nextRadial = Quaternion.AngleAxis(turn, Vector3.up) * radial;
         Vector3 target = center + nextRadial * radius;
-        float playerSpeed = Vector3.ProjectOnPlane(Player.Velocity, Vector3.up).magnitude;
-        float speed = Mathf.Max(0f, Evaluate(MaskChargerStat.FollowSpeed, followSpeed)) + playerSpeed;
-        if (offset.magnitude > radius * 1.15f || Vector3.Dot(radial, forward) < 0f)
-            speed += Mathf.Max(0f, Evaluate(MaskChargerStat.CatchUpBonus, catchUpBonus));
+        // Translation is already inherited above; speed is available for the orbit and catch-up.
+        float speed = Mathf.Max(0f, Evaluate(MaskChargerStat.FollowSpeed, followSpeed)) * Aggressiveness;
+        speed += radius * angularSpeed * Mathf.Deg2Rad;
+        float gap = Vector3.Distance(transform.position, target);
+        speed += gap * Mathf.Max(0f, Evaluate(MaskChargerStat.CatchUpBonus, catchUpBonus));
         transform.position = Vector3.MoveTowards(transform.position, target, speed * dt);
         Face(center - transform.position);
     }
@@ -292,7 +304,7 @@ public sealed class MaskCharger : EnemyAgent
             damageTrigger.radius = Evaluate(MaskChargerStat.ContactRadius, contactRadius) / Mathf.Max(0.0001f, maxScale);
         }
         ShowTrajectory(chargeRemaining + 0.5f * lockedChargeSpeed * lockedBrakingDuration);
-        timer = Evaluate(MaskChargerStat.TelegraphDuration, telegraphDuration);
+        timer = Mathf.Max(0.3f, Evaluate(MaskChargerStat.TelegraphDuration, telegraphDuration) / Aggressiveness);
         SetState(MaskChargerState.Telegraph);
         if (warningFeedback != null) warningFeedback.PlayFeedbacks(transform.position);
     }
@@ -303,7 +315,8 @@ public sealed class MaskCharger : EnemyAgent
         if (damageTrigger != null) damageTrigger.enabled = false;
         ReleaseAttack();
         orbitSide = -orbitSide;
-        timer = Evaluate(MaskChargerStat.RecoveryDuration, recoveryDuration);
+        timer = Mathf.Max(0.25f, Evaluate(MaskChargerStat.RecoveryDuration, recoveryDuration));
+        attackCooldown = AttackCooldown;
         SetState(MaskChargerState.Recovery);
     }
     void SetState(MaskChargerState next)

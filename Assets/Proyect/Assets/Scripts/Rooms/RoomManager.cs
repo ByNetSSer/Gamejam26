@@ -19,6 +19,8 @@ public sealed class RoomManager : MonoBehaviour
     [SerializeField] ImpactTarget hatchPrefab;
     [SerializeField] RoomDoor doorPrefab;
     [Header("Tiempo por torre")][SerializeField, Min(1f)] float towerTimeSeconds = 180f;
+    [SerializeField, Min(0f)] float mediumRoomExtraSeconds = 12f;
+    [SerializeField, Range(0f, 1f)] float mediumRoomSpawnMultiplier = 0.65f;
     public float TimeRemaining { get; private set; }
     public bool TimerRunning => isActiveAndEnabled && started && !finished && !failed && !lost && !victoryReported
         && towerNumber > 1 && roomsEntered > 1 && roomsEntered < RoomsPerTower;
@@ -118,6 +120,7 @@ public sealed class RoomManager : MonoBehaviour
     }
     void StartTower()
     {
+        player.SnapshotTowerSpeed();
         current = Instantiate(startingRoom, transform.position, transform.rotation, transform);
         if (!current.ConfigureSafeRoom(true)) { Fail("No se pudo preparar la zona segura inicial."); return; }
         if (!current.Prepare(hatchPrefab, doorPrefab)) { Fail("No se pudo preparar la salida de la sala inicial."); return; }
@@ -130,10 +133,10 @@ public sealed class RoomManager : MonoBehaviour
         if (cc != null) cc.enabled = true;
         foreach (var flupin in pausedFlupins) if (flupin != null) flupin.enabled = true;
         pausedFlupins.Clear();
+        TimeRemaining = Mathf.Max(1f, towerTimeSeconds);
         PrepareNext();
         if (failed) return;
         BindHealth();
-        TimeRemaining = Mathf.Max(1f, towerTimeSeconds);
         Events.Publish(new TowerStartedEvent(RoomsPerTower, player));
         PublishEntered();
         started = true;
@@ -337,14 +340,21 @@ public sealed class RoomManager : MonoBehaviour
             if (valid.Count == 0)
             { Fail($"No hay un prefab válido con entrada {entry} que permita alcanzar la sala final; revisa los avisos de los pools."); return; }
             var small = new List<RoomDefinition>();
+            var medium = new List<RoomDefinition>();
             var large = new List<RoomDefinition>();
             foreach (var candidate in valid)
             {
                 var layout = candidate.GetComponent<RoomAutoLayout>();
-                if (layout != null && layout.Size == RoomSize.Large) large.Add(candidate); else small.Add(candidate);
+                if (layout != null && layout.Size == RoomSize.Large) large.Add(candidate);
+                else if (layout != null && layout.Size == RoomSize.Medium) medium.Add(candidate);
+                else small.Add(candidate);
             }
-            var pool = large.Count > 0 && (small.Count == 0 || random.NextDouble() < difficulty.LargeRoomChance(towerNumber)) ? large : small;
+            var pool = small;
+            if (large.Count > 0 && random.NextDouble() < difficulty.LargeRoomChance(towerNumber)) pool = large;
+            else if (medium.Count > 0 && random.NextDouble() < difficulty.MediumRoomChance(towerNumber)) pool = medium;
+            if (pool.Count == 0) pool = medium.Count > 0 ? medium : large;
             chosen = pool[random.Next(pool.Count)];
+            if (pool == medium && towerNumber > 1) TimeRemaining += Mathf.Max(0f, mediumRoomExtraSeconds);
         }
         next = Instantiate(chosen, transform);
         if (remaining == 1 && !next.ConfigureSafeRoom(false))
@@ -367,7 +377,9 @@ public sealed class RoomManager : MonoBehaviour
             next.transform.position += Vector3.down * Mathf.Max(0f, hatchVerticalGap);
         if (remaining > 1 && !next.Prepare(hatchPrefab, doorPrefab))
         { next.gameObject.SetActive(false); Destroy(next.gameObject); next = null; Fail("No se pudo preparar la salida de la siguiente sala."); return; }
-        next.Populate(random, difficulty.SpawnMultiplier(towerNumber), !TowerSafetyRules.IsProtectedRoom(roomsEntered + 1));
+        var nextLayout = next.GetComponent<RoomAutoLayout>();
+        float roomSpawnMultiplier = nextLayout != null && nextLayout.Size == RoomSize.Medium ? Mathf.Clamp01(mediumRoomSpawnMultiplier) : 1f;
+        next.Populate(random, difficulty.SpawnMultiplier(towerNumber) * roomSpawnMultiplier, !TowerSafetyRules.IsProtectedRoom(roomsEntered + 1));
     }
     void Fail(string message)
     {

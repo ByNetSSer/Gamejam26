@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3371984280211631442}
   - component: {fileID: 8100000000000000001}
   - component: {fileID: 7500000000000000000}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: Jaula
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -136,6 +136,10 @@ MonoBehaviour:
   hatch: 0
   scoreReason: Jaula destrozada
   scorePoints: 4
+  destructionFeedback: 1
+  paperFragments: 0
+  destructionParticles: {fileID: 0}
+  feedbackLifetime: 3
 --- !u!114 &7500000000000000000
 MonoBehaviour:
   m_ObjectHideFlags: 0

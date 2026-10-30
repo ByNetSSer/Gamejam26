@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81180773991d8724ab7f2d216912b564, type: 3}
   m_Name: ChromaticAberration
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ChromaticAberration
-  active: 0
+  active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 0.15
 --- !u!114 &-5858693324276023338
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -31,19 +31,19 @@ MonoBehaviour:
   active: 0
   intensity:
     m_OverrideState: 1
-    m_Value: -0.63
+    m_Value: -0.08
   xMultiplier:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   yMultiplier:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   center:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: {x: 0.5, y: 0.5}
   scale:
-    m_OverrideState: 0
-    m_Value: 1
+    m_OverrideState: 1
+    m_Value: 5
 --- !u!114 &-2437648121966389593
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -59,7 +59,7 @@ MonoBehaviour:
   active: 1
   type:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 9
   intensity:
     m_OverrideState: 1
     m_Value: 1
@@ -81,7 +81,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb60a22f311433c4c962b888d1393f88, type: 3}
   m_Name: PaniniProjection
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.PaniniProjection
-  active: 0
+  active: 1
   distance:
     m_OverrideState: 1
     m_Value: 0

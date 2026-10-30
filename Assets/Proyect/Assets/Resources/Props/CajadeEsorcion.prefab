@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 615812585332125764}
   - component: {fileID: 5637074936978418324}
   - component: {fileID: 3527516468318616131}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: SM_Prop_Exorcist_Case_01_Lid_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 2182507723064744849}
   - component: {fileID: 7310375590126560711}
   - component: {fileID: 8100000000000000001}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: CajadeEsorcion
   m_TagString: Untagged
   m_Icon: {fileID: 0}

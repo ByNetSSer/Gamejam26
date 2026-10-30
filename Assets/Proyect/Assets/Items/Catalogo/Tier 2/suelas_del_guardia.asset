@@ -20,4 +20,4 @@ MonoBehaviour:
   disposition: 0
   requiredEnemy: 0
   designNotes: ""
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 16999271ce766404499c1fe7cff3d142, type: 3}

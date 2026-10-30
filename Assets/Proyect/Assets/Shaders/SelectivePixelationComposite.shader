@@ -7,7 +7,7 @@ Shader "Hidden/SelectivePixelationComposite"
         {
             ZWrite On ZTest LEqual Cull Off
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"

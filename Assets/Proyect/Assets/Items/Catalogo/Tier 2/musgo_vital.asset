@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Musgo vital"
   visualDescription: "Un terrón de musgo luminoso guardado en una maceta de barro."
-  effectDescription: "Recuperas 1 % de vida máxima cada 5 segundos."
+  effectDescription: "+2 % de regeneración de vida cada 10 segundos."
   tier: 2
   category: 2
   disposition: 0
   requiredEnemy: 0
   designNotes: ""
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 9a23f07c6fa156744996e3b2f55363ad, type: 3}

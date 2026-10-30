@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum EnemyCurse { None, Flupin, Dontsee, MaskCharger }
+public enum EnemyCurse { None, Flupin, Dontsee, MaskCharger, FlupinHaste, FlupinFury, MaskHaste, MaskFury, MaskStalking, DontseeFury }
 
 // Temporary reward room; effects are explicit until catalog items have runtime implementations.
 [RequireComponent(typeof(RoomManager))]
@@ -44,6 +44,8 @@ public sealed class TowerRewardStation : MonoBehaviour
     readonly List<Material> ownedMaterials = new List<Material>();
     // Only catalog effects already supported by PlayerStats are offered.
     static readonly Reward[] common = {
+        new Reward("Gota de rocío", "Recupera 1 % de vida máxima cada 10 segundos.", PlayerStat.MoveSpeed, 0f, StatModifierType.Flat),
+        new Reward("Zapatillas de mecha", "+35 % de velocidad al entrar durante 3,5 s; sin combo ni puntos, fatiga de 2,5 s.", PlayerStat.MoveSpeed, 0f, StatModifierType.Flat),
         new Reward("Cordones del paje", "+3 % de velocidad de movimiento.", PlayerStat.MoveSpeed, 0.03f, StatModifierType.Percent),
         new Reward("Suelas gastadas", "+5 % de frenado.", PlayerStat.Braking, 0.05f, StatModifierType.Percent),
         new Reward("Reloj atrasado", "+5 % de duración del combo.", PlayerStat.ComboDuration, 0.05f, StatModifierType.Percent),
@@ -54,6 +56,8 @@ public sealed class TowerRewardStation : MonoBehaviour
         new Reward("Guantes de piedra", "+10 % de daño por impacto.", PlayerStat.ImpactDamage, 0.1f, StatModifierType.Percent)
     };
     static readonly Reward[] rare = {
+        new Reward("Musgo vital", "Recupera 2 % de vida máxima cada 10 segundos.", PlayerStat.MoveSpeed, 0f, StatModifierType.Flat),
+        new Reward("Trofeo del corredor", "+10 % de puntos.", PlayerStat.ScoreAmplification, 0.1f, StatModifierType.Percent),
         new Reward("Botas del viajero", "+10 % de velocidad de movimiento.", PlayerStat.MoveSpeed, 0.1f, StatModifierType.Percent),
         new Reward("Anillo de maniobra", "+15 % de aceleración de giro.", PlayerStat.TurnAcceleration, 0.15f, StatModifierType.Percent),
         new Reward("Pluma del acróbata", "+15 % de control aéreo.", PlayerStat.AirControl, 0.15f, StatModifierType.Percent),
@@ -94,17 +98,7 @@ public sealed class TowerRewardStation : MonoBehaviour
         rooms.SetStartingExitLocked(true);
         offersRoot = new GameObject("Maldiciones"); offersRoot.transform.SetParent(stage.transform, false);
         var choices = new List<Reward>(curses);
-        var enemyChoices = new List<Reward>();
-        var roster = GetComponent<RoomEnemyRoster>();
-        if (roster != null)
-        {
-            if (roster.CanChooseFlupin)
-                enemyChoices.Add(new Reward(roster.FlupinSelected ? "Enjambre de Flupin" : "Invocar a Flupin", roster.FlupinSelected ? "Aparece un Flupin adicional en cada torre." : "Flupin aparecerá en las siguientes salas.", EnemyCurse.Flupin));
-            if (roster.CanChooseMaskCharger)
-                enemyChoices.Add(new Reward(roster.MaskChargerSelected ? "Doble máscara" : "Invocar a la máscara", roster.MaskChargerSelected ? "Aparece una máscara adicional en cada torre." : "La máscara aparecerá en las siguientes salas.", EnemyCurse.MaskCharger));
-            if (roster.CanChooseDontsee)
-                enemyChoices.Add(new Reward(roster.DontseeSelected ? "Mirada frecuente" : "Invocar a Dontsee", roster.DontseeSelected ? "+15 puntos de probabilidad y una sala menos de espera." : "Dontsee podrá aparecer en las siguientes salas.", EnemyCurse.Dontsee));
-        }
+        var enemyChoices = EnemyChoices();
         var offered = new List<Reward>();
         if (enemyChoices.Count > 0)
         {
@@ -122,6 +116,94 @@ public sealed class TowerRewardStation : MonoBehaviour
         { int pick = UnityEngine.Random.Range(0, i + 1); var swap = offered[i]; offered[i] = offered[pick]; offered[pick] = swap; }
         for (int i = 0; i < offered.Count; i++) AddPedestal(i, offered[i], 1, true);
     }
+    List<Reward> EnemyChoices()
+    {
+        var enemyChoices = new List<Reward>();
+        var roster = GetComponent<RoomEnemyRoster>();
+        if (roster != null)
+        {
+            if (roster.CanChooseFlupin)
+                enemyChoices.Add(new Reward(roster.FlupinSelected ? "Enjambre de Flupin" : "Invocar a Flupin", roster.FlupinSelected ? "Aparece un Flupin adicional en cada torre." : "Flupin aparecerá en las siguientes salas.", EnemyCurse.Flupin));
+            if (roster.CanChooseMaskCharger)
+                enemyChoices.Add(new Reward(roster.MaskChargerSelected ? "Doble máscara" : "Invocar a la máscara", roster.MaskChargerSelected ? "Aparece una máscara adicional en cada torre." : "La máscara aparecerá en las siguientes salas.", EnemyCurse.MaskCharger));
+            if (roster.FlupinSelected)
+            {
+                enemyChoices.Add(new Reward("Flupin impaciente", "Flupin espera un 20 % menos antes de atacar y recuperarse.", EnemyCurse.FlupinHaste));
+                enemyChoices.Add(new Reward("Flupin furioso", "+20 % de agresividad de Flupin: se acerca más rápido y reduce sus esperas.", EnemyCurse.FlupinFury));
+            }
+            if (roster.MaskChargerSelected)
+            {
+                enemyChoices.Add(new Reward("Máscaras sin respiro", "Las máscaras reducen un 20 % su aviso, intervalo y recuperación (aviso mínimo: 0,3 s).", EnemyCurse.MaskHaste));
+                enemyChoices.Add(new Reward("Máscaras furiosas", "+20 % de agresividad: embestidas más rápidas, mejor acecho y menos espera.", EnemyCurse.MaskFury));
+                enemyChoices.Add(new Reward("Acecho implacable", "+30 % de velocidad de seguimiento, alcance de ataque, giro y capacidad de alcanzar al jugador.", EnemyCurse.MaskStalking));
+            }
+            if (roster.DontseeSelected)
+                enemyChoices.Add(new Reward("Dontsee furioso", "+20 % de agresividad de Dontsee: acelera su acercamiento y agota antes el aviso.", EnemyCurse.DontseeFury));
+            if (roster.CanChooseDontsee)
+                enemyChoices.Add(new Reward(roster.DontseeSelected ? "Mirada frecuente" : "Invocar a Dontsee", roster.DontseeSelected ? "+15 puntos de probabilidad y una sala menos de espera." : "Dontsee podrá aparecer en las siguientes salas.", EnemyCurse.Dontsee));
+        }
+        return enemyChoices;
+    }
+    int lastAutomaticCurseTower;
+    void ApplyTowerCurse()
+    {
+        int tower = rooms.TowerNumber;
+        if (!TowerSafetyRules.ShouldApplyTowerCurse(tower, rooms.TotalTowers, lastAutomaticCurseTower) || rooms.Player == null) return;
+        var choices = EnemyChoices();
+        Reward reward = choices.Count > 0 ? choices[UnityEngine.Random.Range(0, choices.Count)] : curses[UnityEngine.Random.Range(0, curses.Length)];
+        if (reward.enemy != EnemyCurse.None)
+        {
+            if (!ApplyEnemyCurse(reward.enemy)) return;
+        }
+        else rooms.Player.Stats.AddModifier(new object(), reward.stat, reward.type, reward.amount);
+        lastAutomaticCurseTower = tower;
+        NotifyReward(reward.name, reward.description, ItemAcquisitionSource.Tower);
+    }
+    bool ApplyEnemyCurse(EnemyCurse curse)
+    {
+        var roster = GetComponent<RoomEnemyRoster>();
+        if (roster == null) return false;
+        object source = new object();
+        switch (curse)
+        {
+            case EnemyCurse.Flupin: return roster.ChooseFlupinCurse();
+            case EnemyCurse.MaskCharger: return roster.ChooseMaskCurse();
+            case EnemyCurse.Dontsee: return roster.ChooseDontseeCurse();
+            case EnemyCurse.FlupinHaste:
+                if (!roster.FlupinSelected) return false;
+                foreach (var stat in new[] { FlupinStat.InitialDelay, FlupinStat.TimeBetweenAttacks, FlupinStat.RecoveryDuration })
+                    roster.AddFlupinModifier(source, stat, StatModifierType.PercentMult, -0.2f);
+                return true;
+            case EnemyCurse.FlupinFury:
+                if (!roster.FlupinSelected) return false;
+                roster.AddFlupinModifier(source, FlupinStat.Aggressiveness, StatModifierType.Percent, 0.2f);
+                return true;
+            case EnemyCurse.MaskHaste:
+                if (!roster.MaskChargerSelected) return false;
+                foreach (var stat in new[] { MaskChargerStat.TelegraphDuration, MaskChargerStat.AttackInterval, MaskChargerStat.RecoveryDuration })
+                    roster.AddMaskChargerModifier(source, stat, StatModifierType.PercentMult, -0.2f);
+                return true;
+            case EnemyCurse.MaskFury:
+                if (!roster.MaskChargerSelected) return false;
+                roster.AddMaskChargerModifier(source, MaskChargerStat.Aggressiveness, StatModifierType.Percent, 0.2f);
+                return true;
+            case EnemyCurse.MaskStalking:
+                if (!roster.MaskChargerSelected) return false;
+                foreach (var stat in new[] { MaskChargerStat.FollowSpeed, MaskChargerStat.CatchUpBonus, MaskChargerStat.OrbitSpeed, MaskChargerStat.AttackRange })
+                    roster.AddMaskChargerModifier(source, stat, StatModifierType.Percent, 0.3f);
+                return true;
+            case EnemyCurse.DontseeFury:
+                if (!roster.DontseeSelected) return false;
+                roster.AddDontseeModifier(source, DontseeStat.Aggressiveness, StatModifierType.Percent, 0.2f);
+                return true;
+            default: return false;
+        }
+    }
+    void NotifyReward(string name, string description, ItemAcquisitionSource source)
+    {
+        var definition = catalog != null ? catalog.Find(name) : null;
+        ItemAcquisitionHud.Show(rooms.Player, name, description, definition != null && definition.Icon != null ? definition.Icon : commonSprite, source);
+    }
     void CreateStage(string name)
     {
         view = rooms.Player.GetComponentInChildren<Camera>();
@@ -134,6 +216,7 @@ public sealed class TowerRewardStation : MonoBehaviour
     void OnCompleted(TowerCompletedEvent e)
     {
         Clear();
+        ApplyTowerCurse();
         if (rooms.CurrentRoom == null || rooms.Player == null) return;
         if (rooms.IsFinalTower)
         {
@@ -285,20 +368,26 @@ public sealed class TowerRewardStation : MonoBehaviour
             {
                 if (focused.Enemy != EnemyCurse.None)
                 {
-                    var roster = GetComponent<RoomEnemyRoster>();
-                    bool applied = roster != null && (focused.Enemy == EnemyCurse.Flupin ? roster.ChooseFlupinCurse() :
-                        focused.Enemy == EnemyCurse.MaskCharger ? roster.ChooseMaskCurse() : roster.ChooseDontseeCurse());
+                    bool applied = ApplyEnemyCurse(focused.Enemy);
                     if (!applied) { Debug.LogWarning("No se pudo aplicar la maldición de enemigo seleccionada.", this); return; }
                 }
                 else rooms.Player.Stats.AddModifier(new object(), focused.Stat, focused.Type, focused.Amount);
+                NotifyReward(focused.RewardName, focused.Description, ItemAcquisitionSource.Curse);
                 rooms.SetStartingExitLocked(false);
                 Clear();
             }
             else if (!focused.Purchased && score != null && score.TrySpend(focused.Price))
             {
                 var source = new object();
-                rooms.Player.Stats.AddModifier(source, focused.Stat, focused.Type, focused.Amount);
+                if (focused.RewardName == "Gota de rocío" || focused.RewardName == "Musgo vital" || focused.RewardName == "Zapatillas de mecha")
+                {
+                    var effects = rooms.Player.GetComponent<RewardItemEffects>();
+                    if (effects == null) effects = rooms.Player.gameObject.AddComponent<RewardItemEffects>();
+                    effects.Acquire(focused.RewardName, rooms);
+                }
+                else rooms.Player.Stats.AddModifier(source, focused.Stat, focused.Type, focused.Amount);
                 focused.MarkPurchased();
+                NotifyReward(focused.RewardName, focused.Description, ItemAcquisitionSource.Shop);
                 purchases++;
             }
         }
@@ -340,13 +429,15 @@ public sealed class RewardPedestal : MonoBehaviour
     public float Amount { get; private set; }
     public StatModifierType Type { get; private set; }
     string title, description;
+    public string RewardName { get; private set; }
+    public string Description => description;
     GameObject panel;
     TextMesh label;
     Transform billboard;
     public void SetBillboard(Transform visual) { billboard = visual; }
     TowerRewardStation station;
     public void Initialize(TowerRewardStation owner, string name, string effect, PlayerStat stat, float amount, StatModifierType type, int tier, int price, bool curse = false, EnemyCurse enemy = EnemyCurse.None)
-    { Enemy = enemy; IsCurse = curse; Price = price; station = owner; title = name + (curse ? "  [MALDICIÓN]" : tier == 3 ? "  [LEGENDARIO]" : tier == 2 ? "  [RARO]" : "  [COMÚN]"); description = effect; Stat = stat; Amount = amount; Type = type; CreatePanel(); }
+    { RewardName = name; Enemy = enemy; IsCurse = curse; Price = price; station = owner; title = name + (curse ? "  [MALDICIÓN]" : tier == 3 ? "  [LEGENDARIO]" : tier == 2 ? "  [RARO]" : "  [COMÚN]"); description = effect; Stat = stat; Amount = amount; Type = type; CreatePanel(); }
     public void InitializeButton(TowerRewardStation owner) { station = owner; IsButton = true; title = "SIGUIENTE TORRE"; description = "Continúa el descenso."; CreatePanel(); }
     public void InitializeVictory(TowerRewardStation owner, int totalTowers) { station = owner; IsVictory = true; title = "VICTORIA"; description = $"Completaste {totalTowers} torres."; CreatePanel(); }
     public void InitializeReroll(TowerRewardStation owner) { station = owner; IsReroll = true; title = "RENOVAR TIENDA"; description = "Una vez gratis por torre."; CreatePanel(); }

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3466965346598307105}
   - component: {fileID: 8100000000000000001}
   - component: {fileID: 7910199924631505563}
-  m_Layer: 9
+  m_Layer: 8
   m_Name: PilaLibros1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -172,7 +172,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7400000000000000001}
   - component: {fileID: 7400000000000000002}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Punto superior - misma pila
   m_TagString: Untagged
   m_Icon: {fileID: 0}

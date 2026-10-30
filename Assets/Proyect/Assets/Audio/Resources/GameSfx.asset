@@ -13,3 +13,7 @@ MonoBehaviour:
   m_Name: GameSfx
   m_EditorClassIdentifier: 
   bank: {fileID: 11400000, guid: 826496c0b8694b5d8f0b975f70bb915f, type: 2}
+  jumpMinimumVolume: 0.2
+  jumpFullVolumeSpeed: 24
+  comboLowestPitch: 1
+  comboHighestPitch: 1.5

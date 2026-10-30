@@ -31,7 +31,7 @@ public sealed class ParryFeedback : MonoBehaviour
 
     void OnRepelled(EnemyRepelledEvent hit)
     {
-        // Multiple enemies in one G press should restart the same effect, not stack it.
+        // Multiple enemies in one right-click should restart the same effect, not stack it.
         if (!slowing)
         {
             if (Time.timeScale <= 0f) return;

@@ -6,6 +6,29 @@ using UnityEngine;
 public sealed class GameSfx : ScriptableObject
 {
     [SerializeField] AudioBank bank;
+    [Header("Respuesta del salto")]
+    [SerializeField, Range(0f, 1f)] float jumpMinimumVolume = 0.2f;
+    [SerializeField, Min(0.01f)] float jumpFullVolumeSpeed = 24f;
+    [Header("Tono del combo")]
+    [SerializeField, Range(0.5f, 2f)] float comboLowestPitch = 1f;
+    [SerializeField, Range(0.5f, 2f)] float comboHighestPitch = 1.5f;
+
+    public static void PlayJump(float speed)
+    {
+        var cue = Find("player.jump");
+        if (cue == null || settings == null) return;
+        float scale = Mathf.Lerp(settings.jumpMinimumVolume, 1f, Mathf.Clamp01(speed / Mathf.Max(0.01f, settings.jumpFullVolumeSpeed)));
+        AudioManager.Instance.PlayAdjusted(cue, scale, 1f);
+    }
+
+    public static void PlayCombo(int tier, int highestTier)
+    {
+        var cue = Find("combo.add");
+        if (cue == null || settings == null) return;
+        float pitch = Mathf.Lerp(settings.comboLowestPitch, settings.comboHighestPitch, Mathf.Clamp01((float)tier / Mathf.Max(1, highestTier)));
+        AudioManager.Instance.PlayAdjusted(cue, 1f, pitch);
+    }
+
     static GameSfx settings;
     static readonly Dictionary<string, float> lastPlayed = new Dictionary<string, float>();
 

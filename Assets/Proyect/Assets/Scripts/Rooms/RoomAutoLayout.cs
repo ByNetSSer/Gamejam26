@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RoomSize { Small, Large }
+// Preserve Large = 1 for prefabs already serialized with the previous enum.
+public enum RoomSize { Small = 0, Large = 1, Medium = 2 }
 
 // Runtime adapter for the modular acueducto prefabs; markers are derived from their geometry.
 public sealed class RoomAutoLayout : MonoBehaviour
@@ -38,12 +39,23 @@ public sealed class RoomAutoLayout : MonoBehaviour
         foreach (var t in GetComponentsInChildren<Transform>(true))
             if (t.name == "Trampilla" && t.childCount == 3) surfaces.Add(t);
         int hatches = (entry == RoomConnection.Hatch ? 1 : 0) + (exit == RoomConnection.Hatch ? 1 : 0);
-        if (surfaces.Count != hatches) { Debug.LogError($"{name}: se esperaban {hatches} superficies de trampilla y se encontraron {surfaces.Count}.", this); return false; }
+        // Newer rooms name the two hatch surfaces explicitly; reversed variants
+        // must use those names, not their height, to determine the route.
+        Transform namedEntry = null, namedExit = null;
+        if (surfaces.Count == 0 && entry == RoomConnection.Hatch && exit == RoomConnection.Hatch)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.name == "EntradaT" && child.childCount == 3) namedEntry = child;
+                if ((child.name == "SalidaT" || child.name == "SalidaT-P") && child.childCount == 3) namedExit = child;
+            }
+        }
+        if ((namedEntry == null || namedExit == null) && surfaces.Count != hatches) { Debug.LogError($"{name}: se esperaban {hatches} superficies de trampilla y se encontraron {surfaces.Count}.", this); return false; }
         surfaces.Sort((a, b) => b.position.y.CompareTo(a.position.y));
         var center = BoundsOf(floor).center;
         int gateIndex = 0, hatchIndex = 0;
-        Transform entryMarker = entry == RoomConnection.Door ? GateMarker(gates[gateIndex++], floor, center, true) : HatchMarker(surfaces[hatchIndex++], true);
-        Transform exitMarker = exit == RoomConnection.Door ? GateMarker(gates[gateIndex], floor, center, false) : HatchMarker(surfaces[hatchIndex], false);
+        Transform entryMarker = entry == RoomConnection.Door ? GateMarker(gates[gateIndex++], floor, center, true) : HatchMarker(namedEntry != null ? namedEntry : surfaces[hatchIndex++], true);
+        Transform exitMarker = exit == RoomConnection.Door ? GateMarker(gates[gateIndex], floor, center, false) : HatchMarker(namedExit != null ? namedExit : surfaces[hatchIndex], false);
         if (entryMarker == null || exitMarker == null) return false;
         room.ConfigureMarkers(entry, entryMarker, null, exit, exitMarker);
         return true;

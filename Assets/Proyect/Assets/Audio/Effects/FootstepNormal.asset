@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0650cfec989eeef418c1e1239567be00, type: 3}
   m_Name: FootstepNormal
   m_EditorClassIdentifier: 
-  clip: {fileID: 0}
+  clip: {fileID: 8300000, guid: 0aea90ab5ee57b74fb09c136aea56613, type: 3}
   channel: 1
   volume: 0.8
   loop: 0

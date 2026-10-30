@@ -14640,6 +14640,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5164848719327737191}
+  - component: {fileID: 9123456789000000002}
+  - component: {fileID: 9123456789000000003}
   m_Layer: 0
   m_Name: MedianoReversed
   m_TagString: Untagged
@@ -40579,3 +40581,41 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8133379443283636205, guid: ba1dcca2efc2bb74696b3574fd53bbe2, type: 3}
   m_PrefabInstance: {fileID: 7750395257407020325}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9123456789000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3382827136681420727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 894148be1d11fb0499377b16ff512a78, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RoomDefinition
+  entryType: 1
+  entryAnchor: {fileID: 0}
+  exitType: 1
+  exitMarker: {fileID: 0}
+  openingWidth: 3
+  openingHeightOrDepth: 3
+  exitClearance: 1.1
+  playerStart: {fileID: 0}
+  exit: {fileID: 0}
+--- !u!114 &9123456789000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3382827136681420727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 784ca05785c9470584716f1356d19671, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RoomAutoLayout
+  entry: 1
+  exit: 1
+  size: 2
+  wallSpawnPoint: {fileID: 0}
+  leverSpawnPoints: []

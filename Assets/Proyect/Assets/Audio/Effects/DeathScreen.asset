@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clip: {fileID: 8300000, guid: da01ba846165bff4ea18f20424553381, type: 3}
   channel: 1
-  volume: 0.8
-  loop: 0
+  volume: 0.6
+  loop: 1
   fadeDuration: 0.35
   minDistance: 2
   maxDistance: 30

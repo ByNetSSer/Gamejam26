@@ -10,14 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Sandalias temerarias"
+  m_Name: sandalias_temerarias
   m_EditorClassIdentifier: 
-  displayName: "Sandalias temerarias"
-  visualDescription: "Sandalias aladas con las correas casi rotas."
-  effectDescription: "+20 % de velocidad de salto y −15 % de frenado."
+  displayName: Sandalias temerarias
+  visualDescription: Sandalias aladas con las correas casi rotas.
+  effectDescription: "+20 % de velocidad de salto y \u221215 % de frenado."
   tier: 2
   category: 0
   disposition: 1
   requiredEnemy: 0
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 0}
+  legendaryModel: {fileID: 0}

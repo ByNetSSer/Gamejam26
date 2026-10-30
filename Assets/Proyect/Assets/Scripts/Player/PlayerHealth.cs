@@ -22,13 +22,17 @@ public sealed class PlayerHealth : MonoBehaviour
         fraction = Mathf.Clamp01(fraction);
         return fraction <= 0f || CurrentHealth <= 0f ? 0f : Mathf.Min(CurrentHealth, Mathf.Max(1f, CurrentHealth * fraction));
     }
+    public void Heal(float amount)
+    {
+        if (amount > 0f && CurrentHealth > 0f) CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+    }
     public bool TakeDamage(float amount, RunLossReason reason = RunLossReason.PlayerHealthDepleted)
     {
         if (amount <= 0f || CurrentHealth <= 0f) return false;
         float actual = Mathf.Min(CurrentHealth, amount);
         LastDamageReason = reason;
         CurrentHealth -= actual;
-        GetComponent<PlayerScore>()?.LoseCombo();
+        GetComponent<PlayerScore>()?.FinishComboOnDamage();
         GameSfx.Play("player.damage", 0.12f);
         try { events.NotifyDamage(actual); }
         finally { if (CurrentHealth <= 0f) Died?.Invoke(); }

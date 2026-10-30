@@ -31,7 +31,9 @@ public sealed class PlayerRepel : MonoBehaviour
     [SerializeField, Min(0f)] float repelPower = 1f;
     [Header("Golpe a destructibles")]
     [SerializeField, Min(0f)] float propHitRange = 3f;
-    [SerializeField, Min(0f)] float propHitDamage = 10f;
+    [SerializeField, Min(0f)] float propHitDamage = 20f;
+    [Tooltip("Daño adicional por unidad de velocidad hacia el objetivo.")]
+    [SerializeField, Min(0f)] float propDamagePerForwardSpeed = 0.6f;
     [SerializeField] LayerMask propHitLayers = ~0;
     EnemyDirector director;
     float nextUse;
@@ -71,7 +73,11 @@ public sealed class PlayerRepel : MonoBehaviour
         var ray = view.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (!Physics.Raycast(ray, out var hit, propHitRange, propHitLayers, QueryTriggerInteraction.Ignore)) return;
         var target = hit.collider.GetComponentInParent<ImpactTarget>();
-        if (target != null) target.ReceivePunch(director.Player, propHitDamage, ray.direction);
+        if (target != null)
+        {
+            float forwardSpeed = Mathf.Max(0f, Vector3.Dot(director.Player.Velocity, ray.direction));
+            target.ReceivePunch(director.Player, propHitDamage + forwardSpeed * propDamagePerForwardSpeed, ray.direction);
+        }
     }
     void LateUpdate() => RefreshAvailability();
     void RefreshAvailability()

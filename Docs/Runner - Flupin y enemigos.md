@@ -14,7 +14,7 @@ Flupin es el primer enemigo de prueba. Se mueve en coordenadas del mundo, sin pe
 1. **Preparación:** se mueve de forma curva mientras espera lejos a que el coordinador conceda el turno de ataque. La espera inicial se configura con `Initial Delay`.
 2. **Acercamiento:** avanza en una espiral que reduce la distancia al jugador. La aceleración suaviza los cambios de dirección y una pequeña oscilación vertical aporta movimiento; el propio acercamiento es el aviso. El HUD provisional sigue indicando la amenaza.
 3. **Impacto:** al llegar al jugador retira **un tercio de la vida actual en ese instante**. La detección comprueba también el segmento recorrido entre fotogramas.
-4. **Expulsión:** el jugador puede pulsar **G** para repelerlo dentro del radio, incluso si está detrás de la cámara. Conserva la velocidad tangencial y continúa girando mientras se aleja. Si Flupin golpea, también sale expulsado, con más velocidad y distancia que con la repulsión normal.
+4. **Expulsión:** el jugador puede usar **clic derecho** para repelerlo dentro del radio, incluso si está detrás de la cámara. Conserva la velocidad tangencial y continúa girando mientras se aleja. Si Flupin golpea, también sale expulsado, con más velocidad y distancia que con la repulsión normal.
 5. **Recuperación:** continúa girando lejos y, tras la pausa configurada, solicita otro turno y vuelve a acercarse en espiral. Un ataque cancelado vuelve a la recuperación.
 
 La repulsión tiene radio y cooldown configurables y usa la lista de enemigos activos, no una dirección de la cámara. Una repulsión exitosa otorga puntos por «Flupin repelido».
@@ -27,7 +27,7 @@ La repulsión tiene radio y cooldown configurables y usa la lista de enemigos ac
 - Crear de nuevo una escena con **Tools → Runner → Crear escena de prueba** o **Crear torre de prueba**. Ambas añaden un Flupin al jugador de demostración.
 - Para una escena existente: seleccionar el jugador o un hijo y elegir **Tools → Runner → Añadir Flupin al jugador seleccionado**. Esta acción añade un nuevo enemigo; no reemplaza los existentes.
 - Asignar el material y la textura deseados al `Renderer` de Flupin. No se cambia el material, el shader ni sus colores durante el ataque.
-- En `Flupin`, `Approach Start Distance` controla la distancia inicial, `Radial Approach Speed` la velocidad hacia el jugador, `Orbit Degrees Per Second` el giro y `Max Tangential Speed` limita la velocidad lateral. `Flight Acceleration` suaviza la trayectoria. `Time Between Attacks` y `Recovery Duration` regulan la pausa después de la expulsión. Ajustar también el radio y cooldown de G desde `PlayerRepel`.
+- En `Flupin`, `Approach Start Distance` controla la distancia inicial, `Radial Approach Speed` la velocidad hacia el jugador, `Orbit Degrees Per Second` el giro y `Max Tangential Speed` limita la velocidad lateral. `Flight Acceleration` suaviza la trayectoria. `Time Between Attacks` y `Recovery Duration` regulan la pausa después de la expulsión. Ajustar también el radio y cooldown del clic derecho desde `PlayerRepel`.
 - Los `MMF_Player` de FEEL para aviso, repulsión y daño son opcionales. El ejemplo usa cambios de escala; los efectos que el equipo añada a FEEL pueden alterar la apariencia según su configuración.
 
 ## Eventos para sonidos y alertas
@@ -38,7 +38,7 @@ La repulsión tiene radio y cooldown configurables y usa la lista de enemigos ac
 IDisposable disponibilidad = repel.Events.Subscribe<EnemyRepelAvailabilityChangedEvent>(e =>
 {
     // e.Enemy identifica a cuál de los enemigos corresponde.
-    // e.Available indica si ahora G puede repelerlo.
+    // e.Available indica si ahora el clic derecho puede repelerlo.
 });
 IDisposable golpe = repel.Events.Subscribe<EnemyRepelledEvent>(e =>
 {
@@ -47,7 +47,7 @@ IDisposable golpe = repel.Events.Subscribe<EnemyRepelledEvent>(e =>
 // Al desactivar el receptor: disponibilidad.Dispose(); golpe.Dispose();
 ```
 
-La disponibilidad cambia al entrar o salir del radio, al cambiar el estado del enemigo, el cooldown, la pausa o la activación del jugador. Se emite solo cuando cambia, no cada fotograma. El evento de golpe se publica una vez por cada enemigo que G logra repeler; puede haber varios en una misma acción. La disponibilidad usa el controlador de teclado actual, incluyendo la tecla G y su cooldown. El flujo es propio de `PlayerRepel`, no el `GameEventBus` del gestor de salas; quien necesite conectarlos puede suscribirse explícitamente.
+La disponibilidad cambia al entrar o salir del radio, al cambiar el estado del enemigo, el cooldown, la pausa o la activación del jugador. Se emite solo cuando cambia, no cada fotograma. El evento de golpe se publica una vez por cada enemigo que el clic derecho logra repeler; puede haber varios en una misma acción. La disponibilidad usa el mouse y el cooldown del clic derecho. El flujo es propio de `PlayerRepel`, no el `GameEventBus` del gestor de salas; quien necesite conectarlos puede suscribirse explícitamente.
 
 > [!todo] Pendiente de diseño y producción
 > Añadir y ajustar sonidos, alertas visuales y feedback de FEEL para estos eventos. Los eventos están preparados, pero todavía no se conectó ningún sonido o alerta nueva. Probar con varios enemigos y en escenas reales.
@@ -78,7 +78,7 @@ El enemigo sigue ocupando una posición 3D: si queda fuera del campo de visión,
 
 - `EnemyAgent` define registro, requisito del jugador, solicitud de ataque, cancelación y respuesta a repulsión.
 - `EnemyDirector`, en el jugador, registra enemigos y mantiene una cola FIFO. Concede un solo ataque activo, incluido el aviso; espera un tiempo de gracia al terminar; comprueba si el jugador debe estar en suelo o aire y cancela si deja de cumplirse la condición. Un tiempo máximo libera el turno si algo falla.
-- `PlayerRepel` aplica G en radio a los enemigos activos que respondan a la acción.
+- `PlayerRepel` aplica el clic derecho en radio a los enemigos activos que respondan a la acción.
 
 Para un futuro enemigo, heredar `EnemyAgent`, declarar `AttackRequirement` (`Any`, `PlayerGrounded` o `PlayerAirborne`), solicitar turno cuando esté listo, avisar/atacar al recibirlo y liberar el turno al terminar o cancelar. Si deja un proyectil o peligro dañino activo, conservar el turno hasta que termine o ampliar el contrato: liberarlo antes puede permitir solapamientos.
 
@@ -88,11 +88,11 @@ Para un futuro enemigo, heredar `EnemyAgent`, declarar `AttackRequirement` (`Any
 
 Compilación de runtime y editor sin errores. Siete verificaciones aisladas del coordinador; cuatro del contacto relativo, dos de la espiral, una de conservación de impulso y dos del cálculo de modificadores. Siete verificaciones aisladas cubren los eventos de repulsión, alcance, cooldown y varios enemigos. También se comprobó que las referencias y máscaras de las renderer features de PC y móvil sean coherentes.
 
-**Pendiente probar en Play Mode y en build:** apariencia real del shader y transparencia del material, visibilidad a través de paredes, dimensiones y trayectoria percibida, G, daño, expulsión, cambios de sala y varios enemigos. Los cálculos aislados no sustituyen esa prueba visual.
+**Pendiente probar en Play Mode y en build:** apariencia real del shader y transparencia del material, visibilidad a través de paredes, dimensiones y trayectoria percibida, clic derecho, daño, expulsión, cambios de sala y varios enemigos. Los cálculos aislados no sustituyen esa prueba visual.
 
 ## Feedback de parry
 
-Al repeler con G se reproduce el prefab Impact Frame frente a la cámara y se ralentiza brevemente el tiempo global, recuperándolo gradualmente con tiempo real. ParryFeedback se añade automáticamente al PlayerRepel existente; en torres nuevas aparece también en el inspector para ajustar intensidad y duración. La partícula usa tiempo no escalado. Magic Time proporciona escalas locales, pero el movimiento y los temporizadores actuales usan Time.deltaTime; por eso esta primera integración utiliza Time.timeScale. El efecto requiere ajuste visual y prueba en Play Mode, y todavía no incluye sonido de parry.
+Al repeler con clic derecho se reproduce el prefab Impact Frame frente a la cámara y se ralentiza brevemente el tiempo global, recuperándolo gradualmente con tiempo real. ParryFeedback se añade automáticamente al PlayerRepel existente; en torres nuevas aparece también en el inspector para ajustar intensidad y duración. La partícula usa tiempo no escalado. Magic Time proporciona escalas locales, pero el movimiento y los temporizadores actuales usan Time.deltaTime; por eso esta primera integración utiliza Time.timeScale. El efecto requiere ajuste visual y prueba en Play Mode, y todavía no incluye sonido de parry.
 
 
 Flupin se dibuja sobre la geometría opaca antes de los transparentes para que las partículas del impact frame puedan cubrirlo. Otros transparentes también pueden dibujarse encima; comprobar su interacción visual en Play Mode.
@@ -119,7 +119,7 @@ El cambio afecta la velocidad y el ritmo de las esperas en curso. El coordinador
 
 Dontsee aparece ocasionalmente en salas intermedias con un marcador `DontseeSpawnPoint`. `DontseeEncounter`, junto al `RoomManager`, selecciona como máximo un marcador al entrar: por defecto la probabilidad es 35 % y se dejan dos salas sin encuentros de Dontsee entre apariciones. No aparece en la inicial ni en la final. Al salir de la sala se destruye inmediatamente, incluso si espera su turno.
 
-Solicita el turno FIFO del `EnemyDirector`; permanece invisible e inofensivo hasta recibirlo. Una vez visible dispone de 1,5 s de aviso y conserva el turno hasta salir, golpear o cancelarse, sin el límite de seis segundos de Flupin. Mirar hacia su centro dentro de la cámara con línea de visión libre lo detiene; si está fuera de pantalla o una pared con collider lo oculta, avanza hacia el jugador. No responde a G. Como regla provisional, el contacto quita un 33 % de la vida actual y termina el encuentro. Velocidad, aviso, radio, daño y capas que bloquean la visión se pueden ajustar en el prefab. El plano usa el render normal y la profundidad del entorno, sin la capa ni la pasada de Flupin. El material debe respetar profundidad; asignar la ilustración y material definitivos en el prefab.
+Solicita el turno FIFO del `EnemyDirector`; permanece invisible e inofensivo hasta recibirlo. Una vez visible dispone de 1,5 s de aviso y conserva el turno hasta salir, golpear o cancelarse, sin el límite de seis segundos de Flupin. Mirar hacia su centro dentro de la cámara con línea de visión libre lo detiene; si está fuera de pantalla o una pared con collider lo oculta, avanza hacia el jugador. No responde al clic derecho. Como regla provisional, el contacto quita un 33 % de la vida actual y termina el encuentro. Velocidad, aviso, radio, daño y capas que bloquean la visión se pueden ajustar en el prefab. El plano usa el render normal y la profundidad del entorno, sin la capa ni la pasada de Flupin. El material debe respetar profundidad; asignar la ilustración y material definitivos en el prefab.
 
 Para probarlo, generar una torre con **Tools → Runner → Crear torre de prueba**. La herramienta crea el prefab provisional, marcadores en las salas intermedias y el componente de encuentros. En otras torres añadir `DontseeEncounter` al objeto del gestor, asignar el prefab y poner `DontseeSpawnPoint` en lugares visibles y accesibles de los prefabs de sala; el jugador necesita `EnemyDirector`. Los marcadores deben colocarse evitando paredes y puntos demasiado próximos al jugador. El movimiento es directo y no busca rutas ni evita geometría; las trampas todavía no participan en la coordinación de enemigos. La selección usa el azar de Unity y no la semilla de generación de salas.
 
@@ -167,7 +167,7 @@ Probar en Play Mode: esperar en la inicial, salir y medir el retraso, pasar vari
 
 ## Máscara que embiste (prototipo)
 
-`MaskCharger` ronda en espacio del mundo a una distancia preferida de 8 unidades, limitada por su alcance de ataque. Busca posiciones a los lados y delante de la dirección de desplazamiento del jugador; si está quieto usa su orientación. Si queda atrás o lejos, acelera para reposicionarse, y espera a estar delante antes de solicitar un ataque. Tras cada embestida cambia el lado preferido. `Orbit Degrees Per Second` y `Stalking Arc` ajustan el rodeo. No es hijo móvil del jugador. Al recibir turno fija la dirección hacia la posición actual del jugador y muestra una línea de aviso que marca el recorrido completo. La embestida mantiene esa dirección y atraviesa al jugador y el escenario. El recorrido termina como mínimo `Overshoot Distance` unidades después de la posición apuntada, o más lejos si la velocidad y duración configuradas producen mayor distancia. Al terminar libera el turno y entra en recuperación. El daño provisional es 33 % de vida actual, una vez por embestida, y no responde a G. El movimiento y sus distancias requieren ajuste en Play Mode.
+`MaskCharger` ronda en espacio del mundo a una distancia preferida de 8 unidades, limitada por su alcance de ataque. Busca posiciones a los lados y delante de la dirección de desplazamiento del jugador; si está quieto usa su orientación. Si queda atrás o lejos, acelera para reposicionarse, y espera a estar delante antes de solicitar un ataque. Tras cada embestida cambia el lado preferido. `Orbit Degrees Per Second` y `Stalking Arc` ajustan el rodeo. No es hijo móvil del jugador. Al recibir turno fija la dirección hacia la posición actual del jugador y muestra una línea de aviso que marca el recorrido completo. La embestida mantiene esa dirección y atraviesa al jugador y el escenario. El recorrido termina como mínimo `Overshoot Distance` unidades después de la posición apuntada, o más lejos si la velocidad y duración configuradas producen mayor distancia. Al terminar libera el turno y entra en recuperación. El daño provisional es 33 % de vida actual, una vez por embestida, y no responde al clic derecho. El movimiento y sus distancias requieren ajuste en Play Mode.
 
 Para preparar el modelo manualmente, añadir `MaskCharger` al objeto raíz de la máscara 3D, orientar su eje local +Z como frente y asignar ese componente en `Mask Charger` de `RoomEnemyRoster`; activar `Mask Charger Selected`. El roster la coloca detrás del jugador al comenzar el encuentro tras salir de la sala inicial y la desactiva al terminar la torre o la partida. La selección viene desactivada por defecto. El seguimiento y la embestida atraviesan geometría: no buscan rutas ni colisionan con paredes. Durante la activación se deshabilitan los colliders originales del modelo y se usa una esfera trigger para daño, activa solo durante la embestida; además se comprueba el barrido relativo para reducir pérdidas de contacto a alta velocidad. Los estados originales de colliders y rigidbodies se restauran al desactivar el componente. El barrido es una aproximación alrededor del centro del jugador, no una prueba exacta de cápsula.
 
@@ -193,10 +193,23 @@ Validación visual pendiente en Unity: puertas y trampillas, turno ocupado por o
 
 ### Skins de Flupin (2026-10-30)
 
-`FlupinVisual` permite configurar `Skins` en el Inspector: nombre, `Weight`, `Idle` obligatorio y `Attack` opcional. El prefab `Assets/Proyect/Assets/enemys/Flupin/Flupin.prefab` tiene Gato (Normal, peso 90), Carita sonriente (Variant1, peso 9) y Variant2 (peso 1). Con esos valores las probabilidades son 90 %, 9 % y 1 %. Se normalizan los pesos positivos de skins con Idle; peso cero excluye una variante. Si todos pesan cero, usa la primera skin válida como predeterminada. Sin skins válidas mantiene la apariencia existente.
+`FlupinVisual` permite configurar `Skins` en el Inspector: nombre, `Weight`, `Idle` obligatorio y `Attack` opcional. El prefab `Assets/Proyect/Assets/enemys/Flupin/Flupin.prefab` tiene Gato (Normal, peso 60), Carita sonriente (Variant1, peso 25) y Variant2 (peso 15). Con esos valores las probabilidades son 60 %, 25 % y 15 %. Se normalizan los pesos positivos de skins con Idle; peso cero excluye una variante. Si todos pesan cero, usa la primera skin válida como predeterminada. Sin skins válidas mantiene la apariencia existente.
 
 Se sortea una vez por instancia: desactivar/reactivar o cambiar de torre conserva su skin, y cada copia nueva sortea independientemente. `Approaching` usa Attack; Waiting, KnockedAway y Returning usan Idle. Si Attack está vacío, usa Idle también al atacar.
 
 El quad del prefab usa PNG individuales importados como Sprite (Single), sin empaquetar en Sprite Atlas. Los cambios se aplican mediante MaterialPropertyBlock por instancia a imagen y contorno, conservando los materiales, shaders, FEEL y FlupinOverlay. También se admite SpriteRenderer. Las carpetas organizan los assets; para añadir skins hay que asignar las referencias en la lista del Inspector.
 
 Compilación de runtime verificada incluyendo los scripts actuales. Referencias de las tres skins verificadas. Pendiente comprobación visual en Play Mode de ataque, repulsión, múltiples copias y contorno.
+
+
+### Presión de máscaras y nuevas maldiciones (2026-10-30)
+
+Las máscaras aparecen en el arco frontal a 8 m, con posiciones repartidas entre copias y fases distintas de acecho. Durante Following y Recovery heredan el desplazamiento real del jugador (incluido descenso), manteniendo su movimiento relativo para colocarse delante. La velocidad de reposicionamiento cubre el giro orbital y aumenta con la distancia al objetivo; `MaskChargerStat.OrbitSpeed` permite modificar ese giro. No heredan desplazamiento durante Telegraph, Charging ni Braking: conservan la trayectoria anunciada y esquivable.
+
+`Attack Cadence Multiplier` vale 0,5: un intervalo configurado de 4 s pasa a 2 s. Ese intervalo se cuenta desde que empieza Recovery y transcurre en paralelo con ella; ya no se suman recuperación e intervalo completos. Recovery también reposiciona la máscara. Se solicita turno en cuanto termina la espera, está delante y dentro del alcance. Se conserva la coordinación de un ataque activo por EnemyDirector y su gracia, de modo que los 2 s no garantizan un ataque si otro enemigo ocupa el turno.
+
+La agresividad aumenta seguimiento, giro, velocidad de embestida y ritmo de recuperación/intervalo; reduce el aviso, con mínimo de 0,3 s para preservar la señal. Se mantiene el daño únicamente durante embestida/frenada.
+
+Nuevas maldiciones de la selección inicial y de La torre (cada 2 torres): Flupin impaciente (-20 % a espera inicial, intervalo y recuperación), Flupin furioso (+20 % agresividad), Máscaras sin respiro (-20 % aviso, intervalo y recuperación), Máscaras furiosas (+20 % agresividad), Acecho implacable (+30 % seguimiento, alcance, giro y recuperación de distancia), Dontsee furioso (+20 % agresividad). Solo se ofrecen mejoras para enemigos seleccionados; invocaciones y copias siguen disponibles. Cada recompensa elige una maldición; puede mejorar varios parámetros del mismo enemigo.
+
+Los modificadores viven en RoomEnemyRoster y afectan instancias actuales y futuras. Las reducciones de tiempo se acumulan multiplicativamente (dos reducciones del 20 % dejan el 64 %); las mejoras porcentuales de agresividad/acecho son aditivas. Compilación runtime comprobada. Pendiente en Play Mode: persecución a alta velocidad, descenso, cambios bruscos de dirección, varias máscaras, combinación de maldiciones y legibilidad del aviso mínimo.

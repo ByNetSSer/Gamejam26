@@ -76,7 +76,7 @@ Validación adicional pendiente en Play Mode: primera torre completa sin reloj; 
 | Deathscrean | Aparición de la calavera, tras el oscurecimiento |
 | OnBrea | Ambiente 3D de la sala de brea, incluso saltando; permanece atrás al salir y se atenúa por distancia |
 
-`BreakComboFortakeDamage` (`combo.damage`) suena al perder un combo activo por daño aceptado. Se pierden sus puntos pendientes (también se descuentan del total), se reinician contador/multiplicador y no se entregan monedas; los puntos y monedas de combos anteriores se conservan. El HUD muestra la pérdida. Un combo ya vencido se liquida antes de procesar la pérdida. `Lightning Strike` (`lightning.strike`) queda disponible como efecto de trueno independiente mediante `AudioCuePlayer` o `GameAudioBank.Play`, sin asociarlo a ataques ni inventar una frecuencia ambiental. Música, clic UI, rotura de objetos y aterrizaje siguen sin clips asignados.
+`BreakComboFortakeDamage` (`combo.damage`) suena al perder un combo activo por daño aceptado. Se liquidan sus puntos en monedas con la conversión habitual, se conserva el total de puntos y se reinician contador/multiplicador. El HUD muestra el cierre por daño y las monedas recibidas. Un combo ya vencido se liquida antes de procesar la pérdida. `Lightning Strike` (`lightning.strike`) queda disponible como efecto de trueno independiente mediante `AudioCuePlayer` o `GameAudioBank.Play`, sin asociarlo a ataques ni inventar una frecuencia ambiental. Música, clic UI, rotura de objetos y aterrizaje siguen sin clips asignados.
 
 Validación: compilación de runtime con todos los scripts actuales mediante proyecto temporal, sin errores ni advertencias; comprobados IDs usados y GUID de clips. Pendiente escuchar y balancear en Play Mode, comprobar silenciamiento con master/efectos a cero, secuencia de máscara y muerte, reloj en salas seguras y reinicio. El daño ahora rompe y pierde el combo activo, según confirmación del usuario.
 
@@ -145,3 +145,25 @@ La secuencia vigente es MenuPlaylist en menú → SafeRoomsPlaylist en sala inic
 Al entrar en una sala segura se retiran las peticiones temporales de gameplay y se cambia la base en una sola operación, evitando iniciar fugazmente una canción de combate antes de la segura. El aviso de último minuto exige estar en sala intermedia y tener TimerRunning. SafeRoomsPlaylist está vacía porque faltan sus canciones: se atenúa la música saliente durante 4 s y queda silencio musical (SFX continúan). Añadir AudioCues Music en su lista Tracks activará la misma rotación sin repeticiones y fundidos cruzados. No se usa música de menú/gameplay como sustituto.
 
 Una lista base vacía ahora produce silencio sin suspender el director, permitiendo que al iniciar el nivel se reactive automáticamente la música correcta. StopMusic por derrota/victoria sí suspende la reproducción. Compilación runtime/MenuUIBase comprobada sin errores ni advertencias; pendiente validación audible de menú→inicio→intermedia→tienda→nuevo inicio, incluido salir del último minuto hacia tienda.
+
+### Corrección: daño liquida el combo, no lo pierde
+
+La aclaración del usuario sustituye las referencias anteriores a pérdida: PlayerHealth llama FinishComboOnDamage al aceptar daño. Se paga el combo activo mediante el mismo cálculo que al expirar, se conserva TotalPoints y se reinician contador, puntos activos y multiplicador. ComboPaid/CoinsChanged notifican el cobro una sola vez. LastComboEndReason distingue Damage de Expired para reproducir BreakComboFortakeDamage o BreakCombo, respectivamente; Coinsound también suena cuando hay monedas positivas. El HUD indica «Combo cerrado por daño» con el pago. Un combo ya vencido se liquida como expirado; golpear sin combo no paga otra vez.
+
+Validación: runtime compilado sin errores/advertencias y seis comprobaciones ejecutadas: pago con conservación de puntos, causa de daño, ausencia de doble pago, siguiente combo desde cero, vencimiento previo y redondeo para puntos inferiores a una moneda. Pendiente validación audible/visual en Unity.
+
+### Añadir música desde el inspector
+
+En Unity elegir `Tools > Runner > Música` y la lista deseada: Menú, Salas seguras, Gameplay tranquilo, Gameplay intenso o Último minuto. En el inspector de la lista, arrastrar un AudioClip al campo «Canción nueva» y pulsar «Añadir canción a esta lista». El editor busca un AudioCue de música existente o crea uno en `Audio/Music`, lo agrega y guarda el asset; evita añadir el mismo clip dos veces a la misma lista. Una canción puede pertenecer a varias listas. «Canciones (Audio Cues)» permite quitar o reordenar referencias y «Transición (segundos)» ajusta el fundido. Para cambiar umbrales, seleccionar `Audio/Resources/Music/GameplayMusicSettings`.
+
+Se detectaron MenuSong y Song1, Song2, Song3. MenuSong y Song1 conservan las asignaciones previas; Song2/Song3 no se asignaron automáticamente porque sus nombres no identifican la categoría. Compilación del nuevo inspector verificada incluyendo explícitamente el archivo nuevo en un proyecto temporal; pendiente probar la interacción en el editor Unity.
+
+### Asignación de música confirmada
+
+Song1 permanece en CalmPlaylist (fácil); Song2 y Song3 están en IntensePlaylist. SafeRoomsPlaylist sigue vacía hasta recibir la canción de sala segura. La música intensa se activa desde el umbral configurado, actualmente la tercera sala visitada, y alterna sin repetir cuando hay alternativas.
+
+### Pasos al caminar (revisión vigente)
+
+Footsteps.mp3 está asignado a FootstepNormal y se reproduce como bucle 2D con una fuente reutilizable de SFX. GroundSurfaceSensor lo activa solo si el controlador está habilitado, hay entrada de movimiento y desplazamiento horizontal real, está en suelo y no está corriendo, deslizándose ni pisoteando; se detiene al cesar estas condiciones, pausar, morir o cambiar escena. Agachado usa 55 % del volumen del cue, configurable en Crouch Footstep Volume; Min Footstep Speed evita sonar contra paredes. Master/SFX afectan el volumen. No se detectó una mecánica de dash independiente en el controlador actual; si se añade, debe incorporarse a estas condiciones.
+
+Las superficies seleccionan su cue FootstepIce/Tar/Lava, y si no tiene clip usan FootstepNormal hasta que lleguen sonidos propios. Esta implementación reemplaza la nota anterior que indicaba que no existía reproducción de pasos. Compilación runtime comprobada; falta escuchar en Play Mode el ritmo y unión del bucle, velocidades de caminata, agachado, pared, salto, deslizamiento, carrera, pausas y cambios de superficie.
