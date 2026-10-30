@@ -18,6 +18,7 @@ public sealed class ItemDefinition : ScriptableObject
     [SerializeField] ItemEnemyRequirement requiredEnemy;
     [SerializeField, TextArea(2, 4)] string designNotes;
     [SerializeField] Sprite icon;
+    [SerializeField] GameObject legendaryModel;
 
     public string DisplayName => displayName;
     public string VisualDescription => visualDescription;
@@ -28,4 +29,5 @@ public sealed class ItemDefinition : ScriptableObject
     public ItemEnemyRequirement RequiredEnemy => requiredEnemy;
     public string DesignNotes => designNotes;
     public Sprite Icon => icon;
+    public GameObject LegendaryModel => legendaryModel;
 }

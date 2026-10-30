@@ -68,7 +68,7 @@ public sealed class PlayerRepel : MonoBehaviour
         var ray = view.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (!Physics.Raycast(ray, out var hit, propHitRange, propHitLayers, QueryTriggerInteraction.Ignore)) return;
         var target = hit.collider.GetComponentInParent<ImpactTarget>();
-        if (target != null) target.ReceivePunch(director.Player, propHitDamage);
+        if (target != null) target.ReceivePunch(director.Player, propHitDamage, ray.direction);
     }
     void LateUpdate() => RefreshAvailability();
     void RefreshAvailability()

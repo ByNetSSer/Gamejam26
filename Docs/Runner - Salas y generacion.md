@@ -57,3 +57,22 @@ Por defecto el punto usa el centro superior de los límites de los colliders del
 `RoomSpawnPoint` admite `Prop Pool` y `Allowed Sizes`: si se asigna el catálogo, escoge de él según tamaño y peso; si no, conserva la lista `Options` anterior. `Chance` sigue afectada por la progresión de torre y `Pool Local Offset` permite ajustar la posición local. El objeto creado puede generar sus propios props apilados. Si no hay entradas válidas del tamaño elegido, el punto no crea nada.
 
 Cada uno de los 14 prefabs de sala incluye en `Marcadores de contenido` tres plantillas inactivas: `Pool pequeño`, `Pool mediano` y `Pool grande`, con el catálogo compartido asignado y un tamaño permitido. Están en el origen local y no aparecen durante la partida hasta moverlas a una ubicación adecuada y activarlas. Se pueden duplicar, cambiar los tamaños permitidos y la probabilidad, o añadir `RoomSpawnPoint` a nuevos vacíos y asignar el mismo catálogo. Los seis puntos anteriores mantienen sus opciones y siguen funcionando. Revisar espacio, orientación y colisiones antes de activar puntos; no hay validación automática de geometría.
+
+## Pools por lugar (configuración actual)
+
+Las pools activas están en `Assets/Proyect/Assets/Resources/PropPools`. Los puntos existentes de las 14 salas de Bajito utilizan `Pool_Suelo`, con libros, jaula, banca, ambos cofres y estante; los filtros de tamaño de las plantillas siguen funcionando. Mesas y cajas aún no estaban en `Resources/Props` y deben añadirse al catálogo de suelo cuando lleguen. Los seis puntos activos anteriores ahora usan este catálogo compartido, en lugar de sus antiguas listas por categoría.
+
+- `Pool_SobreMesa`: libros, candelabros y copa. Asignarla a un `PropStackPoint` en cada mesa nueva.
+- `Pool_SobreBancaYCofre`: libros y candelabros. Ya está asignada a banca y ambos cofres.
+- `Pool_PilaLibros` y `Pool_PilaLibros1`: cada una contiene solamente su propia pila, y cada prefab tiene su propio `PropStackPoint`.
+- `Pool_PilaCajas`: catálogo vacío reservado para cuando existan cajas. Para que solo se apile la misma caja, utilizar un catálogo separado por variante, con esa variante como única entrada, y asignarlo a su `PropStackPoint`.
+
+Al añadir un prefab, configurar su tamaño y peso en cada catálogo correspondiente, además de comprobar que tenga collider y `ImpactTarget` si debe romperse. En los nuevos soportes agregar un hijo vacío con `PropStackPoint`, asignar el catálogo y permitir los tamaños que de verdad quepan. Las posiciones automáticas basadas en límites de colliders y los tamaños de candelabros son provisionales; revisar visualmente y ajustar por prefab. El catálogo antiguo `PropStackPool` se conserva para no romper referencias externas, pero no define estas reglas específicas. Esta sección sustituye las descripciones anteriores de un único catálogo general para estos puntos.
+
+## Mesas y física tras un golpe
+
+Los prefabs `SM_Prop_Table_01`, `SM_Prop_Table_02` y `SM_Prop_Side_Table_01` se movieron desde `PolygonHorrorMansion/Prefabs/Props` a `Resources/Props` junto con sus `.meta`, conservando GUID y materiales. Están en `Pool_Suelo`; su punto superior usa `Pool_SobreMesa` y `ImpactTarget` registra `Mesa destrozada`. La mesa lateral tiene 20 de vida, rotura a 10 m/s y 3 puntos; las otras tienen 30, 12 m/s y 5 puntos. Valores provisionales.
+
+`PropImpactPhysics` se añadió a mesas, cofres, jaula y estante. Al sobrevivir a un golpe de parry o impacto de velocidad, crea un Rigidbody, aplica gravedad e impulso limitado; no se activa al destruirse en el golpe. Masa, impulso y límite se ajustan en el inspector. Libros y candelabros pequeños no lo usan. La banca no se ha activado: su collider habilitado es una malla no convexa y necesita un collider adecuado para un Rigidbody dinámico. El componente rechaza mallas no convexas activas en vez de alterarlas automáticamente.
+
+Los objetos apilados siguen siendo hijos y acompañan al soporte; al romperlo se desactivan con él. No hay derrumbe independiente. La física no causa daño adicional al golpear el escenario ni a otros props. Probar en Play Mode colliders importados, equilibrio de mesas, movimiento en pendientes, velocidad alta y empuje cerca del jugador; ajustar masas y fuerza. Si el objeto físico bloquea el avance o penetra en geometría, revisar sus colliders y el comportamiento del CharacterController.

@@ -29,6 +29,7 @@ public sealed class TowerRewardStation : MonoBehaviour
     IDisposable completed;
     GameObject stage;
     Camera view;
+    RewardCatalog catalog;
     int purchases;
     PlayerScore score;
     readonly HashSet<string> previousOffers = new HashSet<string>();
@@ -62,7 +63,7 @@ public sealed class TowerRewardStation : MonoBehaviour
         new Reward("Monóculo dorado", "+25 % de puntos.", PlayerStat.ScoreAmplification, 0.25f, StatModifierType.Percent),
         new Reward("Maldición de la torre", "+30 % al aumento de velocidad por sala.", PlayerStat.SpeedPerRoom, 0.3f, StatModifierType.Percent)
     };
-    void Awake() { rooms = GetComponent<RoomManager>(); }
+    void Awake() { rooms = GetComponent<RoomManager>(); catalog = Resources.Load<RewardCatalog>("RewardCatalog"); }
     void OnEnable() { if (rooms == null) rooms = GetComponent<RoomManager>(); completed = rooms.Events.Subscribe<TowerCompletedEvent>(OnCompleted); }
     void OnDisable() { completed?.Dispose(); completed = null; Clear(); }
     void OnCompleted(TowerCompletedEvent e)
@@ -97,7 +98,6 @@ public sealed class TowerRewardStation : MonoBehaviour
     }
     void AddPedestal(int index, Reward reward, int tier)
     {
-        bool isRare = tier > 1;
         var pedestal = Cube("Pilar " + (index + 1), stage.transform, new Vector3((index - 1) * 2.5f, 0.65f, 2.6f), new Vector3(0.9f, 1.3f, 0.9f), new Color(0.28f, 0.27f, 0.31f));
         var point = pedestal.AddComponent<RewardPedestal>();
         float discount = Mathf.Clamp(rooms.Player.Stats.Evaluate(PlayerStat.ShopDiscount, 0f), 0f, 0.2f);
@@ -105,26 +105,49 @@ public sealed class TowerRewardStation : MonoBehaviour
         int price = Mathf.Max(1, Mathf.CeilToInt(basePrice * (1f + purchases * Mathf.Max(0f, priceGrowthPerPurchase)) * (1f - discount)));
         point.Initialize(this, reward.name, reward.description, reward.stat, reward.amount, reward.type, tier, price);
         pedestals.Add(point);
-        if (isRare && rareModel != null)
+        ItemDefinition definition = catalog != null ? catalog.Find(reward.name) : null;
+        if (tier == 3)
         {
-            var model = Instantiate(rareModel, pedestal.transform);
-            model.transform.localPosition = new Vector3(0f, 0.75f, 0f);
-        }
-        else if (!isRare && commonSprite != null)
-        {
-            var icon = new GameObject("Ítem 2D"); icon.transform.SetParent(pedestal.transform, false);
-            icon.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            icon.AddComponent<SpriteRenderer>().sprite = commonSprite;
+            GameObject prefab = definition != null && definition.LegendaryModel != null ? definition.LegendaryModel : rareModel;
+            if (prefab != null)
+            {
+                var model = Instantiate(prefab, stage.transform);
+                model.transform.position = pedestal.transform.position + Vector3.up * 1.15f;
+                foreach (var collider in model.GetComponentsInChildren<Collider>()) collider.enabled = false;
+            }
+            else
+            {
+                var placeholder = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                placeholder.name = "Modelo legendario pendiente";
+                placeholder.transform.SetParent(stage.transform, false);
+                placeholder.transform.position = pedestal.transform.position + Vector3.up * 1.15f;
+                placeholder.transform.localScale = Vector3.one * 0.5f;
+                Destroy(placeholder.GetComponent<Collider>());
+                SetColor(placeholder.GetComponent<Renderer>(), new Color(1f, 0.7f, 0.2f));
+            }
         }
         else
         {
-            var visual = GameObject.CreatePrimitive(isRare ? PrimitiveType.Sphere : PrimitiveType.Quad);
-            visual.name = isRare ? "Ítem excepcional" : "Ítem común";
-            visual.transform.SetParent(pedestal.transform, false);
-            visual.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            visual.transform.localScale = new Vector3(0.5f, 0.35f, 0.5f);
-            var collider = visual.GetComponent<Collider>(); if (collider != null) Destroy(collider);
-            SetColor(visual.GetComponent<Renderer>(), isRare ? new Color(0.75f, 0.45f, 1f) : new Color(0.8f, 0.8f, 0.6f));
+            Sprite sprite = definition != null && definition.Icon != null ? definition.Icon : commonSprite;
+            var visual = new GameObject(sprite != null ? "Ítem 2D" : "Sprite pendiente");
+            visual.transform.SetParent(stage.transform, false);
+            visual.transform.position = pedestal.transform.position + Vector3.up * 1.15f;
+            if (sprite != null)
+            {
+                var renderer = visual.AddComponent<SpriteRenderer>();
+                renderer.sprite = sprite;
+                float size = Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y);
+                if (size > 0f) visual.transform.localScale = Vector3.one * (0.75f / size);
+            }
+            else
+            {
+                var placeholder = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                placeholder.transform.SetParent(visual.transform, false);
+                placeholder.transform.localScale = Vector3.one * 0.5f;
+                Destroy(placeholder.GetComponent<Collider>());
+                SetColor(placeholder.GetComponent<Renderer>(), new Color(0.8f, 0.8f, 0.6f));
+            }
+            point.SetBillboard(visual.transform);
         }
     }
     GameObject Cube(string name, Transform parent, Vector3 pos, Vector3 scale, Color color)
@@ -178,6 +201,8 @@ public sealed class RewardPedestal : MonoBehaviour
     string title, description;
     GameObject panel;
     TextMesh label;
+    Transform billboard;
+    public void SetBillboard(Transform visual) { billboard = visual; }
     TowerRewardStation station;
     public void Initialize(TowerRewardStation owner, string name, string effect, PlayerStat stat, float amount, StatModifierType type, int tier, int price)
     { Price = price; station = owner; title = name + (tier == 3 ? "  [LEGENDARIO]" : tier == 2 ? "  [RARO]" : "  [COMÚN]"); description = effect; Stat = stat; Amount = amount; Type = type; CreatePanel(); }
@@ -201,6 +226,11 @@ public sealed class RewardPedestal : MonoBehaviour
     }
     public void SetFocused(bool focused, Transform cameraTransform, long coins)
     {
+        if (billboard != null)
+        {
+            Vector3 direction = billboard.position - cameraTransform.position;
+            if (direction.sqrMagnitude > 0.0001f) billboard.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        }
         if (panel == null) return;
         panel.SetActive(focused);
         if (!focused) return;
