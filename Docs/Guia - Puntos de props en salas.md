@@ -15,3 +15,9 @@ Para añadir puntos propios:
 Un objeto grande con `PropStackPoint` puede generar otros encima mediante el mismo catálogo; su probabilidad y límite de profundidad se configuran en el prefab del objeto, no en el punto de sala. Las cajas de alambre no garantizan el espacio para esos objetos adicionales.
 
 Las salas nuevas en `Assets/PrefabsMapas/Medio` no tenían estas posiciones antes de importar el package: usa el ejemplo para colocarlas manualmente según su geometría. La aparición de armas de pared y su ataque siguen pendientes.
+
+## Gizmos de colocación actualizados
+
+Activar Gizmos en la vista Scene. Cada punto muestra el nombre de su pool, tamaños P/M/G y probabilidad base. El círculo es el origen efectivo de aparición, incluyendo `Pool Local Offset` o los offsets de la lista antigua; una línea lo conecta al vacío. La flecha azul marca +Z, la orientación que recibe el prefab (un modelo cuya malla mire hacia otro eje necesita ajuste). Seleccionar el punto muestra además +X rojo y +Y verde, opciones válidas y dimensiones de la caja orientativa. Cada offset de la lista antigua se dibuja como alternativa, no como otro objeto garantizado.
+
+Los puntos sin candidatos válidos se muestran en rojo; los desactivados en gris cuando Unity dibuja su gizmo seleccionado. Las cajas no calculan dimensiones reales, escala de los modelos, pilas, rutas ni solapamientos. Al seleccionar `RoomSpawnPoint`, el inspector explica los ejes y muestra la cantidad de puntos activos de la sala y el promedio base esperado de objetos directos. El promedio es la suma de probabilidades, no una garantía; no incluye apilado ni progresión por torre. Un punto crea como máximo un objeto directo; duplicar puntos aumenta el máximo.

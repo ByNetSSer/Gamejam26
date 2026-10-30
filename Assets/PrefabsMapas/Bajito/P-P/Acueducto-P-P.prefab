@@ -593,7 +593,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chance: 1
   propPool: {fileID: 11400000, guid: 29555c27f8494dd5980b61167ee1e15f, type: 2}
-  allowedSizes: 7
+  allowedSizes: -1
   poolLocalOffset: {x: 0, y: 0, z: 0}
   options: []
 --- !u!1 &7000000000000000016
@@ -642,7 +642,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chance: 0.55
   propPool: {fileID: 11400000, guid: 29555c27f8494dd5980b61167ee1e15f, type: 2}
-  allowedSizes: 7
+  allowedSizes: -1
   poolLocalOffset: {x: 0, y: 0, z: 0}
   options: []
 --- !u!1 &7000000000000000019
@@ -771,7 +771,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chance: 0.55
   propPool: {fileID: 11400000, guid: 29555c27f8494dd5980b61167ee1e15f, type: 2}
-  allowedSizes: 7
+  allowedSizes: -1
   poolLocalOffset: {x: 0, y: 0, z: 0}
   options: []
 --- !u!1 &7000000000000000027
@@ -820,7 +820,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chance: 0.55
   propPool: {fileID: 11400000, guid: 29555c27f8494dd5980b61167ee1e15f, type: 2}
-  allowedSizes: 7
+  allowedSizes: -1
   poolLocalOffset: {x: 0, y: 0, z: 0}
   options: []
 --- !u!1 &7000000000000000030
