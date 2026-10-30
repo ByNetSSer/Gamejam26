@@ -31,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 2, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7500000000000000003}
@@ -137,6 +137,10 @@ MonoBehaviour:
   hatch: 0
   scoreReason: Mesa destrozada
   scorePoints: 3
+  destructionFeedback: 1
+  paperFragments: 0
+  destructionParticles: {fileID: 0}
+  feedbackLifetime: 3
 --- !u!114 &7500000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -137,6 +137,10 @@ MonoBehaviour:
   hatch: 0
   scoreReason: Banca destrozada
   scorePoints: 5
+  destructionFeedback: 1
+  paperFragments: 0
+  destructionParticles: {fileID: 0}
+  feedbackLifetime: 3
 --- !u!64 &1534822741371692729
 MeshCollider:
   m_ObjectHideFlags: 0

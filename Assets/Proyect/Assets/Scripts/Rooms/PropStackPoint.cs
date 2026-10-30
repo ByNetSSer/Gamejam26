@@ -41,7 +41,11 @@ public sealed class PropStackPoint : MonoBehaviour
                 Vector3 offset = point.transform.parent.TransformVector(point.transform.localPosition);
                 position = new Vector3(baseBounds.center.x, baseBounds.max.y, baseBounds.center.z) + offset;
             }
-            var instance = Instantiate(prefab, position, point.transform.rotation, point.transform);
+            // Instantiate outside the scaled hierarchy first. Parenting directly in
+            // Instantiate multiplies the prefab's authored scale by the table/stack
+            // scale, deforming props and growing recursive stacks exponentially.
+            var instance = Instantiate(prefab, position, point.transform.rotation);
+            instance.transform.SetParent(point.transform, true);
             Physics.SyncTransforms();
             if (TryBounds(instance, out var childBounds)) instance.transform.position += Vector3.up * (position.y - childBounds.min.y);
             budget--;
