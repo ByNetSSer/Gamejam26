@@ -46,3 +46,10 @@ La cámara también permite modificar `CameraControl` (base 1), `CameraSensitivi
 Crear nuevamente la escena con **Tools → Runner → Crear escena de prueba**. En la sala principal hay zonas celeste, marrón y naranja para hielo, brea y lava; el HUD muestra la vida. Recoge los ítems de prueba y compara el control a distintas velocidades. Al pisotear la escotilla, la conexión de demostración suma una sala.
 
 La compilación pasó y se probaron los cálculos de modificadores por fuente de forma aislada. Faltan pruebas en Play Mode de triggers sobre el `CharacterController`, entrada y salida a gran velocidad, saltos y transición entre superficies. Las zonas por trigger no garantizan detectar un paso a cualquier velocidad; ajustar el tamaño y probar los límites físicos.
+
+
+## Choque extremo contra paredes (2026-10-30)
+
+Si la velocidad horizontal llega a 120 unidades/s, está al menos al 95 % del sprint máximo actual y al menos el 55 % apunta hacia una pared, el jugador rebota. Conserva 35 % de la velocidad tangencial y sale en la normal de la pared con 20 % de la velocidad de impacto, hasta 25 unidades/s. Durante 0,2 s mantiene el impulso sin aceleración de input; hay 0,35 s entre rebotes. Estos parámetros están en `PlayerController`. Los props que se rompen antes del movimiento no causan el choque; los obstáculos que sobreviven sí pueden causarlo. No añade daño de vida ni un modo de locura. El evento `WallCrashed` permite conectar presentación.
+
+120 unidades/s es un umbral extremo, muy por encima del inicio (sprint base 6,9 u/s), y puede no alcanzarse en una partida normal. Pendiente probar en Unity colisiones frontales y oblicuas, esquinas, objetos rompibles, deslizamiento, pausas y velocidades extremas; los subpasos tienen un límite de distancia por fotograma.

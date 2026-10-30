@@ -40,6 +40,17 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField, Min(0.01f)] float speedForFullFov = 30f;
     [SerializeField, Min(0.01f)] float movementFeedbackTime = 0.25f;
 
+    [Header("Choque a velocidad extrema")]
+    [SerializeField, Min(0f)] float wallCrashMinimumSpeed = 120f;
+    [SerializeField, Range(0f, 1f)] float wallCrashMinimumSpeedFraction = 0.95f;
+    [Tooltip("Fracción de la velocidad que debe dirigirse hacia la pared.")]
+    [SerializeField, Range(0f, 1f)] float wallCrashMinimumHeadOn = 0.55f;
+    [SerializeField, Range(0f, 1f)] float wallCrashReboundFraction = 0.2f;
+    [SerializeField, Min(0f)] float wallCrashMaximumRebound = 25f;
+    [SerializeField, Range(0f, 1f)] float wallCrashTangentialRetention = 0.35f;
+    [SerializeField, Min(0f)] float wallCrashRecoveryTime = 0.2f;
+    [SerializeField, Min(0f)] float wallCrashCooldown = 0.35f;
+
     [Header("Seguridad de colisiones")]
     [SerializeField, Min(0.01f)] float maxStepDistance = 0.2f;
     [SerializeField, Range(1, 256)] int maxStepsPerFrame = 128;
@@ -50,6 +61,7 @@ public sealed class PlayerController : MonoBehaviour
     bool grounded, pounding;
     bool crouching, sliding;
     float slideBoostRemaining;
+    float wallCrashRecoveryRemaining, nextWallCrashTime;
     float standingHeight;
     Vector3 standingCenter, cameraStandingPosition;
     Transform playerCamera;
@@ -70,6 +82,9 @@ public sealed class PlayerController : MonoBehaviour
         if (firstTowerSpeed <= 0f) firstTowerSpeed = speed;
         DestructibleTowerScale = Mathf.Max(1f, speed / firstTowerSpeed);
     }
+    // Sprint is the reference maximum; slides and external impulses can exceed it.
+    public float MaximumRunSpeed => Mathf.Max(0f, TargetSpeed * sprintSpeedMultiplier);
+    public float MaximumRunSpeedFraction => MaximumRunSpeed > 0.001f ? Mathf.Clamp01(HorizontalSpeed / MaximumRunSpeed) : 0f;
     public float TargetSpeed => stats.Evaluate(PlayerStat.MoveSpeed, baseSpeed + stats.Evaluate(PlayerStat.SpeedPerRoom, speedPerRoom) * roomsCleared);
     // Conservative starting point for encounter timing; actual travel depends on input and surfaces.
     public float GroundAcceleration => Mathf.Min(stats.Evaluate(PlayerStat.Acceleration, acceleration), stats.Evaluate(PlayerStat.TurnAcceleration, turnAcceleration));
@@ -83,6 +98,7 @@ public sealed class PlayerController : MonoBehaviour
     public bool HasMovementInput { get; private set; }
     public event Action<int> RoomCleared;
     public event Action<float, bool> Landed;
+    public event Action<float, Vector3> WallCrashed;
 
     void Awake()
     {
@@ -109,6 +125,7 @@ public sealed class PlayerController : MonoBehaviour
         velocity = Vector3.zero;
         grounded = pounding = sliding = false;
         slideBoostRemaining = 0f;
+        wallCrashRecoveryRemaining = 0f; nextWallCrashTime = 0f;
         coyoteRemaining = jumpBuffered = 0f;
     }
 
@@ -209,7 +226,21 @@ public sealed class PlayerController : MonoBehaviour
             rate = slideBoostRemaining > 0f ? 0f : slideBraking;
             slideBoostRemaining = Mathf.Max(0f, slideBoostRemaining - dt);
         }
-        Vector3 horizontalVelocity = Vector3.MoveTowards(currentHorizontal, desired, rate * dt);
+        bool recoveringFromCrash = wallCrashRecoveryRemaining > 0f;
+        wallCrashRecoveryRemaining = Mathf.Max(0f, wallCrashRecoveryRemaining - dt);
+        Vector3 horizontalVelocity = recoveringFromCrash ? currentHorizontal : Vector3.MoveTowards(currentHorizontal, desired, rate * dt);
+        // Ground control changes only the sideways correction towards the intended
+        // direction. Forward acceleration, braking and sliding remain independent.
+        if (!recoveringFromCrash && wasGrounded && !sliding && desired.sqrMagnitude > 0.0001f)
+        {
+            Vector3 direction = desired.normalized;
+            Vector3 previousSideways = currentHorizontal - Vector3.Project(currentHorizontal, direction);
+            Vector3 nextSideways = horizontalVelocity - Vector3.Project(horizontalVelocity, direction);
+            float correction = (previousSideways - nextSideways).magnitude;
+            float control = stats.Evaluate(PlayerStat.GroundControl, 1f);
+            Vector3 adjustedSideways = Vector3.MoveTowards(previousSideways, Vector3.zero, correction * control);
+            horizontalVelocity += adjustedSideways - nextSideways;
+        }
         velocity.x = horizontalVelocity.x;
         velocity.z = horizontalVelocity.z;
 
@@ -321,8 +352,31 @@ public sealed class PlayerController : MonoBehaviour
         }
         if (Mathf.Abs(hit.normal.y) < 0.5f)
         {
-            float intoWall = Vector3.Dot(velocity, hit.normal);
-            if (intoWall < 0f) velocity -= hit.normal * intoWall;
+            Vector3 wallNormal = new Vector3(hit.normal.x, 0f, hit.normal.z).normalized;
+            Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
+            float speed = horizontal.magnitude;
+            float intoWall = Vector3.Dot(horizontal, wallNormal);
+            if (intoWall >= 0f) return;
+            bool extreme = Time.time >= nextWallCrashTime && speed >= wallCrashMinimumSpeed &&
+                speed >= MaximumRunSpeed * wallCrashMinimumSpeedFraction &&
+                -intoWall >= speed * wallCrashMinimumHeadOn;
+            if (extreme)
+            {
+                Vector3 tangent = horizontal - wallNormal * intoWall;
+                float rebound = Mathf.Min(wallCrashMaximumRebound, -intoWall * wallCrashReboundFraction);
+                Vector3 result = tangent * wallCrashTangentialRetention + wallNormal * rebound;
+                velocity.x = result.x; velocity.z = result.z;
+                sliding = false; slideBoostRemaining = 0f;
+                wallCrashRecoveryRemaining = Mathf.Max(0f, wallCrashRecoveryTime);
+                nextWallCrashTime = Time.time + Mathf.Max(0f, wallCrashCooldown);
+                landingOffset = -0.09f;
+                WallCrashed?.Invoke(speed, hit.normal);
+            }
+            else
+            {
+                velocity.x -= wallNormal.x * intoWall;
+                velocity.z -= wallNormal.z * intoWall;
+            }
         }
     }
 }

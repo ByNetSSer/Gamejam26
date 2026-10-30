@@ -201,3 +201,20 @@ Las vidas existentes distinguen objetos ligeros (taza 6, libros/candelabro peque
 ## Sensación de movimiento (2026-10-30)
 
 La cápsula cambia inmediatamente; la cámara interpola la bajada y subida durante 0,12 s. El balanceo vertical depende de la velocidad y se activa en suelo sin deslizamiento; el aterrizaje añade una bajada corta. El FOV aumenta hasta 6 grados a 30 u/s y vuelve suavemente al frenar. Los valores están en PlayerController y pueden reducirse a cero. El feedback usa tiempo escalado y se limpia al desactivar el controlador. Pendiente validar comodidad, techos bajos, salto, deslizamiento y velocidades altas en Play Mode. El parry y el hachazo usan clic derecho.
+
+
+## Props y señal de velocidad máxima (2026-10-30)
+
+`PlayerSpeedFeedback` añade Chromatic Aberration a su volumen global temporal (prioridad 100), sin editar el perfil guardado: intensidad 0–1 según velocidad horizontal / velocidad objetivo de sprint actual, con suavizado de 0,12 s. La relación se limita a 1 incluso si un deslizamiento supera la velocidad objetivo. El volumen de daño de prioridad 200 puede modificar temporalmente el resultado. El HUD de depuración muestra la velocidad y el porcentaje de esa misma referencia.
+
+`ImpactTarget` multiplica el daño por 1 a 85 % de la velocidad máxima y aumenta linealmente hasta 2,5 al 100 %, tanto en colisiones como en hachazo; la predicción de rotura usa el mismo cálculo. No afecta a trampillas. Cuando un prop sobrevive a un golpe, FEEL 5.5 anima brevemente hacia un color rojizo y devuelve el color de los materiales que exponen _BaseColor o _Color; el impacto conserva sus partículas e impulso existentes. Los materiales se instancian solo al necesitar el feedback y se destruyen con el prop. Los parámetros de umbral, multiplicador, color y duración son configurables en ImpactTarget. Pendiente validar visualmente en Play Mode los shaders de cada prop, los golpes repetidos, la composición con daño/parry, y balancear el valor máximo de aberración.
+
+
+## Balance y fragmentos de props (2026-10-30)
+
+Los prefabs de props proporcionales del pool tienen 20 % menos vida y 15 % menos velocidad de rotura que antes. Ambas cifras importan: la vida reducida facilita el hachazo y la velocidad reducida facilita la colisión, cuyo daño se calcula como fracción de vida máxima. Conservan el escalado por torre. `ImpactTarget` admite un prefab opcional de fragmentos físicos, limitado a 12 hijos y cuatro segundos por defecto; ver el brief de arte para prepararlo. Pendiente validar en Play Mode.
+
+
+## Bonus de velocidad y ojo de pez (2026-10-30)
+
+El bonus contra props comienza al 50 % de la velocidad horizontal de sprint máximo y sube linealmente de 1× a 2,5× al 100 %. Afecta al hachazo y a los impactos, incluida la predicción de rotura. El ojo de pez usa el mismo porcentaje en el volumen global temporal de velocidad: respuesta cuadrática desde 0 hasta Lens Distortion −0,12 al 100 %, suavizado de 0,3 s. La aberración cromática conserva su escala 0–1. La distorsión anterior por velocidades absolutas queda sustituida por este cálculo relativo. El efecto se limita al 100 % si un impulso supera el sprint objetivo y usa velocidad horizontal. Los valores requieren validación visual y de balance en Play Mode.

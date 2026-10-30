@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3466965346598307105}
   - component: {fileID: 8100000000000000001}
   - component: {fileID: 7910199924631505563}
-  m_Layer: 8
+  m_Layer: 9
   m_Name: PilaLibros1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,19 +128,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e671a5852b60fa4c96675127b999d42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 12
-  breakSpeed: 8
+  health: 9.6
+  breakSpeed: 6.8
   damagePerSpeed: 0.5
   proportionalSpeedDamage: 1
   poundBonusDamage: 3
   impactCooldown: 0.25
   hatch: 0
+  speedBonusStart: 0.85
+  maximumSpeedDamageMultiplier: 2.5
+  damageFeel: 1
+  damageFeelDuration: 0.2
+  damageFeelColor: {r: 1, g: 0.25, b: 0.12, a: 1}
   scoreReason: Pila de libros dispersada
   scorePoints: 2
   destructionFeedback: 1
   paperFragments: 1
   destructionParticles: {fileID: 0}
   feedbackLifetime: 3
+  brokenFragmentsPrefab: {fileID: 0}
+  maxPhysicalFragments: 12
+  fragmentLifetime: 4
+  fragmentImpulse: 2
+  fragmentUpwardImpulse: 1
 --- !u!65 &7910199924631505563
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -172,7 +182,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7400000000000000001}
   - component: {fileID: 7400000000000000002}
-  m_Layer: 8
+  m_Layer: 9
   m_Name: Punto superior - misma pila
   m_TagString: Untagged
   m_Icon: {fileID: 0}

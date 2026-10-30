@@ -127,3 +127,12 @@ El generador alinea marcadores, pero no garantiza que las salas no se solapen ni
 ## 7. Prueba existente
 
 En Unity, **Tools → Runner → Crear torre de prueba** genera una escena temporal con salas de bloque y conexiones. También crea una carpeta nueva de prefabs de ejemplo; las carpetas antiguas no se sobrescriben. Las salas finales del equipo reemplazarán progresivamente estas piezas en los pools correspondientes. La herramienta de conexión existe, pero aún se requiere una prueba completa en Play Mode con los modelos nuevos.
+
+
+## Prueba de props fragmentados (2026-10-30)
+
+Preparar primero una caja o un cofre de prueba en Blender. Entregar el modelo intacto y una versión rota que conserve la misma escala, orientación y pivote, con entre 6 y 12 trozos visibles como objetos separados. Mantener materiales compatibles y texturas existentes; preferir fragmentos grandes y legibles frente a muchos pequeños. Los interiores pueden ser sencillos y coherentes con madera o el material del objeto.
+
+En Unity, crear un prefab de rotura con un objeto raíz vacío y cada trozo como hijo directo, en las posiciones que reconstruyen el objeto intacto. Dejar la raíz con escala local 1 y no poner Rigidbody ni Collider en ella; evitar Rigidbody en descendientes. Opcionalmente, añadir a cada hijo un collider sencillo o MeshCollider convexo. Asignar el prefab en `ImpactTarget > Broken Fragments Prefab` del objeto intacto. El sistema crea rigidbodies, usa colliders de caja si faltan o hay mallas no convexas, aplica impulso según el golpe, ignora la colisión con el jugador y elimina los fragmentos tras cuatro segundos. Máximo 12 por defecto; los sobrantes se ocultan. Las partículas existentes siguen activas.
+
+Es un flujo provisional: comprobar en Play Mode coincidencia de pivote, escala y materiales, objetos apilados, navegación, rendimiento y estabilidad de física antes de fragmentar todo el catálogo. No hay prefabs fragmentados asignados todavía.

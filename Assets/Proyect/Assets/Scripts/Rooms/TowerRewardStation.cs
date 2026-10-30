@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum EnemyCurse { None, Flupin, Dontsee, MaskCharger, FlupinHaste, FlupinFury, MaskHaste, MaskFury, MaskStalking, DontseeFury }
+public enum EnemyCurse { None, Flupin, Dontsee, MaskCharger, FlupinHaste, FlupinFury, MaskHaste, MaskFury, MaskStalking, DontseeFury, CorridorChaser, CorridorChaserSpeed, CorridorChaserHaste }
 
 // Temporary reward room; effects are explicit until catalog items have runtime implementations.
 [RequireComponent(typeof(RoomManager))]
@@ -47,7 +47,7 @@ public sealed class TowerRewardStation : MonoBehaviour
         new Reward("Gota de rocío", "Recupera 1 % de vida máxima cada 10 segundos.", PlayerStat.MoveSpeed, 0f, StatModifierType.Flat),
         new Reward("Zapatillas de mecha", "+35 % de velocidad al entrar durante 3,5 s; sin combo ni puntos, fatiga de 2,5 s.", PlayerStat.MoveSpeed, 0f, StatModifierType.Flat),
         new Reward("Cordones del paje", "+3 % de velocidad de movimiento.", PlayerStat.MoveSpeed, 0.03f, StatModifierType.Percent),
-        new Reward("Suelas gastadas", "+5 % de frenado.", PlayerStat.Braking, 0.05f, StatModifierType.Percent),
+        new Reward("Suelas gastadas", "+5 % de control lateral en suelo.", PlayerStat.GroundControl, 0.05f, StatModifierType.Percent),
         new Reward("Reloj atrasado", "+5 % de duración del combo.", PlayerStat.ComboDuration, 0.05f, StatModifierType.Percent),
         new Reward("Moneda de la suerte", "+3 % de puntos.", PlayerStat.ScoreAmplification, 0.03f, StatModifierType.Percent),
         new Reward("Cupón del mercader", "+5 % de descuento (máximo 20 %).", PlayerStat.ShopDiscount, 0.05f, StatModifierType.Flat),
@@ -62,21 +62,21 @@ public sealed class TowerRewardStation : MonoBehaviour
         new Reward("Anillo de maniobra", "+15 % de aceleración de giro.", PlayerStat.TurnAcceleration, 0.15f, StatModifierType.Percent),
         new Reward("Pluma del acróbata", "+15 % de control aéreo.", PlayerStat.AirControl, 0.15f, StatModifierType.Percent),
         new Reward("Reloj del bufón", "+20 % de duración del combo.", PlayerStat.ComboDuration, 0.2f, StatModifierType.Percent),
-        new Reward("Suelas del guardia", "+15 % de frenado.", PlayerStat.Braking, 0.15f, StatModifierType.Percent),
+        new Reward("Suelas del guardia", "+15 % de control lateral en suelo.", PlayerStat.GroundControl, 0.15f, StatModifierType.Percent),
         new Reward("Resorte encantado", "+15 % de velocidad de salto.", PlayerStat.JumpSpeed, 0.15f, StatModifierType.Percent),
         new Reward("Monóculo de la fortuna", "+15 % de puntos.", PlayerStat.ScoreAmplification, 0.15f, StatModifierType.Percent)
     };
     static readonly Reward[] legendary = {
         new Reward("Botas del vendaval", "+25 % de velocidad de movimiento.", PlayerStat.MoveSpeed, 0.25f, StatModifierType.Percent),
         new Reward("Alas del halcón", "+25 % de control aéreo.", PlayerStat.AirControl, 0.25f, StatModifierType.Percent),
-        new Reward("Ancla del explorador", "+30 % de frenado.", PlayerStat.Braking, 0.3f, StatModifierType.Percent),
+        new Reward("Ancla del explorador", "+30 % de control lateral en suelo.", PlayerStat.GroundControl, 0.3f, StatModifierType.Percent),
         new Reward("Corona del espectáculo", "+25 % de crecimiento del multiplicador de combo.", PlayerStat.ComboMultiplierGrowth, 0.25f, StatModifierType.Percent),
         new Reward("Monóculo dorado", "+25 % de puntos.", PlayerStat.ScoreAmplification, 0.25f, StatModifierType.Percent),
         new Reward("Maldición de la torre", "+30 % al aumento de velocidad por sala.", PlayerStat.SpeedPerRoom, 0.3f, StatModifierType.Percent)
     };
     // Provisional drawbacks until the curse catalog has executable effects.
     static readonly Reward[] curses = {
-        new Reward("Paso inestable", "-15 % de frenado.", PlayerStat.Braking, -0.15f, StatModifierType.Percent),
+        new Reward("Paso inestable", "-15 % de control lateral en suelo.", PlayerStat.GroundControl, -0.15f, StatModifierType.Percent),
         new Reward("Carga pesada", "-15 % de aceleración.", PlayerStat.Acceleration, -0.15f, StatModifierType.Percent),
         new Reward("Mirada inquieta", "-15 % de control de cámara.", PlayerStat.CameraControl, -0.15f, StatModifierType.Percent),
         new Reward("Salto encadenado", "-10 % de fuerza de salto.", PlayerStat.JumpSpeed, -0.1f, StatModifierType.Percent)
@@ -102,7 +102,11 @@ public sealed class TowerRewardStation : MonoBehaviour
         var offered = new List<Reward>();
         if (enemyChoices.Count > 0)
         {
-            int pick = UnityEngine.Random.Range(0, enemyChoices.Count);
+            // Keep the new enemy discoverable: offer its unlock until chosen.
+            // After that, all enemy upgrades return to the normal random pool.
+            int pick = enemyChoices.FindIndex(reward => reward.enemy == EnemyCurse.CorridorChaser &&
+                !GetComponent<RoomEnemyRoster>().CorridorChaserSelected);
+            if (pick < 0) pick = UnityEngine.Random.Range(0, enemyChoices.Count);
             offered.Add(enemyChoices[pick]);
             enemyChoices.RemoveAt(pick);
         }
@@ -122,6 +126,13 @@ public sealed class TowerRewardStation : MonoBehaviour
         var roster = GetComponent<RoomEnemyRoster>();
         if (roster != null)
         {
+            if (roster.CanChooseCorridorChaser)
+                enemyChoices.Add(new Reward(roster.CorridorChaserSelected ? "Rastro persistente" : "Invocar al perseguidor", roster.CorridorChaserSelected ? "El perseguidor aparece con más frecuencia." : "Un perseguidor veloz recorrerá los puntos de las salas; apártate hacia las paredes.", EnemyCurse.CorridorChaser));
+            if (roster.CorridorChaserSelected)
+            {
+                enemyChoices.Add(new Reward("Perseguidor furioso", "El perseguidor recorre su ruta un 20 % más rápido.", EnemyCurse.CorridorChaserSpeed));
+                enemyChoices.Add(new Reward("Perseguidor impaciente", "El aviso por esperar en la sala dura un 20 % menos.", EnemyCurse.CorridorChaserHaste));
+            }
             if (roster.CanChooseFlupin)
                 enemyChoices.Add(new Reward(roster.FlupinSelected ? "Enjambre de Flupin" : "Invocar a Flupin", roster.FlupinSelected ? "Aparece un Flupin adicional en cada torre." : "Flupin aparecerá en las siguientes salas.", EnemyCurse.Flupin));
             if (roster.CanChooseMaskCharger)
@@ -169,6 +180,13 @@ public sealed class TowerRewardStation : MonoBehaviour
             case EnemyCurse.Flupin: return roster.ChooseFlupinCurse();
             case EnemyCurse.MaskCharger: return roster.ChooseMaskCurse();
             case EnemyCurse.Dontsee: return roster.ChooseDontseeCurse();
+            case EnemyCurse.CorridorChaser: return roster.ChooseCorridorChaserCurse();
+            case EnemyCurse.CorridorChaserSpeed:
+                if (!roster.CorridorChaserSelected) return false;
+                GetComponent<CorridorChaserEncounter>().IncreaseSpeed(); return true;
+            case EnemyCurse.CorridorChaserHaste:
+                if (!roster.CorridorChaserSelected) return false;
+                GetComponent<CorridorChaserEncounter>().IncreaseImpatience(); return true;
             case EnemyCurse.FlupinHaste:
                 if (!roster.FlupinSelected) return false;
                 foreach (var stat in new[] { FlupinStat.InitialDelay, FlupinStat.TimeBetweenAttacks, FlupinStat.RecoveryDuration })

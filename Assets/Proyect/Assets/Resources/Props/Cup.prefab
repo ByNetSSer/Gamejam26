@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5112514193591877732}
   - component: {fileID: 965075175955199955}
   - component: {fileID: 8100000000000000001}
-  m_Layer: 8
+  m_Layer: 9
   m_Name: Cup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -126,16 +126,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e671a5852b60fa4c96675127b999d42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 6
-  breakSpeed: 5
+  health: 4.8
+  breakSpeed: 4.25
   damagePerSpeed: 0.5
   proportionalSpeedDamage: 1
   poundBonusDamage: 3
   impactCooldown: 0.25
   hatch: 0
+  speedBonusStart: 0.85
+  maximumSpeedDamageMultiplier: 2.5
+  damageFeel: 1
+  damageFeelDuration: 0.2
+  damageFeelColor: {r: 1, g: 0.25, b: 0.12, a: 1}
   scoreReason: Copa hecha pedazos
   scorePoints: 1
   destructionFeedback: 1
   paperFragments: 0
   destructionParticles: {fileID: 0}
   feedbackLifetime: 3
+  brokenFragmentsPrefab: {fileID: 0}
+  maxPhysicalFragments: 12
+  fragmentLifetime: 4
+  fragmentImpulse: 2
+  fragmentUpwardImpulse: 1

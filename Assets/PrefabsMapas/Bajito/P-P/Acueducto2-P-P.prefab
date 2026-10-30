@@ -1000,7 +1000,7 @@ GameObject:
   - component: {fileID: 5268602492030621804}
   - component: {fileID: 1015551762125080956}
   - component: {fileID: 6338487450958322730}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Puerta1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1219,7 +1219,7 @@ GameObject:
   - component: {fileID: 4117712687419184093}
   - component: {fileID: 486553506023366046}
   - component: {fileID: 7738588115472312809}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Puerta2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1235,7 +1235,7 @@ Transform:
   m_GameObject: {fileID: 5635557063084245721}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
-  m_LocalPosition: {x: 0.43445873, y: -1, z: 29.87539}
+  m_LocalPosition: {x: 0.43445873, y: -1, z: 29.650396}
   m_LocalScale: {x: -2.4, y: 2.25, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7141,7 +7141,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8717790595474207859, guid: 553804ab4ec7e754185374332a79b550, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 29.875393
+      value: 29.6504
       objectReference: {fileID: 0}
     - target: {fileID: 8717790595474207859, guid: 553804ab4ec7e754185374332a79b550, type: 3}
       propertyPath: m_LocalRotation.w
@@ -10101,7 +10101,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8717790595474207859, guid: 553804ab4ec7e754185374332a79b550, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 29.87539
+      value: 29.650396
       objectReference: {fileID: 0}
     - target: {fileID: 8717790595474207859, guid: 553804ab4ec7e754185374332a79b550, type: 3}
       propertyPath: m_LocalRotation.w

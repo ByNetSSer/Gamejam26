@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Suelas de hielo"
   visualDescription: "Placas de hielo eterno que cubren la parte inferior de las botas."
-  effectDescription: "−30 % de frenado e inmune al hielo."
+  effectDescription: "−30 % de control lateral en suelo e inmune al hielo."
   tier: 3
   category: 7
   disposition: 1

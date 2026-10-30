@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Botas de cometa"
   visualDescription: "Botas azules con colas de tela que dejan un fugaz rastro luminoso."
-  effectDescription: "+20 % de velocidad y −15 % de frenado"
+  effectDescription: "+20 % de velocidad y −15 % de control lateral en suelo"
   tier: 2
   category: 0
   disposition: 1

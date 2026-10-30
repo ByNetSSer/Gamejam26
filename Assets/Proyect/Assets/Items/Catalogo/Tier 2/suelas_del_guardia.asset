@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: "Suelas del guardia"
   m_EditorClassIdentifier: 
   displayName: "Suelas del guardia"
-  visualDescription: "Placas de cuero y hierro diseñadas para detenerse en seco sobre piedra."
-  effectDescription: "+15 % de frenado."
+  visualDescription: "Placas de cuero y hierro diseñadas para cambiar de dirección sobre piedra."
+  effectDescription: "+15 % de control lateral en suelo."
   tier: 2
   category: 0
   disposition: 0

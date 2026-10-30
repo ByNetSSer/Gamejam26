@@ -55,6 +55,7 @@ public sealed class RoomManager : MonoBehaviour
     bool healthBound;
     public int RoomsEntered => roomsEntered;
     public RoomDefinition CurrentRoom => current;
+    public RoomDefinition PreviousRoom => previous;
     public RoomDefinition NextRoom => next;
     public PlayerController Player => player;
     public int RoomsPerTower => difficulty.Rooms(roomsPerTower, towerNumber) + additionalRooms;

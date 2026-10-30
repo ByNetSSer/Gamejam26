@@ -13,6 +13,7 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     [SerializeField] bool flupinSelected;
     [SerializeField] bool dontseeSelected;
     [SerializeField] bool maskChargerSelected;
+    [SerializeField] bool corridorChaserSelected;
     [SerializeField, Min(0f)] float delayAfterLeavingStart = 5f;
     [SerializeField, Min(1)] int maxCopiesPerEnemy = 4;
     struct FlupinModifier { public object Source; public FlupinStat Stat; public StatModifierType Type; public float Value; }
@@ -32,6 +33,18 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     public bool DontseeSelected => dontseeSelected;
     public bool FlupinSelected => flupinSelected;
     public bool MaskChargerSelected => maskChargerSelected;
+    public bool CorridorChaserSelected => corridorChaserSelected;
+    public bool CanChooseCorridorChaser => GetComponent<CorridorChaserEncounter>() != null;
+    public bool ChooseCorridorChaserCurse()
+    {
+        var encounter = GetComponent<CorridorChaserEncounter>();
+        if (encounter == null) return false;
+        if (!corridorChaserSelected) corridorChaserSelected = true;
+        else encounter.IncreaseFrequency();
+        return true;
+    }
+    // Persistent roster counts selected enemies, including those temporarily absent in safe rooms.
+    public int AccumulatedEnemyCount => FlupinCount + MaskChargerCount + (dontseeSelected ? 1 : 0) + (corridorChaserSelected ? 1 : 0);
     public int FlupinCount => flupinSelected ? flupinCount : 0;
     public int MaskChargerCount => maskChargerSelected ? maskCount : 0;
     public bool CanChooseFlupin => flupin != null && (!flupinSelected || flupinCount < Mathf.Max(1, maxCopiesPerEnemy));
@@ -48,6 +61,7 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     void Awake()
     {
         rooms = GetComponent<RoomManager>();
+        if (GetComponent<CorridorChaserEncounter>() == null) gameObject.AddComponent<CorridorChaserEncounter>();
         if (flupin != null) flupin.gameObject.SetActive(false);
         if (maskCharger != null) maskCharger.gameObject.SetActive(false);
     }

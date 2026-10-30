@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Ancla del explorador"
   visualDescription: "Una pequeña ancla dorada que se arrastra en el aire detrás del portador."
-  effectDescription: "+30 % de frenado."
+  effectDescription: "+30 % de control lateral en suelo."
   tier: 3
   category: 7
   disposition: 0

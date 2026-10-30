@@ -7,13 +7,15 @@ public sealed class GameplayMusicDirector : MonoBehaviour
 {
     [SerializeField] GameplayMusicSettings settings;
     RoomManager rooms;
-    int roomsVisited;
+    RoomEnemyRoster roster;
+    bool? intenseSelected;
     bool ended;
     bool inSafeRoom = true;
     readonly List<IDisposable> subscriptions = new List<IDisposable>();
     void Awake()
     {
         rooms = GetComponent<RoomManager>();
+        roster = GetComponent<RoomEnemyRoster>();
         if (settings == null) settings = Resources.Load<GameplayMusicSettings>("Music/GameplayMusicSettings");
     }
     void OnEnable()
@@ -23,7 +25,6 @@ public sealed class GameplayMusicDirector : MonoBehaviour
         MusicPlaylistPlayer.Instance.SetBase(settings.safeRooms, true);
         subscriptions.Add(rooms.Events.Subscribe<RoomEnteredEvent>(e =>
         {
-            roomsVisited++;
             inSafeRoom = e.Context.Kind != RoomKind.Intermediate;
             SelectBase();
         }));
@@ -36,17 +37,29 @@ public sealed class GameplayMusicDirector : MonoBehaviour
         if (ended) return;
         if (inSafeRoom)
         {
+            intenseSelected = null;
             // Safe-room music replaces gameplay and any temporary combat requests atomically.
             MusicPlaylistPlayer.Instance.SetBase(settings.safeRooms, true);
             return;
         }
-        var playlist = roomsVisited >= Mathf.Max(1, settings.intenseFromRoom) && settings.intense != null && settings.intense.HasTracks
-            ? settings.intense : settings.calm;
+        bool intense = rooms.TowerNumber >= Mathf.Max(1, settings.intenseFromTower) &&
+            roster != null && roster.AccumulatedEnemyCount >= Mathf.Max(1, settings.intenseFromAccumulatedEnemies) &&
+            settings.intense != null && settings.intense.HasTracks;
+        intenseSelected = intense;
+        var playlist = intense ? settings.intense : settings.calm;
         MusicPlaylistPlayer.Instance.SetBase(playlist);
     }
     void Update()
     {
         if (ended || settings == null) return;
+        if (!inSafeRoom)
+        {
+            if (roster == null) roster = GetComponent<RoomEnemyRoster>();
+            bool intense = rooms.TowerNumber >= Mathf.Max(1, settings.intenseFromTower) &&
+                roster != null && roster.AccumulatedEnemyCount >= Mathf.Max(1, settings.intenseFromAccumulatedEnemies) &&
+                settings.intense != null && settings.intense.HasTracks;
+            if (intenseSelected != intense) SelectBase();
+        }
         if (!inSafeRoom && rooms.TimerRunning && rooms.TimeRemaining <= settings.urgentSeconds)
             MusicPlaylistPlayer.Instance.RequestOverride("tower.last-minute", settings.lastMinute, 100);
         else MusicPlaylistPlayer.Instance.ClearOverride("tower.last-minute");

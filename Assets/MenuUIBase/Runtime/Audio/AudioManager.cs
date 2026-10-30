@@ -192,6 +192,7 @@ namespace MenuUIBase.Audio
         void LateUpdate()
         {
             if (voices == null) return;
+            EnsureRoomLoops();
             foreach (var room in roomLoops)
             {
                 if (!room.Source.isPlaying) continue;
@@ -403,6 +404,7 @@ namespace MenuUIBase.Audio
 
         private void EnsurePool()
         {
+            EnsureRoomLoops();
             if (voices != null) return;
             int count = Mathf.Clamp(soundPoolSize, 4, 64);
             voices = new AudioSource[count];
@@ -414,15 +416,6 @@ namespace MenuUIBase.Audio
             voiceFollows = new bool[count];
             voiceEmitters = new int[count];
             voiceRequested = new float[count];
-            roomLoops = new RoomLoop[3];
-            for (int i = 0; i < roomLoops.Length; i++)
-            {
-                var child = new GameObject($"Room ambience {i}"); child.transform.SetParent(transform, false);
-                var source = child.AddComponent<AudioSource>();
-                source.playOnAwake = false; source.loop = true; source.spatialBlend = 1f;
-                source.rolloffMode = AudioRolloffMode.Linear; source.dopplerLevel = 0f;
-                roomLoops[i] = new RoomLoop { Source = source };
-            }
             tails = new AudioSource[4]; tailVolumes = new float[4]; tailRemaining = new float[4];
             for (int i = 0; i < tails.Length; i++)
             {
@@ -439,6 +432,26 @@ namespace MenuUIBase.Audio
                 voices[i].minDistance = 2f;
                 voices[i].maxDistance = 40f;
                 voices[i].dopplerLevel = 0f;
+            }
+        }
+
+        private void EnsureRoomLoops()
+        {
+            if (roomLoops != null) return;
+            roomLoops = new RoomLoop[3];
+            for (int i = 0; i < roomLoops.Length; i++)
+            {
+                string childName = $"Room ambience {i}";
+                Transform existing = transform.Find(childName);
+                GameObject child = existing != null ? existing.gameObject : new GameObject(childName);
+                if (existing == null) child.transform.SetParent(transform, false);
+                var source = child.GetComponent<AudioSource>();
+                if (source == null) source = child.AddComponent<AudioSource>();
+                // Room ownership cannot survive a script reload; stop orphaned ambience.
+                source.Stop();
+                source.playOnAwake = false; source.loop = true; source.spatialBlend = 1f;
+                source.rolloffMode = AudioRolloffMode.Linear; source.dopplerLevel = 0f;
+                roomLoops[i] = new RoomLoop { Source = source };
             }
         }
 

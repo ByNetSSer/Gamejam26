@@ -32,7 +32,7 @@ public sealed class ScoreDebugView : MonoBehaviour
         if (Time.time < displayUntil)
             GUI.Label(new Rect(22, 42, 290, 20), $"{lastAward.Reason} +{lastAward.Points}  x{lastAward.Multiplier:F2}");
         if (player != null)
-            GUI.Label(new Rect(22, 64, 290, 20), $"Velocidad: {player.HorizontalSpeed:F1} / {player.TargetSpeed:F1}   Salas: {player.RoomsCleared}");
+            GUI.Label(new Rect(22, 64, 290, 20), $"Velocidad: {player.HorizontalSpeed:F1} / {player.MaximumRunSpeed:F1} ({player.MaximumRunSpeedFraction:P0})   Salas: {player.RoomsCleared}");
         GUI.Label(new Rect(22, 86, 290, 20), $"Combo: {score.ComboDuration:F1}s  Crecimiento: {score.MultiplierGrowth:F2}");
         GUI.Label(new Rect(22, 108, 290, 20), $"Amplificación: x{score.ScoreAmplification:F1}");
         if (health != null) GUI.Label(new Rect(22, 130, 290, 20), $"Vida: {Mathf.CeilToInt(health.CurrentHealth)}/{Mathf.CeilToInt(health.MaxHealth)}  |  hielo / brea / lava");

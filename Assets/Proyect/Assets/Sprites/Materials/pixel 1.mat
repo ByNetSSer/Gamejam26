@@ -34,6 +34,7 @@ Material:
     - _Dither: 0.844
     - _DitherScale: 1.87
     - _OutlineStrength: 0.511
+    - _Overlay: 0
     - _PaletteMix: 1
     - _PixelAspect: 0.98
     - _PixelSize: 4.1
@@ -44,6 +45,7 @@ Material:
     - _TexturePixelAspect: 0.37
     - _TexturePixelSize: 116
     - _TexturePixelStrength: 1
+    - _ZTest: 4
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 0.96, b: 0.83, a: 1}

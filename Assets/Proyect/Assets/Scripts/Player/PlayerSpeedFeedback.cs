@@ -2,24 +2,26 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-// Presentation only: absolute speed thresholds remain useful as tower speed increases.
+// Presentation only: both effects follow the current horizontal sprint target.
 [DisallowMultipleComponent, RequireComponent(typeof(PlayerController))]
 public sealed class PlayerSpeedFeedback : MonoBehaviour
 {
-    [Header("Distorsion por velocidad (unidades/segundo)")]
-    [SerializeField, Min(0f)] float startSpeed = 8f;
-    [SerializeField, Min(0.01f)] float fullEffectSpeed = 45f;
+    [Header("Ojo de pez por velocidad relativa")]
     [SerializeField, Min(1f)] float responseExponent = 2f;
-    [SerializeField, Range(-0.6f, 0.6f)] float maximumDistortion = -0.3f;
+    [SerializeField, Range(-0.6f, 0f)] float maximumDistortion = -0.12f;
     [SerializeField, Min(0.01f)] float smoothingTime = 0.3f;
-    [Tooltip("Desactivado: solo carrera horizontal. Activado: incluye caidas y pisoton.")]
-    [SerializeField] bool includeVerticalSpeed;
+
+    [Header("Aberracion cromatica respecto al sprint maximo")]
+    [SerializeField, Range(0f, 1f)] float maximumChromaticAberration = 1f;
+    [SerializeField, Min(0.01f)] float chromaticSmoothingTime = 0.12f;
 
     PlayerController player;
     UniversalAdditionalCameraData cameraData;
     Volume volume;
     VolumeProfile profile;
     LensDistortion distortion;
+    ChromaticAberration chromatic;
+    float chromaticStrength;
     float strength;
 
     void Start()
@@ -47,18 +49,21 @@ public sealed class PlayerSpeedFeedback : MonoBehaviour
         distortion.yMultiplier.Override(1f);
         distortion.center.Override(new Vector2(0.5f, 0.5f));
         distortion.scale.Override(1f);
+        chromatic = profile.Add<ChromaticAberration>();
+        chromatic.intensity.Override(0f);
         volume.sharedProfile = profile;
     }
 
     void LateUpdate()
     {
         if (volume == null) return;
-        float speed = player.isActiveAndEnabled
-            ? (includeVerticalSpeed ? player.Velocity.magnitude : player.HorizontalSpeed) : 0f;
-        float normalized = Mathf.InverseLerp(startSpeed, Mathf.Max(startSpeed + 0.01f, fullEffectSpeed), speed);
-        float target = Mathf.Pow(normalized, Mathf.Max(1f, responseExponent));
+        float speedFraction = player.isActiveAndEnabled ? player.MaximumRunSpeedFraction : 0f;
+        float target = Mathf.Pow(speedFraction, Mathf.Max(1f, responseExponent));
         strength = Mathf.Lerp(strength, target, 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, smoothingTime)));
         distortion.intensity.value = strength * maximumDistortion;
+        chromaticStrength = Mathf.Lerp(chromaticStrength, speedFraction,
+            1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, chromaticSmoothingTime)));
+        chromatic.intensity.value = chromaticStrength * maximumChromaticAberration;
         volume.enabled = true;
         // Post processing is shared with other feedback (e.g. parry).
         cameraData.renderPostProcessing = true;
@@ -66,7 +71,7 @@ public sealed class PlayerSpeedFeedback : MonoBehaviour
 
     void OnDisable()
     {
-        strength = 0f;
+        strength = chromaticStrength = 0f;
         if (volume != null) volume.enabled = false;
     }
 

@@ -128,8 +128,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e671a5852b60fa4c96675127b999d42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 30
-  breakSpeed: 12
+  health: 24
+  breakSpeed: 10.2
   damagePerSpeed: 0.5
   proportionalSpeedDamage: 1
   poundBonusDamage: 3

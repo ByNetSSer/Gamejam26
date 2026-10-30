@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Sandalias temerarias
   visualDescription: Sandalias aladas con las correas casi rotas.
-  effectDescription: "+20 % de velocidad de salto y \u221215 % de frenado."
+  effectDescription: "+20 % de velocidad de salto y \u221215 % de control lateral en suelo."
   tier: 2
   category: 0
   disposition: 1

@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: GameAudioBank
   m_EditorClassIdentifier: 
   entries:
+  - id: corredor.alert
+    cue: {fileID: 11400000, guid: 3ca53de4ce3346419df5d24b3cf2b101, type: 2}
+  - id: corredor.attack
+    cue: {fileID: 11400000, guid: 8bc0135492504a108716caa6c219f33b, type: 2}
   - id: music.menu
     cue: {fileID: 11400000, guid: d9c66688232140b1b7086b634c6b5eaf, type: 2}
   - id: music.gameplay

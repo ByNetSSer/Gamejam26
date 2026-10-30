@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Escudo de reacción"
   visualDescription: "Un broquel que se sacude cuando su dueño recibe un golpe."
-  effectDescription: "Al recibir daño, +20 % de frenado durante 4 segundos."
+  effectDescription: "Al recibir daño, +20 % de control lateral en suelo durante 4 segundos."
   tier: 2
   category: 3
   disposition: 0

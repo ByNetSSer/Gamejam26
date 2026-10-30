@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Botas remendadas"
   visualDescription: "Un par de botas de distinto color."
-  effectDescription: "+5 % de velocidad y −3 % de frenado."
+  effectDescription: "+5 % de velocidad y −3 % de control lateral en suelo."
   tier: 1
   category: 0
   disposition: 1

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Suelas enjabonadas"
   visualDescription: "Un par completo de suelas cubiertas de espuma mágica."
-  effectDescription: "−25 % de frenado."
+  effectDescription: "−25 % de control lateral en suelo."
   tier: 2
   category: 1
   disposition: 2

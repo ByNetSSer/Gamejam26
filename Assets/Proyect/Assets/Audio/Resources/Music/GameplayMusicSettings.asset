@@ -16,5 +16,6 @@ MonoBehaviour:
   calm: {fileID: 11400000, guid: 614d8856372948baa6de5180e21b2e55, type: 2}
   intense: {fileID: 11400000, guid: 935775a97a1a49b88c18cb50c36a956b, type: 2}
   lastMinute: {fileID: 11400000, guid: 17583554760e4a8f9a37afb284e8a442, type: 2}
-  intenseFromRoom: 3
+  intenseFromTower: 4
+  intenseFromAccumulatedEnemies: 5
   urgentSeconds: 60

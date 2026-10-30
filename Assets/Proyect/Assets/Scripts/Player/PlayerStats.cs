@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PlayerStat { MoveSpeed, Acceleration, Braking, AirControl, JumpSpeed, PoundSpeed, ImpactDamage, CameraControl, ComboDuration, ComboMultiplierGrowth, ScoreAmplification, TurnAcceleration, Gravity, MaxFallSpeed, SpeedPerRoom, PoundSpeedPerRoom, CoyoteTime, JumpBufferTime, GroundStickSpeed, CameraSensitivity, CameraPenaltySpeed, CameraMinimumControl, CameraPitchLimit, ShopDiscount }
+public enum PlayerStat { MoveSpeed, Acceleration, Braking, AirControl, JumpSpeed, PoundSpeed, ImpactDamage, CameraControl, ComboDuration, ComboMultiplierGrowth, ScoreAmplification, TurnAcceleration, Gravity, MaxFallSpeed, SpeedPerRoom, PoundSpeedPerRoom, CoyoteTime, JumpBufferTime, GroundStickSpeed, CameraSensitivity, CameraPenaltySpeed, CameraMinimumControl, CameraPitchLimit, ShopDiscount, GroundControl }
 public sealed class PlayerStats : MonoBehaviour
 {
     readonly Dictionary<PlayerStat, StatValue> values = new Dictionary<PlayerStat, StatValue>();

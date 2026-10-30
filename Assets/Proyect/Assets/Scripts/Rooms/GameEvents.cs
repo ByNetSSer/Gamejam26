@@ -2,7 +2,13 @@ using UnityEngine;
 
 public enum RoomKind { Initial, Intermediate, Final }
 public enum RoomExitReason { Advanced, Completed, Defeated }
-public enum RunLossReason { PlayerHealthDepleted, TimeExpired, Flupin, Dontsee, MaskCharger, Crusher, HazardousSurface }
+public enum RunLossReason { PlayerHealthDepleted, TimeExpired, Flupin, Dontsee, MaskCharger, Crusher, HazardousSurface, CorridorChaser }
+
+public readonly struct CorridorChaserWarningEvent
+{
+    public readonly RoomContext Context;
+    public CorridorChaserWarningEvent(RoomContext context) { Context = context; }
+}
 
 // Scene references are valid during dispatch; retain Index/Kind for long-term records.
 public readonly struct RoomContext

@@ -21,3 +21,10 @@ Verificado: compilación runtime con scripts actuales; regla de cadencia 2/4/6/8
 ### Maldiciones que potencian enemigos
 
 La selección manual y la automática incluyen ahora Flupin impaciente/furioso, Máscaras sin respiro/furiosas, Acecho implacable y Dontsee furioso, siempre que el enemigo correspondiente esté seleccionado. Se aplican a copias existentes y futuras, se acumulan entre torres y usan la misma notificación de nombre/efecto/origen. Ver `Runner - Flupin y enemigos.md` para porcentajes y comportamiento. La alternativa de penalización al jugador solo se usa si no hay opciones de enemigos disponibles.
+
+
+## Control lateral en lugar de frenado (2026-10-30)
+
+Suelas gastadas, Suelas del guardia y Ancla del explorador conceden respectivamente +5 %, +15 % y +30 % de control lateral en suelo en la tienda; Paso inestable penaliza ese control un 15 %. El nuevo atributo `GroundControl` modifica la corrección de la velocidad lateral hacia la dirección elegida mientras hay input y el jugador está en el suelo. No modifica la aceleración hacia delante, la desaceleración al soltar controles, el control aéreo ni el deslizamiento. Los modificadores se acumulan mediante el sistema habitual de estadísticas.
+
+Las demás fichas que mencionaban frenado se actualizaron como propuestas equivalentes de control lateral, incluido Escudo de reacción; sus efectos de catálogo no se convierten por ello en funcionales. Las ofertas explícitas de tienda sí están conectadas. Pendiente probar los valores en Play Mode, especialmente giros a alta velocidad, superficies y acumulación de objetos.

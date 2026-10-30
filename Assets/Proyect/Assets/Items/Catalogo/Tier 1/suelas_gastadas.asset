@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Suelas gastadas
   visualDescription: Dos suelas claveteadas, reparadas tantas veces que apenas queda
     el cuero original.
-  effectDescription: +5 % de frenado.
+  effectDescription: +5 % de control lateral en suelo.
   tier: 1
   category: 0
   disposition: 0

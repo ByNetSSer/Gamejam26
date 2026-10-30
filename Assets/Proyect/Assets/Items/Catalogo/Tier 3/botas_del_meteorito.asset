@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: "Botas del meteorito"
   visualDescription: "Botas de roca oscura con grietas encendidas y una estela de chispas."
-  effectDescription: "+30 % de velocidad y −20 % de frenado."
+  effectDescription: "+30 % de velocidad y −20 % de control lateral en suelo."
   tier: 3
   category: 7
   disposition: 1

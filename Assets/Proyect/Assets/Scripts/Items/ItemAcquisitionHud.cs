@@ -32,7 +32,7 @@ public sealed class ItemAcquisitionHud : MonoBehaviour
             "daño de impacto", "control de cámara", "duración del combo", "crecimiento del combo", "puntos",
             "aceleración de giro", "gravedad", "velocidad máxima de caída", "velocidad por sala", "pisotón por sala",
             "margen para saltar", "anticipación del salto", "adherencia al suelo", "sensibilidad", "penalización de cámara",
-            "control mínimo de cámara", "límite vertical de cámara", "descuento de tienda" };
+            "control mínimo de cámara", "límite vertical de cámara", "descuento de tienda", "control lateral en suelo" };
         int index = (int)stat;
         string name = index >= 0 && index < names.Length ? names[index] : stat.ToString();
         float amount = type == StatModifierType.Flat ? value : value * 100f;
