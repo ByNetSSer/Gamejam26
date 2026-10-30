@@ -375,8 +375,8 @@ MonoBehaviour:
   roomsPerTower: 4
   totalTowers: 12
   difficulty:
-    extraRoomsPerTower: 1
-    maximumRooms: 15
+    extraRoomsPerTower: 4
+    maximumRooms: 32
     speedPercentPerTower: 0.02
     spawnChancePerTower: 0.12
     initialLargeRoomChance: 0
@@ -676,6 +676,12 @@ MonoBehaviour:
   slideBraking: 3
   slideStartSpeedMultiplier: 1.1
   slideBoostDuration: 0.3
+  crouchCameraTime: 0.12
+  movementBobAmount: 0.035
+  movementBobFrequency: 8
+  speedFovIncrease: 6
+  speedForFullFov: 30
+  movementFeedbackTime: 0.25
   maxStepDistance: 0.2
   maxStepsPerFrame: 128
 --- !u!114 &439266911
@@ -731,6 +737,7 @@ MonoBehaviour:
   repelPower: 1
   propHitRange: 3
   propHitDamage: 20
+  propDamagePerForwardSpeed: 0.6
   propHitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
