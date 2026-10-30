@@ -18,8 +18,13 @@ public sealed class RoomManager : MonoBehaviour
     [Header("Elementos compartidos")]
     [SerializeField] ImpactTarget hatchPrefab;
     [SerializeField] RoomDoor doorPrefab;
+    [Header("Tiempo por torre")][SerializeField, Min(1f)] float towerTimeSeconds = 180f;
+    public float TimeRemaining { get; private set; }
+    public bool TimerRunning => isActiveAndEnabled && started && !finished && !failed && !lost && !victoryReported
+        && towerNumber > 1 && roomsEntered > 1 && roomsEntered < RoomsPerTower;
     [Header("Torre (incluye inicial y final)")]
     [SerializeField, Min(2)] int roomsPerTower = 6;
+    [SerializeField, Min(1)] int totalTowers = 12;
     [SerializeField] TowerDifficulty difficulty = new TowerDifficulty();
     [SerializeField] bool useFixedSeed;
     [SerializeField] int seed = 12345;
@@ -48,13 +53,21 @@ public sealed class RoomManager : MonoBehaviour
     bool healthBound;
     public int RoomsEntered => roomsEntered;
     public RoomDefinition CurrentRoom => current;
+    public RoomDefinition NextRoom => next;
     public PlayerController Player => player;
     public int RoomsPerTower => difficulty.Rooms(roomsPerTower, towerNumber) + additionalRooms;
     public int TowerNumber => towerNumber;
+    public int TotalTowers => Mathf.Max(1, totalTowers);
+    public bool IsFinalTower => TowerSafetyRules.IsFinalTower(towerNumber, TotalTowers);
     public bool IsFinished => finished;
     public bool IsLost => lost;
+    public bool IsWon => victoryReported;
+    public void SetStartingExitLocked(bool locked)
+    {
+        if (roomsEntered == 1 && current != null && current.Exit != null) current.Exit.SetLocked(locked);
+    }
     public GameEventBus Events => eventBus != null ? eventBus : GetComponent<GameEventBus>();
-    public string Status => failed ? "Configuración de salas incompleta" : lost ? "Derrota" : finished ? "Torre completada" : $"Sala {roomsEntered}/{RoomsPerTower}";
+    public string Status => failed ? "Configuración de salas incompleta" : lost ? "Derrota" : victoryReported ? "Partida ganada" : finished ? "Torre completada" : $"Sala {roomsEntered}/{RoomsPerTower}";
     public event Action<int> RoomEntered;
     public event Action TowerFinished;
 
@@ -70,10 +83,11 @@ public sealed class RoomManager : MonoBehaviour
     {
         eventBus = GetComponent<GameEventBus>();
         if (eventBus == null) eventBus = gameObject.AddComponent<GameEventBus>();
+        if (GetComponent<GameplayMusicDirector>() == null) gameObject.AddComponent<GameplayMusicDirector>();
     }
     void OnEnable()
     {
-        if (!started || finished || failed) return;
+        if (!started || failed || lost || victoryReported) return;
         BindHealth();
         if (health != null && health.CurrentHealth <= 0f) OnPlayerDied();
     }
@@ -105,8 +119,9 @@ public sealed class RoomManager : MonoBehaviour
     void StartTower()
     {
         current = Instantiate(startingRoom, transform.position, transform.rotation, transform);
+        if (!current.ConfigureSafeRoom(true)) { Fail("No se pudo preparar la zona segura inicial."); return; }
         if (!current.Prepare(hatchPrefab, doorPrefab)) { Fail("No se pudo preparar la salida de la sala inicial."); return; }
-        current.Populate(random, difficulty.SpawnMultiplier(towerNumber));
+        current.Populate(random, difficulty.SpawnMultiplier(towerNumber), false);
         roomsEntered = 1;
         var cc = player.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
@@ -118,6 +133,7 @@ public sealed class RoomManager : MonoBehaviour
         PrepareNext();
         if (failed) return;
         BindHealth();
+        TimeRemaining = Mathf.Max(1f, towerTimeSeconds);
         Events.Publish(new TowerStartedEvent(RoomsPerTower, player));
         PublishEntered();
         started = true;
@@ -125,7 +141,7 @@ public sealed class RoomManager : MonoBehaviour
     }
     public bool StartNextTower()
     {
-        if (!started || !finished || lost || failed || player == null || health == null || health.CurrentHealth <= 0f) return false;
+        if (!started || !finished || lost || failed || IsFinalTower || player == null || health == null || health.CurrentHealth <= 0f) return false;
         int following = towerNumber + 1;
         BuildPools();
         int baseCount = difficulty.Rooms(roomsPerTower, following);
@@ -135,7 +151,7 @@ public sealed class RoomManager : MonoBehaviour
         if (next != null) { next.gameObject.SetActive(false); Destroy(next.gameObject); next = null; }
         towerNumber = following; additionalRooms = reachableCount - (baseCount - 2); finished = false; roomExitSent = false;
         player.Stats.RemoveModifiers(towerSpeedSource);
-        player.Stats.AddModifier(towerSpeedSource, PlayerStat.MoveSpeed, StatModifierType.Flat, difficulty.SpeedBonus(towerNumber));
+        player.Stats.AddModifier(towerSpeedSource, PlayerStat.MoveSpeed, StatModifierType.Percent, difficulty.SpeedBonus(towerNumber));
         player.enabled = true;
         StartTower();
         return !failed;
@@ -206,26 +222,28 @@ public sealed class RoomManager : MonoBehaviour
         roomExitSent = true;
         Events.Publish(new RoomExitedEvent(CurrentContext(), reason));
     }
-    void OnPlayerDied()
+    void OnPlayerDied() => LoseRun(health != null ? health.LastDamageReason : RunLossReason.PlayerHealthDepleted);
+    void LoseRun(RunLossReason reason)
     {
-        if (lost || failed) return;
+        if (lost || failed || victoryReported) return;
         if (!started) { pendingDefeat = true; return; }
         finished = true; lost = true;
         UnbindHealth();
         if (player != null) player.enabled = false;
         PublishExited(RoomExitReason.Defeated);
-        Events.Publish(new RunLostEvent(CurrentContext(), CurrentScore(), RunLossReason.PlayerHealthDepleted));
+        Events.Publish(new RunLostEvent(CurrentContext(), CurrentScore(), reason));
     }
-    // A later game director may call this after the last tower, not after every tower.
     public bool DeclareRunVictory()
     {
-        if (!started || !finished || lost || failed || victoryReported) return false;
+        if (!TowerSafetyRules.CanDeclareVictory(towerNumber, TotalTowers, started, finished, lost, failed, victoryReported)) return false;
         victoryReported = true;
+        UnbindHealth();
         Events.Publish(new RunWonEvent(RoomsPerTower, CurrentScore()));
         return true;
     }
     void Update()
     {
+        if (started && !lost && !failed && !victoryReported && health != null && health.CurrentHealth <= 0f) OnPlayerDied();
         if (failed || finished || current == null || player == null) return;
         if (roomsEntered == RoomsPerTower)
         {
@@ -256,6 +274,14 @@ public sealed class RoomManager : MonoBehaviour
         roomsEntered++;
         PublishEntered();
         if (!finished) PrepareNext();
+    }
+    // Resolve room transitions first: entering the final safe room beats expiry this frame,
+    // even while the player is still airborne and tower completion awaits landing.
+    void LateUpdate()
+    {
+        if (!TimerRunning) return;
+        TimeRemaining = Mathf.Max(0f, TimeRemaining - Time.deltaTime);
+        if (TimeRemaining <= 0f) LoseRun(RunLossReason.TimeExpired);
     }
     void CompleteRoom()
     {
@@ -321,6 +347,13 @@ public sealed class RoomManager : MonoBehaviour
             chosen = pool[random.Next(pool.Count)];
         }
         next = Instantiate(chosen, transform);
+        if (remaining == 1 && !next.ConfigureSafeRoom(false))
+        { next.gameObject.SetActive(false); Destroy(next.gameObject); next = null; Fail("No se pudo preparar la entrada de la zona segura final."); return; }
+        if (remaining == 1 && IsFinalTower)
+        {
+            var safe = next.GetComponent<SafeRoomLayout>();
+            if (safe != null) safe.SetAltarsActive(false);
+        }
         if (next.EntryAnchor == null || next.ExitMarker == null && remaining > 1)
         {
             next.gameObject.SetActive(false); Destroy(next.gameObject); next = null;
@@ -334,7 +367,7 @@ public sealed class RoomManager : MonoBehaviour
             next.transform.position += Vector3.down * Mathf.Max(0f, hatchVerticalGap);
         if (remaining > 1 && !next.Prepare(hatchPrefab, doorPrefab))
         { next.gameObject.SetActive(false); Destroy(next.gameObject); next = null; Fail("No se pudo preparar la salida de la siguiente sala."); return; }
-        next.Populate(random, difficulty.SpawnMultiplier(towerNumber));
+        next.Populate(random, difficulty.SpawnMultiplier(towerNumber), !TowerSafetyRules.IsProtectedRoom(roomsEntered + 1));
     }
     void Fail(string message)
     {

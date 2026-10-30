@@ -29,8 +29,13 @@ public sealed class RoomDefinition : MonoBehaviour
         var auto = GetComponent<RoomAutoLayout>();
         if (auto != null && !auto.Configure(this)) Debug.LogError("No se pudieron configurar las conexiones de " + name, this);
     }
-    public bool IsFinalRoomConfigured => EntryType == RoomConnection.Hatch && MarkerValid(entryAnchor) && ExitMarker == null;
-    public bool IsStartingRoomConfigured => playerStart != null && MarkerValid(ExitMarker) && ExitType == RoomConnection.Hatch;
+    public bool IsFinalRoomConfigured => GetComponent<SafeRoomLayout>() != null ? GetComponent<SafeRoomLayout>().HasRequiredParts : EntryType == RoomConnection.Hatch && MarkerValid(entryAnchor) && ExitMarker == null;
+    public bool IsStartingRoomConfigured => GetComponent<SafeRoomLayout>() != null ? GetComponent<SafeRoomLayout>().HasRequiredParts : playerStart != null && MarkerValid(ExitMarker) && ExitType == RoomConnection.Hatch;
+    public bool ConfigureSafeRoom(bool starting)
+    {
+        var safe = GetComponent<SafeRoomLayout>();
+        return safe == null || safe.Configure(this, starting);
+    }
     static bool MarkerValid(Transform marker)
     {
         if (marker == null || !marker.gameObject.activeSelf) return false;
@@ -40,7 +45,7 @@ public sealed class RoomDefinition : MonoBehaviour
     }
     public bool CanPrepare(ImpactTarget hatchPrefab, RoomDoor doorPrefab)
     {
-        if (ExitMarker == null) return GetComponent<RoomAutoLayout>() != null && hatchPrefab != null && hatchPrefab.IsHatch;
+        if (ExitMarker == null) return (GetComponent<RoomAutoLayout>() != null || GetComponent<SafeRoomLayout>() != null) && hatchPrefab != null && hatchPrefab.IsHatch;
         if (ExitType != RoomConnection.Hatch) return exit != null && exit.Door != null || doorPrefab != null;
         var assigned = exit != null ? exit.Hatch : null;
         return assigned != null ? assigned.IsHatch : hatchPrefab != null && hatchPrefab.IsHatch;
@@ -63,9 +68,9 @@ public sealed class RoomDefinition : MonoBehaviour
         }
         return exit.Prepare(hatchPrefab, doorPrefab);
     }
-    public void Populate(System.Random random, float spawnChanceMultiplier = 1f)
+    public void Populate(System.Random random, float spawnChanceMultiplier = 1f, bool allowEnemies = true)
     {
-        foreach (var point in GetComponentsInChildren<RoomSpawnPoint>(true)) point.Spawn(random, spawnChanceMultiplier);
+        foreach (var point in GetComponentsInChildren<RoomSpawnPoint>(true)) point.Spawn(random, spawnChanceMultiplier, allowEnemies);
     }
     void OnDrawGizmos()
     {

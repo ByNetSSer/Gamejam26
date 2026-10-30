@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d2952411f97462bb0cc18d2d8fca81f, type: 3}
+  m_Name: GameAudioBank
+  m_EditorClassIdentifier: 
+  entries:
+  - id: music.menu
+    cue: {fileID: 11400000, guid: d9c66688232140b1b7086b634c6b5eaf, type: 2}
+  - id: music.gameplay
+    cue: {fileID: 11400000, guid: 23ee4dd6d579400aa76deefcc71ea826, type: 2}
+  - id: ui.click
+    cue: {fileID: 11400000, guid: aa0cdfacd72645bfa98e1e26ce2c2ab3, type: 2}
+  - id: player.land
+    cue: {fileID: 11400000, guid: f09b0de4062541d7a1a0a67065ac2134, type: 2}
+  - id: impact.break
+    cue: {fileID: 11400000, guid: 44fced5e48bd44cbbb075d8542d3c29a, type: 2}
+  - id: player.damage
+    cue: {fileID: 11400000, guid: d3bda28f71f34e9c9d9c6fa9bab810fd, type: 2}
+  - id: player.jump
+    cue: {fileID: 11400000, guid: 1e82fa7be3f245a4b533c3d0aa5c7056, type: 2}
+  - id: parry.success
+    cue: {fileID: 11400000, guid: 2809f025d7a448f2a399d43f7fb4a01a, type: 2}
+  - id: flupin.available
+    cue: {fileID: 11400000, guid: e80d5734987a48f381d6abc8cdd2bff7, type: 2}
+  - id: dontsee.appear
+    cue: {fileID: 11400000, guid: 9b0a220e9efe4cb8ac6eeae40ea2354f, type: 2}
+  - id: mask.aim
+    cue: {fileID: 11400000, guid: 4f9248112c1f4dfb84688db2510617af, type: 2}
+  - id: mask.charge
+    cue: {fileID: 11400000, guid: c600e791365745fba1e9cc6aa8ff0056, type: 2}
+  - id: mask.start
+    cue: {fileID: 11400000, guid: e7e8cc9482a74645901bd20235f53fcd, type: 2}
+  - id: combo.add
+    cue: {fileID: 11400000, guid: 0719164846f7462ab1e26892a5da53a3, type: 2}
+  - id: combo.end
+    cue: {fileID: 11400000, guid: d7dccee07b784197a74203971854b5b1, type: 2}
+  - id: combo.damage
+    cue: {fileID: 11400000, guid: 345aa17c4bdc4156ae4d111c4bb325ba, type: 2}
+  - id: combo.tier
+    cue: {fileID: 11400000, guid: bfe3e7ff82b243b787f1441f17a7ee99, type: 2}
+  - id: coins.gain
+    cue: {fileID: 11400000, guid: 112b420d4784433babcaef8b060c9897, type: 2}
+  - id: clock.tick
+    cue: {fileID: 11400000, guid: 816e4160f4574aff816e6d07c65023be, type: 2}
+  - id: death.screen
+    cue: {fileID: 11400000, guid: 6cb9b683d34a48379dc04b0e812b7cc7, type: 2}
+  - id: death.start
+    cue: {fileID: 11400000, guid: 28b67b87509644b08a9f9ec5bc5197ab, type: 2}
+  - id: lightning.strike
+    cue: {fileID: 11400000, guid: 40f5376065854747b17e499ab102d139, type: 2}
+  - id: surface.tar
+    cue: {fileID: 11400000, guid: 5822319fb191441aaa761846a0b87d96, type: 2}
+  - id: surface.ice.freeze
+    cue: {fileID: 11400000, guid: 9fb2235816b042a4929684f6fdfa7265, type: 2}
+  - id: surface.lava.enter
+    cue: {fileID: 11400000, guid: 1aa43432eadf4120b3cffa777313ee9b, type: 2}
+  - id: surface.lava.exit
+    cue: {fileID: 11400000, guid: b92678f11a1b4ab090112bfb8b0e4c20, type: 2}
+  - id: footstep.normal
+    cue: {fileID: 11400000, guid: 14339c359b904aab9e2030967181370a, type: 2}
+  - id: footstep.ice
+    cue: {fileID: 11400000, guid: 2b35ea7c450c4e0db00107c735779be4, type: 2}
+  - id: footstep.tar
+    cue: {fileID: 11400000, guid: bd4f0f3efd84467cb19e42d5440b087a, type: 2}
+  - id: footstep.lava
+    cue: {fileID: 11400000, guid: 38fa25bdf933455e99c5ed5db2700666, type: 2}

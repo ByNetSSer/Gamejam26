@@ -132,5 +132,6 @@ MonoBehaviour:
   - stat: 11
     type: 1
     value: -0.35
+  audioKind: 1
   damagePerTick: 0
   damageInterval: 1

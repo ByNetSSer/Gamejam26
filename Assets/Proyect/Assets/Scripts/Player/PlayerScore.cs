@@ -22,6 +22,17 @@ public sealed class PlayerScore : MonoBehaviour
     public float ComboRemaining => combo.Count == 0 ? 0f : Mathf.Max(0f, combo.ExpiresAt - Time.time);
     public event Action<ScoreAward> Awarded;
     public event Action ComboEnded;
+    public event Action ComboLost;
+    public void LoseCombo()
+    {
+        if (combo.Expire(Time.time)) { FinishCombo(); return; }
+        if (combo.Count == 0) return;
+        TotalPoints = Math.Max(0, TotalPoints - ComboPoints);
+        ComboPoints = 0;
+        combo.Reset();
+        ComboLost?.Invoke();
+        ComboEnded?.Invoke();
+    }
     void Awake() { stats = GetComponent<PlayerStats>(); if (GetComponent<ComboHud>() == null) gameObject.AddComponent<ComboHud>(); }
     void Update() { if (combo.Expire(Time.time)) FinishCombo(); }
     void FinishCombo()

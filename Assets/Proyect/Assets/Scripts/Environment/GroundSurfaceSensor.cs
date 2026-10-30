@@ -9,6 +9,16 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
     readonly HashSet<GroundSurface> active = new HashSet<GroundSurface>();
     readonly HashSet<GroundSurface> current = new HashSet<GroundSurface>();
     readonly Collider[] overlapBuffer = new Collider[32];
+    bool touchingLava;
+    public SurfaceAudioKind FootstepSurface { get; private set; }
+    public string FootstepCueId => FootstepSurface == SurfaceAudioKind.Ice ? "footstep.ice" :
+        FootstepSurface == SurfaceAudioKind.Tar ? "footstep.tar" : FootstepSurface == SurfaceAudioKind.Lava ? "footstep.lava" : "footstep.normal";
+    // Called by a future footstep cadence/animation system, not every frame.
+    public void PlayFootstep()
+    {
+        if (player != null && player.enabled && player.IsGrounded && Time.deltaTime > 0f)
+            GameSfx.PlayAt(FootstepCueId, controller.bounds.center - Vector3.up * controller.bounds.extents.y);
+    }
     PlayerController player;
     CharacterController controller;
     public string SurfaceNames { get; private set; } = "Normal";
@@ -32,6 +42,16 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
                 if (surface != null && surface.isActiveAndEnabled) current.Add(surface);
             }
         }
+        bool lavaNow = false;
+        FootstepSurface = SurfaceAudioKind.Normal;
+        foreach (var surface in current)
+        {
+            if (surface.AudioKind == SurfaceAudioKind.Lava) lavaNow = true;
+            if ((int)surface.AudioKind > (int)FootstepSurface) FootstepSurface = surface.AudioKind;
+        }
+        if (lavaNow != touchingLava && player.enabled && Time.deltaTime > 0f)
+            GameSfx.PlayAt(lavaNow ? "surface.lava.enter" : "surface.lava.exit", controller.bounds.center - Vector3.up * controller.bounds.extents.y);
+        touchingLava = lavaNow;
         foreach (var surface in active)
             if (surface != null && !current.Contains(surface)) surface.Exit(player);
         foreach (var surface in current)
@@ -49,5 +69,6 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
     {
         foreach (var surface in active) if (surface != null) surface.Exit(player);
         active.Clear(); current.Clear(); SurfaceNames = "Normal";
+        touchingLava = false; FootstepSurface = SurfaceAudioKind.Normal;
     }
 }

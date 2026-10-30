@@ -24,6 +24,8 @@ public sealed class ImpactTarget : MonoBehaviour
     float nextImpactTime;
     float maxHealth;
     bool broken;
+    bool breakLocked;
+    public void SetBreakLocked(bool locked) => breakLocked = locked;
     GameObject fallingVisual;
     public void SetFallingVisual(GameObject visual) => fallingVisual = visual;
     public float Health => health;
@@ -64,7 +66,7 @@ public sealed class ImpactTarget : MonoBehaviour
     // Pure prediction: do not apply non-lethal damage before physical contact.
     public bool WillBreak(PlayerController player, Vector3 velocity, Vector3 normal, bool pounding)
     {
-        if (broken || player == null) return false;
+        if (broken || breakLocked || player == null) return false;
         float speed = Mathf.Max(0f, -Vector3.Dot(velocity, normal));
         bool downwardPound = pounding && normal.y > 0.5f && speed > 0f;
         if (hatch) return downwardPound;
@@ -76,7 +78,7 @@ public sealed class ImpactTarget : MonoBehaviour
 
     public void ReceiveImpact(PlayerController player, Vector3 velocity, Vector3 normal, bool pounding)
     {
-        if (broken || player == null) return;
+        if (broken || breakLocked || player == null) return;
         float impactSpeed = Mathf.Max(0f, -Vector3.Dot(velocity, normal));
         bool downwardPound = pounding && normal.y > 0.5f && impactSpeed > 0f;
         if (hatch)

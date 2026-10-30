@@ -80,6 +80,7 @@ public static class PlaygroundCreator
         material.color = color;
         zone.GetComponent<Renderer>().sharedMaterial = material;
         var component = zone.AddComponent<GroundSurface>();
+        component.SetAudioKind(name.StartsWith("Brea") ? SurfaceAudioKind.Tar : name.StartsWith("Hielo") ? SurfaceAudioKind.Ice : damage > 0f ? SurfaceAudioKind.Lava : SurfaceAudioKind.Normal);
         var data = new SerializedObject(component);
         var entries = data.FindProperty("modifiers");
         entries.arraySize = modifiers.Length;

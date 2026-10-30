@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum RoomKind { Initial, Intermediate, Final }
 public enum RoomExitReason { Advanced, Completed, Defeated }
-public enum RunLossReason { PlayerHealthDepleted }
+public enum RunLossReason { PlayerHealthDepleted, TimeExpired, Flupin, Dontsee, MaskCharger, Crusher, HazardousSurface }
 
 // Scene references are valid during dispatch; retain Index/Kind for long-term records.
 public readonly struct RoomContext

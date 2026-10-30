@@ -31,9 +31,9 @@ Material:
     m_Floats:
     - _PixelAspect: 1.22
     - _PixelSize: 4.7
-    - _PixelSnapStrength: 1
-    - _TexturePixelAspect: 1
-    - _TexturePixelSize: 4
+    - _PixelSnapStrength: 0.56
+    - _TexturePixelAspect: 0.74
+    - _TexturePixelSize: 41
     - _TexturePixelStrength: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}

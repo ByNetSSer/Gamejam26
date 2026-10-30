@@ -1,4 +1,4 @@
----
+﻿---
 tags: [gamejam, enemigos, flupin, feel, combate]
 estado: prototipo
 ---
@@ -20,7 +20,7 @@ Flupin es el primer enemigo de prueba. Se mueve en coordenadas del mundo, sin pe
 La repulsión tiene radio y cooldown configurables y usa la lista de enemigos activos, no una dirección de la cámara. Una repulsión exitosa otorga puntos por «Flupin repelido».
 
 > [!note] Consecuencia del daño
-> Un tercio de **vida actual** reduce la vida de forma proporcional: 9 → 6 → 4, por ejemplo. En condiciones normales no agota la vida por sí solo en un número finito de golpes; otros peligros pueden matar. Si se desea que Flupin pueda derrotar al jugador por sí mismo, decidir después una regla de daño mínimo o usar vida máxima.
+> Un tercio de **vida actual** reduce la vida de forma proporcional: 9 → 6 → 4, por ejemplo. Los ataques proporcionales de enemigos tienen un mínimo de 1 punto de daño (limitado a la vida restante), por lo que también pueden causar derrota. Una fracción de daño configurada en cero no causa daño.
 
 ## Uso en Unity
 
@@ -159,9 +159,9 @@ Las estadísticas y modificadores de Dontsee y la guía común para futuros enem
 
 ## Selección y aparición entre torres en la escena e
 
-`RoomEnemyRoster` conserva la selección provisional de Flupin y Dontsee. Ambos están habilitados inicialmente en la escena de prueba; el inventario y la interfaz para elegir enemigos siguen pendientes. La futura selección puede llamar `SetFlupinSelected` y `SetDontseeSelected`. El temporizador configurable empieza al entrar en la primera sala intermedia, nunca mientras se espera en la inicial. Por defecto dura cinco segundos y se reinicia en cada torre. Dontsee además conserva su probabilidad y separación por salas.
+`RoomEnemyRoster` conserva la selección de Flupin, Dontsee y la máscara durante la partida. En la escena `e` empiezan sin seleccionar y pueden incorporarse como maldiciones obligatorias en las torres pares. Las siguientes elecciones del mismo enemigo añaden un Flupin o máscara hasta cuatro por tipo; en Dontsee añaden 15 puntos porcentuales de aparición y reducen en una sala la separación mínima, con límites de 100 % y cero salas. Al menos una de las tres opciones será de enemigo si hay alguna disponible. El temporizador configurable empieza al entrar en la segunda sala intermedia: tanto la inicial como la primera intermedia están protegidas. Por defecto dura cinco segundos y se reinicia en cada torre.
 
-Al entrar a la sala final o al terminar/perder, Flupin se desactiva. Se reutiliza la misma instancia al reaparecer cerca del jugador y se vuelve a asignar su director, por lo que conserva sus modificadores, referencias FEEL y material. Dontsee se retira al salir de su sala; el roster puede registrar modificadores persistentes mediante `AddDontseeModifier` y los aplica a cada instancia nueva. `AddFlupinModifier` modifica la instancia conservada. Ambos tipos de modificador se pueden retirar por fuente. La selección y estos métodos aún no están conectados al inventario.
+Al entrar a la sala final o al terminar/perder, Flupin y las máscaras se desactivan. Se reutilizan las instancias al reaparecer cerca del jugador y se vuelve a asignar su director; los modificadores añadidos a través del roster se aplican también a las copias nuevas. Dontsee se retira al salir de su sala; el roster puede registrar modificadores persistentes mediante `AddDontseeModifier` y los aplica a cada instancia nueva. Los modificadores se pueden retirar por fuente. La elección está conectada a los altares, pero todavía no hay una pantalla de inventario.
 
 Probar en Play Mode: esperar en la inicial, salir y medir el retraso, pasar varias salas, llegar a los pilares y continuar a otra torre. Confirmar también el material, FEEL, parry con clic derecho, destrucción de Dontsee al salir de su sala y conservación de modificadores.
 
@@ -180,3 +180,23 @@ Los valores de `MaskChargerStat` permiten modificadores por instancia con `GetSt
 Flupin hereda ahora la traslación del jugador durante espera, órbita y acercamiento y conserva una velocidad relativa propia para la espiral; no hereda el giro de la cámara. Durante la expulsión vuelve al espacio del mundo y recupera la referencia relativa al regresar. Esto evita que la aceleración del jugador deje atrás al enemigo durante la persecución, pero hay que probar pasos por sala, teletransportes, cambios bruscos y repulsiones: el arrastre relativo también traslada a Flupin por paredes, coherente con su presentación superpuesta.
 
 Compilación de runtime/editor comprobada incluyendo el archivo nuevo; hubo advertencias de paquetes FEEL/NiceVibrations y ningún error. Pendiente Play Mode: velocidades altas, obstáculos, interacción con puertas y trampillas, trayectoria fija, aviso legible, daño, coordinación con los otros enemigos y recuperación de Flupin. No se han modificado escenas ni creado herramientas de editor.
+
+
+### Dontsee: preparación anticipada (2026-10-30)
+
+Dontsee decide su aparición una sola vez para la siguiente sala intermedia elegible, usando sus `DontseeSpawnPoint`; nunca se genera en la sala actual. Conserva probabilidad, salas de separación y exclusión de salas protegidas/finales. La selección tardía de la maldición permite preparar la siguiente sala mientras todavía no se haya evaluado.
+
+La instancia ya es visible antes de entrar: FEEL (`MMF_Scale`) anima desde escala cero hasta la escala original del prefab durante `appearanceDuration` (0,25 s por defecto). Espera inmóvil sin pedir turno hasta entrar en su sala, terminar la aparición y cumplirse la espera del roster. Obtener turno no vuelve a mostrarla ni reinicia su escala; conserva el aviso previo al acercamiento. La instancia actual y la preparada reciben modificadores y se cancelan juntas al detener los enemigos.
+
+Validación visual pendiente en Unity: puertas y trampillas, turno ocupado por otro enemigo, probabilidad 100 % con separación cero, cancelación y cambio de torre.
+
+
+### Skins de Flupin (2026-10-30)
+
+`FlupinVisual` permite configurar `Skins` en el Inspector: nombre, `Weight`, `Idle` obligatorio y `Attack` opcional. El prefab `Assets/Proyect/Assets/enemys/Flupin/Flupin.prefab` tiene Gato (Normal, peso 90), Carita sonriente (Variant1, peso 9) y Variant2 (peso 1). Con esos valores las probabilidades son 90 %, 9 % y 1 %. Se normalizan los pesos positivos de skins con Idle; peso cero excluye una variante. Si todos pesan cero, usa la primera skin válida como predeterminada. Sin skins válidas mantiene la apariencia existente.
+
+Se sortea una vez por instancia: desactivar/reactivar o cambiar de torre conserva su skin, y cada copia nueva sortea independientemente. `Approaching` usa Attack; Waiting, KnockedAway y Returning usan Idle. Si Attack está vacío, usa Idle también al atacar.
+
+El quad del prefab usa PNG individuales importados como Sprite (Single), sin empaquetar en Sprite Atlas. Los cambios se aplican mediante MaterialPropertyBlock por instancia a imagen y contorno, conservando los materiales, shaders, FEEL y FlupinOverlay. También se admite SpriteRenderer. Las carpetas organizan los assets; para añadir skins hay que asignar las referencias en la lista del Inspector.
+
+Compilación de runtime verificada incluyendo los scripts actuales. Referencias de las tres skins verificadas. Pendiente comprobación visual en Play Mode de ataque, repulsión, múltiples copias y contorno.

@@ -74,6 +74,7 @@ public sealed class PlayerController : MonoBehaviour
         if (GetComponent<GroundSurfaceSensor>() == null) gameObject.AddComponent<GroundSurfaceSensor>();
         if (GetComponent<EnemyDirector>() == null) gameObject.AddComponent<EnemyDirector>();
         if (GetComponent<PlayerRepel>() == null) gameObject.AddComponent<PlayerRepel>();
+        if (GetComponent<PlayerSpeedFeedback>() == null) gameObject.AddComponent<PlayerSpeedFeedback>();
     }
 
     // El gestor de salas llamará una sola vez por transición confirmada.
@@ -166,6 +167,7 @@ public sealed class PlayerController : MonoBehaviour
         if (jumpBuffered > 0f && coyoteRemaining > 0f && !pounding)
         {
             velocity.y = stats.Evaluate(PlayerStat.JumpSpeed, jumpSpeed);
+            GameSfx.Play("player.jump");
             jumpBuffered = coyoteRemaining = 0f;
             wasGrounded = false;
         }

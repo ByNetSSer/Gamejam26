@@ -52,10 +52,10 @@ public sealed class RoomCrusher : EnemyAgent
         room = GetComponentInParent<RoomDefinition>();
         var manager = GetComponentInParent<RoomManager>();
         if (manager != null && manager.Player != null) SetDirector(manager.Player.GetComponent<EnemyDirector>());
-        roomActive = room == null || manager == null || manager.CurrentRoom == room;
+        roomActive = room == null || manager == null || manager.CurrentRoom == room && !TowerSafetyRules.IsProtectedRoom(manager.RoomsEntered);
         if (room != null && manager != null)
         {
-            roomEnter = manager.Events.Subscribe<RoomEnteredEvent>(e => { if (e.Context.Room == room) roomActive = true; });
+            roomEnter = manager.Events.Subscribe<RoomEnteredEvent>(e => { if (e.Context.Room == room && !TowerSafetyRules.IsProtectedRoom(e.Context.Index)) roomActive = true; });
             roomExit = manager.Events.Subscribe<RoomExitedEvent>(e => { if (e.Context.Room == room) Finish(); });
         }
         if (!ValidSetup()) { Debug.LogWarning("Aplanadora de prueba: revisa marcadores, dimensiones y descenso vertical.", this); finished = true; return; }
@@ -81,9 +81,9 @@ public sealed class RoomCrusher : EnemyAgent
         if (SweptContact(oldPosition, visual.position, previousPlayer, center, playerBody.bounds.extents))
         {
             var health = Player.GetComponent<PlayerHealth>();
-            float damage = health != null ? health.CurrentHealth * Mathf.Clamp01(Value(CrusherStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
+            float damage = health != null ? health.DamageForCurrentHealthFraction(Value(CrusherStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
             Finish();
-            if (health != null) health.TakeDamage(damage);
+            if (health != null) health.TakeDamage(damage, RunLossReason.Crusher);
             return;
         }
         previousPlayer = center;

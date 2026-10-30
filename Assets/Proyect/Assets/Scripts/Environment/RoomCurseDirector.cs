@@ -42,7 +42,7 @@ public sealed class RoomCurseDirector : MonoBehaviour
     void OnDisable() { entered?.Dispose(); exited?.Dispose(); entered = exited = null; Clear(); }
     void OnEntered(RoomEnteredEvent message)
     {
-        if (message.Context.Kind != RoomKind.Intermediate || UnityEngine.Random.value >= chance) return;
+        if (message.Context.Kind != RoomKind.Intermediate || TowerSafetyRules.IsProtectedRoom(message.Context.Index) || UnityEngine.Random.value >= chance) return;
         var geometry = message.Context.Room.GetComponent<RoomGeometry>();
         if (geometry == null || transitionShader == null) return;
         context = message.Context;
@@ -55,6 +55,18 @@ public sealed class RoomCurseDirector : MonoBehaviour
         }
         if (surfaces.Count == 0) { Clear(); return; }
         elapsed = 0f; active = true;
+        var bounds = new Bounds();
+        bool hasBounds = false;
+        foreach (var surface in surfaces)
+        {
+            var collider = surface.GetComponent<Collider>();
+            if (collider == null) continue;
+            if (!hasBounds) { bounds = collider.bounds; hasBounds = true; }
+            else bounds.Encapsulate(collider.bounds);
+        }
+        Vector3 soundPosition = hasBounds ? bounds.center : context.Room.transform.position;
+        if (kind == RoomCurseKind.Tar) GameSfx.StartTarRoom(context.Room.transform, soundPosition);
+        if (kind == RoomCurseKind.Ice) GameSfx.PlayAt("surface.ice.freeze", soundPosition);
         manager.Events.Publish(new RoomCurseStartedEvent(context, kind));
     }
     void ApplyVisual(Renderer renderer)
@@ -95,6 +107,7 @@ public sealed class RoomCurseDirector : MonoBehaviour
             new GroundSurface.Modifier { stat = PlayerStat.Acceleration, type = StatModifierType.Percent, value = -0.25f }
         } : Array.Empty<GroundSurface.Modifier>();
         surface.Configure(modifiers, kind == RoomCurseKind.Lava ? 1f : 0f);
+        surface.SetAudioKind(kind == RoomCurseKind.Ice ? SurfaceAudioKind.Ice : kind == RoomCurseKind.Tar ? SurfaceAudioKind.Tar : SurfaceAudioKind.Lava);
         surfaces.Add(surface);
     }
     void Update()

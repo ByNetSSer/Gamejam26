@@ -15,6 +15,7 @@ public sealed class RoomExit : MonoBehaviour
     public Transform Anchor => anchor != null ? anchor : transform;
     public ImpactTarget Hatch => hatch;
     public RoomDoor Door => door;
+    public void SetLocked(bool locked) { if (hatch != null) hatch.SetBreakLocked(locked); }
     public void Configure(RoomConnection type, Transform marker, ImpactTarget hatchTarget, GameObject blocker)
     { connection = type; anchor = marker; hatch = hatchTarget; oneWayBlocker = blocker; }
     public void SetDoor(RoomDoor value) => door = value;

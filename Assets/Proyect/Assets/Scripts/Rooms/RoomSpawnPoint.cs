@@ -19,13 +19,13 @@ public sealed class RoomSpawnPoint : MonoBehaviour
     [SerializeField] Vector3 poolLocalOffset;
     [SerializeField] SpawnOption[] options;
     public void Configure(float probability, SpawnOption[] choices) { chance = Mathf.Clamp01(probability); propPool = null; options = choices; }
-    public void Spawn(System.Random random, float chanceMultiplier = 1f)
+    public void Spawn(System.Random random, float chanceMultiplier = 1f, bool allowEnemies = true)
     {
         if (!isActiveAndEnabled || random == null || random.NextDouble() >= Mathf.Clamp01(chance * Mathf.Max(0f, chanceMultiplier))) return;
         if (propPool != null)
         {
             var prefab = propPool.Choose(random, allowedSizes);
-            if (prefab != null)
+            if (prefab != null && (allowEnemies || prefab.GetComponentInChildren<EnemyAgent>(true) == null))
             {
                 var spawned = Instantiate(prefab, transform.TransformPoint(poolLocalOffset), transform.rotation, transform);
                 PropStackPoint.Populate(spawned, random);
@@ -34,12 +34,13 @@ public sealed class RoomSpawnPoint : MonoBehaviour
         }
         if (options == null) return;
         double total = 0;
-        foreach (var option in options) if (option.prefab != null && option.weight > 0f) total += option.weight;
+        foreach (var option in options)
+            if (option.prefab != null && option.weight > 0f && (allowEnemies || option.prefab.GetComponentInChildren<EnemyAgent>(true) == null)) total += option.weight;
         if (total <= 0) return;
         double choice = random.NextDouble() * total;
         foreach (var option in options)
         {
-            if (option.prefab == null || option.weight <= 0f) continue;
+            if (option.prefab == null || option.weight <= 0f || !allowEnemies && option.prefab.GetComponentInChildren<EnemyAgent>(true) != null) continue;
             choice -= option.weight;
             if (choice >= 0) continue;
             var instance = Instantiate(option.prefab, transform.TransformPoint(option.localOffset), transform.rotation, transform);

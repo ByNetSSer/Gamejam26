@@ -61,6 +61,8 @@ public sealed class MaskCharger : EnemyAgent
     readonly Dictionary<MaskChargerStat, StatValue> modifiers = new Dictionary<MaskChargerStat, StatValue>();
     EventStream events;
     MaskChargerState state;
+    float aimSoundAt;
+    bool aimSoundPlayed;
     float timer, chargeRemaining, lockedChargeSpeed, lockedBrakingDuration, brakingElapsed, orbitPhase;
     float orbitSide = 1f;
     Vector3 chargeDirection, previousPlayer;
@@ -130,6 +132,11 @@ public sealed class MaskCharger : EnemyAgent
                 break;
             case MaskChargerState.Telegraph:
                 timer -= dt;
+                if (!aimSoundPlayed && timer <= aimSoundAt)
+                {
+                    aimSoundPlayed = true;
+                    GameSfx.PlayFollowing("mask.aim", transform);
+                }
                 if (timer <= 0f)
                 {
                     if (trajectory != null) trajectory.enabled = false;
@@ -263,10 +270,10 @@ public sealed class MaskCharger : EnemyAgent
         if (hitPlayer || Player == null || !Player.enabled) return;
         hitPlayer = true;
         var health = Player.GetComponent<PlayerHealth>();
-        float damage = health != null ? health.CurrentHealth * Mathf.Clamp01(Evaluate(MaskChargerStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
+        float damage = health != null ? health.DamageForCurrentHealthFraction(Evaluate(MaskChargerStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
         Events.Publish(new MaskChargerHitEvent(this, Player, transform.position, damage));
         if (hitFeedback != null) hitFeedback.PlayFeedbacks(transform.position);
-        if (health != null) health.TakeDamage(damage);
+        if (health != null) health.TakeDamage(damage, RunLossReason.MaskCharger);
     }
     public override void AttackGranted()
     {
@@ -303,6 +310,13 @@ public sealed class MaskCharger : EnemyAgent
     {
         if (state == next) return;
         state = next;
+        if (next == MaskChargerState.Telegraph)
+        {
+            aimSoundAt = timer * 0.5f;
+            aimSoundPlayed = false;
+            GameSfx.PlayFollowing("mask.start", transform);
+        }
+        if (next == MaskChargerState.Charging) GameSfx.PlayFollowing("mask.charge", transform);
         Events.Publish(new MaskChargerStateChangedEvent(this, next, transform.position));
     }
 }

@@ -291,6 +291,7 @@ GameObject:
   - component: {fileID: 280264451}
   - component: {fileID: 280264452}
   - component: {fileID: 280264453}
+  - component: {fileID: 280264454}
   m_Layer: 0
   m_Name: Gestor de salas
   m_TagString: Untagged
@@ -340,8 +341,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomManager
   player: {fileID: 439266910}
-  startingRoom: {fileID: 3046097098999790974, guid: 2724ddee2747c494e9f5ba5aaabbe1d7, type: 3}
-  finalRoom: {fileID: 5932472808891719866, guid: 40638ca1061d91d45af10264fa821f5f, type: 3}
+  startingRoom: {fileID: 9101052000000000001, guid: 58e83998f1ecc6c4392c0b34ad21d16f, type: 3}
+  finalRoom: {fileID: 9101052000000000001, guid: 58e83998f1ecc6c4392c0b34ad21d16f, type: 3}
   hatchToHatch:
   - {fileID: 9123456789000000002, guid: 12e34921990b2944c803137fec5a47bd, type: 3}
   - {fileID: 9123456789000000002, guid: 5e93e11a3954422429d94b1a6be898ec, type: 3}
@@ -362,11 +363,12 @@ MonoBehaviour:
   - {fileID: 9123456789000000002, guid: 51e252aef74291c4c9680330e286c739, type: 3}
   hatchPrefab: {fileID: 4837290550892506680, guid: 294e6b60491701e468f0f572ecdb8a9e, type: 3}
   doorPrefab: {fileID: 6663744358754789415, guid: 9b3b072ef7239694e8ad34eb0938728f, type: 3}
-  roomsPerTower: 8
+  roomsPerTower: 7
+  totalTowers: 12
   difficulty:
     extraRoomsPerTower: 1
     maximumRooms: 20
-    speedPerTower: 0.5
+    speedPercentPerTower: 0.03
     spawnChancePerTower: 0.1
     initialLargeRoomChance: 0
     largeRoomChancePerTower: 0.1
@@ -452,10 +454,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flupin: {fileID: 1985854387}
   maskCharger: {fileID: 472450319}
-  flupinSelected: 1
-  dontseeSelected: 1
-  maskChargerSelected: 1
+  flupinSelected: 0
+  dontseeSelected: 0
+  maskChargerSelected: 0
   delayAfterLeavingStart: 5
+--- !u!114 &280264454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280264445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5360a361fe044a25b75fdcc1a4c428ef, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RunEndScreen
 --- !u!1 &435069590
 GameObject:
   m_ObjectHideFlags: 0
@@ -1090,6 +1104,8 @@ MonoBehaviour:
   catchUpBonus: 4
   attackRange: 10
   preferredDistance: 8
+  orbitDegreesPerSecond: 70
+  stalkingArc: 65
   attackInterval: 4
   telegraphDuration: 1
   chargeSpeed: 16
@@ -1098,8 +1114,13 @@ MonoBehaviour:
   currentHealthFraction: 0.33
   recoveryDuration: 1.5
   overshootDistance: 4
-  lineWidth: 0.08
+  brakingDuration: 0.35
+  lineWidth: 0.9
   lineColor: {r: 1, g: 0.2, b: 0.1, a: 1}
+  warningFeedback: {fileID: 0}
+  chargeFeedback: {fileID: 0}
+  brakingFeedback: {fileID: 0}
+  hitFeedback: {fileID: 0}
 --- !u!1 &497558307
 GameObject:
   m_ObjectHideFlags: 0
@@ -1161,17 +1182,33 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mask
       objectReference: {fileID: 0}
+    - target: {fileID: 2354963698112598834, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 5.358145
+      objectReference: {fileID: 0}
+    - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 5.358145
+      objectReference: {fileID: 0}
+    - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 5.358145
+      objectReference: {fileID: 0}
     - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.23211
       objectReference: {fileID: 0}
     - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0
+      value: 0.00000033892
       objectReference: {fileID: 0}
     - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.75253
+      value: -0.97226
       objectReference: {fileID: 0}
     - target: {fileID: 4578033986637244219, guid: 5e5b18fcbeb9d9540b678f831ef255d4, type: 3}
       propertyPath: m_LocalRotation.w

@@ -2,12 +2,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum SurfaceAudioKind { Normal, Ice, Tar, Lava }
+
 // Surface regions are explicitly queried by GroundSurfaceSensor, independent of trigger callbacks.
 [RequireComponent(typeof(Collider))]
 public sealed class GroundSurface : MonoBehaviour
 {
     [Serializable] public struct Modifier { public PlayerStat stat; public StatModifierType type; public float value; }
     [SerializeField] Modifier[] modifiers;
+    [SerializeField] bool tarSurface;
+    [SerializeField] SurfaceAudioKind audioKind;
+    public SurfaceAudioKind AudioKind => tarSurface ? SurfaceAudioKind.Tar : damagePerTick > 0f ? SurfaceAudioKind.Lava : audioKind;
+    public void SetAudioKind(SurfaceAudioKind kind) { audioKind = kind; tarSurface = kind == SurfaceAudioKind.Tar; }
+    public bool IsTar => AudioKind == SurfaceAudioKind.Tar;
+    public void SetTarSurface(bool value) => tarSurface = value;
     [SerializeField, Min(0f)] float damagePerTick;
     [SerializeField, Min(0.01f)] float damageInterval = 1f;
     readonly Dictionary<PlayerController, float> contacts = new Dictionary<PlayerController, float>();
@@ -28,7 +36,7 @@ public sealed class GroundSurface : MonoBehaviour
     {
         if (player == null || !contacts.TryGetValue(player, out float nextDamage) || damagePerTick <= 0f || Time.time < nextDamage) return;
         var health = player.GetComponent<PlayerHealth>();
-        if (health != null) health.TakeDamage(damagePerTick);
+        if (health != null) health.TakeDamage(damagePerTick, RunLossReason.HazardousSurface);
         contacts[player] = Time.time + Mathf.Max(0.01f, damageInterval);
     }
     public void Exit(PlayerController player)

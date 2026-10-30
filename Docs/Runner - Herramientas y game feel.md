@@ -76,3 +76,17 @@ Referencias oficiales: [atributos](https://odininspector.com/attributes), [tutor
 ## Aún no implementado
 
 Flupin tiene tres `MMF_Player` de demostración con escala para aviso, repulsión y daño. No hay integración de Odin ni shake, FOV dinámico, hit stop, audio reactivo o animaciones de combo confirmadas. El inicio del pisotón y la apertura de puerta no exponen aún eventos dedicados; podrían añadirse si se necesitan. No se ha creado una skill global: esta nota y `AGENTS.md` son referencias locales del proyecto.
+
+## Distorsion gradual por velocidad (2026-10-30)
+
+`PlayerController` incorpora automaticamente `PlayerSpeedFeedback` si no existe. Usa un Volume global de runtime con prioridad 100 y perfil propio de Lens Distortion; conserva los assets del Global Volume, el pixelado y el overlay de Flupin. Activa postprocesado en la camara del jugador. Solo controla la distorsion; no modifica FOV.
+
+Valores iniciales de ajuste: empieza a 8 u/s, alcanza -0.3 a 45 u/s y permanece limitada por encima. La respuesta cuadratica mantiene los cambios bajos al principio (20 u/s: aproximadamente -0.032; 30 u/s: -0.106). Suavizado exponencial de 0.3 s, con tiempo escalado. Usa velocidad horizontal; `Include Vertical Speed` permite incluir caidas/pisoton. Al deshabilitar el controlador vuelve suavemente a cero; al deshabilitar el feedback retira su volumen.
+
+Para guardar ajustes, agregar `PlayerSpeedFeedback` al jugador/prefab fuera de Play Mode y editar Start Speed, Full Effect Speed, Response Exponent, Maximum Distortion y Smoothing Time. Los umbrales son absolutos, no se normalizan con la velocidad maxima actual del jugador. Compilacion de runtime verificada con proyecto temporal que incluye el script nuevo y referencias DLL locales; falta validacion visual en Play Mode a 6, 20, 30, 45 y mas de 45 u/s, frenado, derrota y parry.
+
+## Pulso visual al recibir dano (2026-10-30)
+
+`PlayerHealth` incorpora `PlayerDamageFeedback` automaticamente; escucha solo `PlayerEvents.DamageReceived` (dano aceptado). Pulso de 0.45 s: vineta negra 0.4, exposicion -0.35, distorsion -0.38 y aberracion cromatica 0.15. La intensidad depende del dano respecto a la vida maxima (pulso completo al perder 30%); golpes consecutivos refrescan sin acumular oscuridad ilimitada. Recuperacion suave con tiempo no escalado, incluso al detenerse la partida por derrota.
+
+Volume temporal de prioridad 200, por encima del feedback de velocidad y debajo del parry. El peso vuelve a cero para recuperar los valores de los volumenes inferiores, incluida la distorsion de carrera. No altera perfiles guardados. Para conservar ajustes, agregar el componente al jugador/prefab fuera de Play Mode. Compilacion de runtime correcta, incluyendo ambos scripts nuevos; pendiente comprobar visualmente dano leve/fuerte, lava repetida, dano corriendo, parry, derrota y desactivar/reactivar el componente.

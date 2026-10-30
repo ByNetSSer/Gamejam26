@@ -213,7 +213,7 @@ public sealed class Flupin : EnemyAgent
     void HitPlayer()
     {
         var health = Player.GetComponent<PlayerHealth>();
-        if (health != null) health.TakeDamage(health.CurrentHealth * Mathf.Clamp01(Evaluate(FlupinStat.CurrentHealthFraction, currentHealthFraction)));
+        if (health != null) health.TakeDamage(health.DamageForCurrentHealthFraction(Evaluate(FlupinStat.CurrentHealthFraction, currentHealthFraction)), RunLossReason.Flupin);
         if (hitFeedback != null) hitFeedback.PlayFeedbacks(transform.position);
         ThrowAway(Evaluate(FlupinStat.HitRecoilSpeed, hitRecoilSpeed), Mathf.Max(1f, Evaluate(FlupinStat.HitTravelMultiplier, hitTravelMultiplier)));
     }

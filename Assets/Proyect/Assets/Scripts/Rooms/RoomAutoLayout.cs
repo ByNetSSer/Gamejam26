@@ -49,7 +49,7 @@ public sealed class RoomAutoLayout : MonoBehaviour
         return true;
     }
     Transform FindDirect(string n) { foreach (Transform t in transform) if (t.name == n) return t; return null; }
-    static Bounds BoundsOf(Transform root)
+    public static Bounds BoundsOf(Transform root)
     {
         var renderers = root.GetComponentsInChildren<Renderer>();
         if (renderers.Length == 0) return new Bounds(root.position, Vector3.zero);
@@ -65,6 +65,8 @@ public sealed class RoomAutoLayout : MonoBehaviour
         return marker;
     }
     Transform HatchMarker(Transform surface, bool incoming)
+        => CreateHatchMarker(transform, surface, incoming);
+    public static Transform CreateHatchMarker(Transform roomRoot, Transform surface, bool incoming)
     {
         var tiles = new List<Transform>();
         foreach (Transform t in surface) tiles.Add(t);
@@ -73,7 +75,9 @@ public sealed class RoomAutoLayout : MonoBehaviour
         var tile = tiles[0];
         var bounds = BoundsOf(tile);
         tile.gameObject.SetActive(false);
-        var marker = Marker(incoming ? "Entrada trampilla" : "Salida trampilla", new Vector3(bounds.center.x, bounds.max.y, bounds.center.z), Quaternion.identity);
+        var marker = new GameObject(incoming ? "Entrada trampilla" : "Salida trampilla").transform;
+        marker.SetParent(roomRoot, false);
+        marker.SetPositionAndRotation(new Vector3(bounds.center.x, bounds.max.y, bounds.center.z), Quaternion.identity);
         if (!incoming) marker.gameObject.AddComponent<RoomHatchVisual>().Tile = tile;
         return marker;
     }

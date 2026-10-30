@@ -24,7 +24,7 @@ public sealed class PlayerCamera : MonoBehaviour
         if (player == null || Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
         float speedFraction = Mathf.Clamp01(player.HorizontalSpeed / Mathf.Max(0.01f, player.Stats.Evaluate(PlayerStat.CameraPenaltySpeed, speedForMaxPenalty)));
         float control = player.Stats.Evaluate(PlayerStat.CameraControl, baseControl) * Mathf.Lerp(1f, Mathf.Clamp01(player.Stats.Evaluate(PlayerStat.CameraMinimumControl, minimumControl)), speedFraction);
-        Vector2 look = Mouse.current.delta.ReadValue() * (player.Stats.Evaluate(PlayerStat.CameraSensitivity, mouseSensitivity) * control);
+        Vector2 look = Mouse.current.delta.ReadValue() * (player.Stats.Evaluate(PlayerStat.CameraSensitivity, mouseSensitivity) * control * MenuUIBase.Core.GameSettings.Instance.MouseSensitivity);
         player.transform.Rotate(0f, look.x, 0f, Space.World);
         float maxPitch = Mathf.Clamp(player.Stats.Evaluate(PlayerStat.CameraPitchLimit, pitchLimit), 1f, 89f);
         pitch = Mathf.Clamp(pitch - look.y, -maxPitch, maxPitch);

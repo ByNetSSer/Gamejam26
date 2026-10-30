@@ -16,10 +16,10 @@ estado: prototipo
 | `RoomExitedEvent` | Se abandona una sala por avance, victoria de torre o derrota. | Contexto y motivo `Advanced`, `Completed` o `Defeated`. |
 | `TowerCompletedEvent` | El jugador entra y toca el suelo de la sala final. | Total de salas y puntuación. |
 | `RunLostEvent` | `PlayerHealth` llega a cero durante la torre. | Sala actual, puntuación y motivo `PlayerHealthDepleted`. |
-| `RunWonEvent` | Un director futuro llama `DeclareRunVictory()` tras completar la torre final de la partida. | Total de salas de esa torre y puntuación. |
+| `RunWonEvent` | El jugador activa el botón de victoria después de completar la última torre. | Total de salas de esa torre y puntuación. |
 | `TowerGenerationFailedEvent` | Falta configuración o no se puede preparar una secuencia. | Mensaje e índice alcanzado; no cuenta como derrota del jugador. |
 
-**Completar una torre no implica ganar toda la partida:** se emite `TowerCompletedEvent`, y `RunWonEvent` solo se emite si un director llama expresamente a `RoomManager.DeclareRunVictory()`. Actualmente no existe ese director ni una condición final de victoria; la torre de prueba se detiene al completarse. La derrota detiene el controlador y muestra estado provisional; aún no hay pantalla de fin, reinicio o transición a tienda.
+**Completar una torre no implica ganar toda la partida:** se emite `TowerCompletedEvent`. Tras completar la torre 12, la zona segura final muestra solo un botón de victoria; al mirarlo y pulsar E se llama a `RoomManager.DeclareRunVictory()` y se emite `RunWonEvent` una sola vez. El límite se configura en `Total Towers` del gestor y no permite iniciar otra torre. Todavía no hay pantalla de victoria ni reinicio de partida.
 
 ## Orden esperado
 
@@ -64,16 +64,16 @@ public sealed class EjemploEventoSala : MonoBehaviour
 }
 ```
 
-Los listeners que necesiten el evento inicial deben suscribirse antes del `Start` del gestor; no se vuelven a emitir eventos pasados al suscribirse. Para una victoria final, un director futuro escucha `TowerCompletedEvent`, decide si hay más torres y llama a `DeclareRunVictory()` solo si corresponde. La llamada está protegida contra duplicados y contra una derrota previa.
+Los listeners que necesiten el evento inicial deben suscribirse antes del `Start` del gestor; no se vuelven a emitir eventos pasados al suscribirse. `DeclareRunVictory()` está protegida contra llamadas antes de completar la última torre, duplicados y una derrota previa.
 
 ## Verificación
 
 Runtime y editor compilan. Se ejecutaron cinco comprobaciones aisladas del canal: orden de eventos anidados, cancelación de suscripción, aislamiento de excepciones, independencia entre canales y limpieza. Falta probar en Play Mode los eventos reales al avanzar, perder vida, terminar la torre y conectar la UI o ítems.
 
-## Ciclo provisional de recompensas en la escena e
+## Ciclo de zonas seguras en la escena e
 
-Al completar la torre, `TowerRewardStation` crea tres pilares dentro de la sala final: dos opciones comunes distintas y una de nivel superior. Sus representaciones y efectos son provisionales; se elige una gratis con E y el botón situado al otro lado de la sala inicia la torre siguiente después de elegir. Los efectos se conservan en `PlayerStats` durante la partida. El catálogo de `ItemDefinition` sigue siendo descriptivo y no se conecta automáticamente a estos efectos; el inspector admite un sprite común y un modelo excepcional cuando estén disponibles.
+La escena `e` usa `ZonaSegura` como sala inicial y final. El inicio de la primera torre muestra la sala y la trampilla de salida; los altares quedan ocultos. En el final de las torres anteriores a la última, `TowerRewardStation` usa los tres altares existentes para ofrecer mejoras con precios y permite una renovación gratuita de las ofertas por torre. El botón inicia la torre siguiente sin exigir una compra. En el final de la última torre los altares se ocultan y solo aparece el botón de victoria. Se conservan los efectos en `PlayerStats` durante la partida.
 
-`TowerDifficulty` mantiene el número inicial de salas configurado y añade una sala por torre hasta 20, 0,5 de velocidad inicial por torre y un 10 % relativo a las probabilidades de los puntos de aparición de objetos por torre (limitadas al 100 %). `RoomAutoLayout.Size` permite marcar salas grandes; la probabilidad de elegirlas crece un 10 % por torre cuando hay salas grandes compatibles. Las salas actuales son pequeñas y se usan como alternativa mientras no haya grandes. Los valores son experimentales, no balance final. No hay monedas ni compras en esta versión.
+En las torres pares (2, 4, 6…) aparecen tres maldiciones provisionales en la zona inicial. El jugador debe elegir una gratis con E para desbloquear la trampilla; sus modificadores persisten. La selección incluye al menos una maldición de enemigo cuando hay alguna disponible: la primera elección incorpora al enemigo y las posteriores aumentan la cantidad de Flupin o máscaras, o la frecuencia de Dontsee. Los valores de las maldiciones son provisionales. `TowerDifficulty` mantiene el número inicial de salas configurado y añade una sala por torre hasta 20, un 3 % aditivo de velocidad máxima por torre y un 10 % relativo a las probabilidades de los puntos de aparición de objetos por torre (limitadas al 100 %). El crecimiento de velocidad por sala sigue siendo independiente. `RoomAutoLayout.Size` permite marcar salas grandes; la probabilidad de elegirlas crece un 10 % por torre cuando hay salas grandes compatibles. Las salas actuales son pequeñas y se usan como alternativa mientras no haya grandes.
 
-Al avanzar se conservan vida, puntuación, mejoras y progreso de velocidad por salas. La torre inicial y la final siguen usando los prefabs existentes. Las nuevas conexiones, recompensas y reinicios requieren validación completa en Play Mode; los proyectos generados por Unity deben regenerarse para incluir los scripts nuevos.
+La sala inicial y la primera intermedia (índices 1 y 2) no activan enemigos ni maldiciones de suelo. Al avanzar se conservan vida, puntuación, monedas, mejoras y progreso de velocidad por salas. Las conexiones, recompensas, renovación y reinicios requieren validación completa en Play Mode; los proyectos generados por Unity deben regenerarse para incluir los scripts nuevos.

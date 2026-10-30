@@ -1,4 +1,6 @@
 using UnityEngine;
+using MoreMountains.Feedbacks;
+using MoreMountains.Tools;
 using System.Collections.Generic;
 
 public enum DontseeEndReason { RoomExited, HitPlayer, Cancelled, Disabled }
@@ -57,6 +59,10 @@ public sealed class Dontsee : EnemyAgent
     [Header("Apariencia")]
     [SerializeField] Material stalkingMaterial;
     [SerializeField] Material watchedMaterial;
+    [SerializeField, Min(0.01f)] float appearanceDuration = 0.25f;
+    bool roomEntered;
+    RoomEnemyRoster roster;
+    float appearanceReadyAt;
     Renderer visual;
     Camera view;
     bool attacking;
@@ -81,7 +87,7 @@ public sealed class Dontsee : EnemyAgent
     public float Evaluate(DontseeStat stat, float baseValue) => GetStat(stat).Calculate(baseValue);
     public float Aggressiveness => Mathf.Max(0.1f, Evaluate(DontseeStat.Aggressiveness, aggressiveness));
     public override AttackRequirement Requirement => AttackRequirement.Any;
-    public override bool CanRequestAttack => !attacking;
+    public override bool CanRequestAttack => roomEntered && !ended && !attacking && Time.time >= appearanceReadyAt && (roster == null || roster.EnemiesReady);
     public override bool CanBeRepelled => false;
     public override bool UsesAttackTimeout => false;
     public override bool TryRepel(float power) => false;
@@ -90,18 +96,43 @@ public sealed class Dontsee : EnemyAgent
     {
         roomExited?.Dispose();
         eventBus = bus; room = context;
+        roster = GetComponentInParent<RoomEnemyRoster>();
+        PlayAppearance();
         if (eventBus != null)
             roomExited = eventBus.Subscribe<RoomExitedEvent>(e =>
             {
                 if (e.Context.Room == room.Room) Finish(DontseeEndReason.RoomExited);
             });
     }
+    public void EnterRoom() { roomEntered = true; }
+    void PlayAppearance()
+    {
+        var destination = transform.localScale;
+        transform.localScale = Vector3.zero;
+        var feedbackObject = new GameObject("Dontsee Appearance FEEL");
+        feedbackObject.transform.SetParent(transform, false);
+        var feedback = feedbackObject.AddComponent<MMF_Player>();
+        var tween = new MMTweenType(AnimationCurve.EaseInOut(0f, 0f, 1f, 1f));
+        feedback.FeedbacksList = new List<MMF_Feedback>
+        {
+            new MMF_Scale
+            {
+                Mode = MMF_Scale.Modes.ToDestination, AnimateScaleTarget = transform,
+                DestinationScale = destination, AnimateScaleDuration = appearanceDuration,
+                AnimateScaleTweenX = tween, AnimateScaleTweenY = tween, AnimateScaleTweenZ = tween
+            }
+        };
+        feedback.Initialization();
+        if (visual != null) visual.enabled = true;
+        appearanceReadyAt = Time.time + appearanceDuration;
+        feedback.PlayFeedbacks();
+    }
     void Update()
     {
         if (Player == null || !Player.enabled) return;
-        if (!attacking) { RequestAttack(); return; }
         if (view == null) view = Player.GetComponentInChildren<Camera>();
         if (view != null) transform.rotation = Quaternion.LookRotation(view.transform.forward, view.transform.up);
+        if (!attacking) { if (CanRequestAttack) RequestAttack(); return; }
         Vector3 center = Player.transform.position + Vector3.up * 0.5f;
         Vector3 before = transform.position;
         bool watched = IsWatched();
@@ -128,10 +159,10 @@ public sealed class Dontsee : EnemyAgent
         if (Flupin.TouchesPlayer(before, transform.position, previousPlayer, center, Evaluate(DontseeStat.ContactRadius, contactRadius)))
         {
             var health = Player.GetComponent<PlayerHealth>();
-            float damage = health != null ? health.CurrentHealth * Mathf.Clamp01(Evaluate(DontseeStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
+            float damage = health != null ? health.DamageForCurrentHealthFraction(Evaluate(DontseeStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
             eventBus?.Publish(new DontseeHitEvent(this, Player, room, transform.position, damage));
             Finish(DontseeEndReason.HitPlayer);
-            if (health != null) health.TakeDamage(damage);
+            if (health != null) health.TakeDamage(damage, RunLossReason.Dontsee);
             return;
         }
         previousPlayer = center;
@@ -153,11 +184,12 @@ public sealed class Dontsee : EnemyAgent
     }
     public override void AttackGranted()
     {
-        if (Player == null) { ReleaseAttack(); return; }
+        if (Player == null || !CanRequestAttack) { ReleaseAttack(); return; }
         attacking = true;
         previousPlayer = Player.transform.position + Vector3.up * 0.5f;
         warningRemaining = Evaluate(DontseeStat.WarningDuration, warningDuration);
         if (visual != null) visual.enabled = true;
+        GameSfx.PlayFollowing("dontsee.appear", transform);
         eventBus?.Publish(new DontseeActivatedEvent(this, Player, room, transform.position));
     }
     public override void AttackCancelled()

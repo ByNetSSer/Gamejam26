@@ -57,7 +57,10 @@ public sealed class PlayerRepel : MonoBehaviour
                 (enemy.transform.position - transform.position).sqrMagnitude > radius * radius) continue;
             Vector3 impactPosition = enemy.transform.position;
             if (enemy.TryRepel(repelPower))
+            {
+                GameSfx.PlayAt("parry.success", impactPosition);
                 Events.Publish(new EnemyRepelledEvent(director.Player, enemy, impactPosition, repelPower));
+            }
         }
         RefreshAvailability();
     }
@@ -90,7 +93,10 @@ public sealed class PlayerRepel : MonoBehaviour
                 Events.Publish(new EnemyRepelAvailabilityChangedEvent(director != null ? director.Player : null, enemy, false));
         foreach (var enemy in next)
             if (enemy != null && !previous.Contains(enemy))
+            {
+                if (enemy is Flupin) GameSfx.PlayFollowing("flupin.available", enemy.transform);
                 Events.Publish(new EnemyRepelAvailabilityChangedEvent(director.Player, enemy, true));
+            }
     }
     void ClearAvailability()
     {

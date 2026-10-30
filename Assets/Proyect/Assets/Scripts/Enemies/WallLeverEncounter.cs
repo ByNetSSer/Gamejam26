@@ -52,9 +52,9 @@ public sealed class WallLeverEncounter : EnemyAgent
         if (room != null && rooms != null)
         {
             if (rooms.Player != null) SetDirector(rooms.Player.GetComponent<EnemyDirector>());
-            entered = rooms.Events.Subscribe<RoomEnteredEvent>(e => { if (e.Context.Room == room) Begin(); });
+            entered = rooms.Events.Subscribe<RoomEnteredEvent>(e => { if (e.Context.Room == room && !TowerSafetyRules.IsProtectedRoom(e.Context.Index)) Begin(); });
             exited = rooms.Events.Subscribe<RoomExitedEvent>(e => { if (e.Context.Room == room) End(); });
-            if (rooms.CurrentRoom == room) Begin();
+            if (rooms.CurrentRoom == room && !TowerSafetyRules.IsProtectedRoom(rooms.RoomsEntered)) Begin();
         }
         else Begin();
     }
