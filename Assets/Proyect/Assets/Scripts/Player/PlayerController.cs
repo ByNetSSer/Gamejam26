@@ -1,0 +1,276 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+[RequireComponent(typeof(CharacterController), typeof(PlayerStats))]
+public sealed class PlayerController : MonoBehaviour
+{
+    [Header("Movimiento horizontal")]
+    [SerializeField, Min(0f)] float baseSpeed = 6f;
+    [SerializeField, Min(0f)] float speedPerRoom = 0.6f;
+    [SerializeField, Min(0.01f)] float acceleration = 28f;
+    [SerializeField, Min(0.01f)] float braking = 24f;
+    [SerializeField, Min(0f)] float turnAcceleration = 32f;
+    [SerializeField, Range(0f, 1f)] float airControl = 0.6f;
+    [Header("Salto y pisotón")]
+    [SerializeField, Min(0f)] float jumpSpeed = 9f;
+    [SerializeField, Min(0f)] float gravity = 25f;
+    [SerializeField, Min(0f)] float maxFallSpeed = 30f;
+    [SerializeField, Min(0f)] float poundSpeed = 22f;
+    [SerializeField, Min(0f)] float poundSpeedPerRoom = 0.4f;
+    [SerializeField, Min(0f)] float coyoteTime = 0.1f;
+    [SerializeField, Min(0f)] float jumpBufferTime = 0.12f;
+    [SerializeField, Min(0f)] float groundStickSpeed = 2f;
+    [Header("Correr y agacharse")]
+    [SerializeField, Min(1f)] float sprintSpeedMultiplier = 1.15f;
+    [SerializeField, Min(1f)] float sprintAccelerationMultiplier = 1.1f;
+    [SerializeField, Range(0.3f, 1f)] float crouchHeightFraction = 0.6f;
+    [SerializeField, Range(0f, 1f)] float crouchSpeedFraction = 0.6f;
+    [SerializeField, Min(0f)] float slideMinimumSpeed = 5f;
+    [SerializeField, Min(0f)] float slideBraking = 3f;
+    [SerializeField, Min(1f)] float slideStartSpeedMultiplier = 1.1f;
+    [SerializeField, Min(0f)] float slideBoostDuration = 0.3f;
+
+    [Header("Seguridad de colisiones")]
+    [SerializeField, Min(0.01f)] float maxStepDistance = 0.2f;
+    [SerializeField, Range(1, 256)] int maxStepsPerFrame = 128;
+    CharacterController controller;
+    PlayerStats stats;
+    Vector3 velocity;
+    float coyoteRemaining, jumpBuffered;
+    bool grounded, pounding;
+    bool crouching, sliding;
+    float slideBoostRemaining;
+    float standingHeight;
+    Vector3 standingCenter, cameraStandingPosition;
+    Transform playerCamera;
+    int roomsCleared;
+    bool groundedForSweep;
+    readonly RaycastHit[] sweepBuffer = new RaycastHit[32];
+    static readonly IComparer<RaycastHit> HitDistanceComparer = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
+    public Vector3 Velocity => velocity;
+    public float HorizontalSpeed => new Vector2(velocity.x, velocity.z).magnitude;
+    public float TargetSpeed => stats.Evaluate(PlayerStat.MoveSpeed, baseSpeed + stats.Evaluate(PlayerStat.SpeedPerRoom, speedPerRoom) * roomsCleared);
+    // Conservative starting point for encounter timing; actual travel depends on input and surfaces.
+    public float GroundAcceleration => Mathf.Min(stats.Evaluate(PlayerStat.Acceleration, acceleration), stats.Evaluate(PlayerStat.TurnAcceleration, turnAcceleration));
+    public PlayerStats Stats => stats;
+    public int RoomsCleared => roomsCleared;
+    public bool IsGrounded => grounded;
+    public bool IsPounding => pounding;
+    public bool IsCrouching => crouching;
+    public bool IsSliding => sliding;
+    public event Action<int> RoomCleared;
+    public event Action<float, bool> Landed;
+
+    void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+        standingHeight = controller.height;
+        standingCenter = controller.center;
+        var camera = GetComponentInChildren<Camera>();
+        if (camera != null) { playerCamera = camera.transform; cameraStandingPosition = playerCamera.localPosition; }
+        stats = GetComponent<PlayerStats>();
+        if (GetComponent<GroundSurfaceSensor>() == null) gameObject.AddComponent<GroundSurfaceSensor>();
+        if (GetComponent<EnemyDirector>() == null) gameObject.AddComponent<EnemyDirector>();
+        if (GetComponent<PlayerRepel>() == null) gameObject.AddComponent<PlayerRepel>();
+    }
+
+    // El gestor de salas llamará una sola vez por transición confirmada.
+    public void RegisterRoomCleared()
+    {
+        roomsCleared++;
+        RoomCleared?.Invoke(roomsCleared);
+    }
+    public void ResetMotion()
+    {
+        velocity = Vector3.zero;
+        grounded = pounding = sliding = false;
+        slideBoostRemaining = 0f;
+        coyoteRemaining = jumpBuffered = 0f;
+    }
+
+    void Update()
+    {
+        if (Time.deltaTime <= 0f) return;
+        var keyboard = Keyboard.current;
+        float horizontal = keyboard == null ? 0f :
+            ((keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed ? 1f : 0f) -
+             (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed ? 1f : 0f));
+        float forward = keyboard == null ? 0f :
+            ((keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed ? 1f : 0f) -
+             (keyboard.sKey.isPressed && grounded ? 1f : 0f));
+        bool jump = keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
+        bool crouch = keyboard != null && keyboard.cKey.isPressed;
+        bool crouchPressed = keyboard != null && keyboard.cKey.wasPressedThisFrame;
+        bool pound = keyboard != null && (keyboard.leftCtrlKey.wasPressedThisFrame || keyboard.rightCtrlKey.wasPressedThisFrame);
+        bool sprint = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+        UpdateCrouch(crouch, crouchPressed);
+        Tick(new Vector2(horizontal, forward), jump, pound, sprint, Time.deltaTime);
+    }
+
+    void UpdateCrouch(bool requested, bool pressed)
+    {
+        if (!requested && crouching && !CanStand()) requested = true;
+        crouching = requested;
+        if (!crouching || !grounded) { sliding = false; slideBoostRemaining = 0f; }
+        else if (pressed && HorizontalSpeed >= slideMinimumSpeed && HorizontalSpeed > 0.001f)
+        {
+            sliding = true;
+            velocity.x *= Mathf.Max(1f, slideStartSpeedMultiplier);
+            velocity.z *= Mathf.Max(1f, slideStartSpeedMultiplier);
+            slideBoostRemaining = slideBoostDuration;
+        }
+        else if (sliding && HorizontalSpeed < slideMinimumSpeed) sliding = false;
+        float height = crouching ? Mathf.Max(controller.radius * 2f, standingHeight * crouchHeightFraction) : standingHeight;
+        controller.height = height;
+        controller.center = standingCenter + Vector3.down * ((standingHeight - height) * 0.5f);
+        if (playerCamera != null) playerCamera.localPosition = cameraStandingPosition + Vector3.down * ((standingHeight - height) * 0.5f);
+    }
+    bool CanStand()
+    {
+        float radius = Mathf.Max(0.01f, controller.radius - controller.skinWidth);
+        Vector3 center = transform.TransformPoint(standingCenter);
+        float half = Mathf.Max(0f, standingHeight * 0.5f - radius);
+        foreach (var hit in Physics.OverlapCapsule(center + Vector3.up * half, center - Vector3.up * half, radius, ~0, QueryTriggerInteraction.Ignore))
+            if (hit != controller && !hit.transform.IsChildOf(transform)) return false;
+        return true;
+    }
+    void Tick(Vector2 input, bool jumpPressed, bool poundPressed, bool sprint, float dt)
+    {
+        bool wasGrounded = grounded;
+        if (wasGrounded) coyoteRemaining = stats.Evaluate(PlayerStat.CoyoteTime, coyoteTime);
+        else coyoteRemaining = Mathf.Max(0f, coyoteRemaining - dt);
+        jumpBuffered = jumpPressed ? stats.Evaluate(PlayerStat.JumpBufferTime, jumpBufferTime) : Mathf.Max(0f, jumpBuffered - dt);
+
+        if (pounding) input = Vector2.zero;
+        input = Vector2.ClampMagnitude(input, 1f);
+        float speed = TargetSpeed * (crouching ? crouchSpeedFraction : sprint ? sprintSpeedMultiplier : 1f);
+        Vector3 desired = (transform.right * input.x + transform.forward * input.y) * speed;
+        float rate = input.sqrMagnitude > 0.0001f ? stats.Evaluate(PlayerStat.Acceleration, acceleration) : stats.Evaluate(PlayerStat.Braking, braking);
+        Vector3 currentHorizontal = new Vector3(velocity.x, 0f, velocity.z);
+        if (input.sqrMagnitude > 0.0001f && Vector3.Dot(currentHorizontal, desired) < 0f)
+            rate = stats.Evaluate(PlayerStat.TurnAcceleration, turnAcceleration);
+        if (!wasGrounded) rate *= stats.Evaluate(PlayerStat.AirControl, airControl);
+        if (sprint && !crouching && input.sqrMagnitude > 0.0001f) rate *= sprintAccelerationMultiplier;
+        if (sliding)
+        {
+            desired = Vector3.zero;
+            rate = slideBoostRemaining > 0f ? 0f : slideBraking;
+            slideBoostRemaining = Mathf.Max(0f, slideBoostRemaining - dt);
+        }
+        Vector3 horizontalVelocity = Vector3.MoveTowards(currentHorizontal, desired, rate * dt);
+        velocity.x = horizontalVelocity.x;
+        velocity.z = horizontalVelocity.z;
+
+        if (jumpBuffered > 0f && coyoteRemaining > 0f && !pounding)
+        {
+            velocity.y = stats.Evaluate(PlayerStat.JumpSpeed, jumpSpeed);
+            jumpBuffered = coyoteRemaining = 0f;
+            wasGrounded = false;
+        }
+        if (poundPressed && !wasGrounded && !pounding)
+        {
+            pounding = true;
+            velocity.x = velocity.z = 0f;
+            coyoteRemaining = 0f;
+            velocity.y = -Mathf.Max(stats.Evaluate(PlayerStat.PoundSpeed, poundSpeed + stats.Evaluate(PlayerStat.PoundSpeedPerRoom, poundSpeedPerRoom) * roomsCleared), -velocity.y);
+        }
+        if (wasGrounded && velocity.y < 0f) velocity.y = -stats.Evaluate(PlayerStat.GroundStickSpeed, groundStickSpeed);
+        else if (!pounding) velocity.y = Mathf.Max(velocity.y - stats.Evaluate(PlayerStat.Gravity, gravity) * dt, -stats.Evaluate(PlayerStat.MaxFallSpeed, maxFallSpeed));
+
+        // Bound movement distance per sweep. If a frame is exceptionally long or speed is
+        // extreme, discard excess travel instead of risking tunnelling through thin colliders.
+        float desiredDistance = velocity.magnitude * dt;
+        float stepLength = Mathf.Max(0.01f, maxStepDistance);
+        int limit = Mathf.Clamp(maxStepsPerFrame, 1, 256);
+        int steps = Mathf.Clamp(Mathf.CeilToInt(desiredDistance / stepLength), 1, limit);
+        float simulatedTime = desiredDistance > stepLength * limit && desiredDistance > 0f
+            ? dt * (stepLength * limit / desiredDistance) : dt;
+        float stepTime = simulatedTime / steps;
+        bool landedThisFrame = false;
+        groundedForSweep = wasGrounded;
+        grounded = false;
+        for (int i = 0; i < steps; i++)
+        {
+            float impactSpeed = Mathf.Max(0f, -velocity.y);
+            bool impactWasPound = pounding;
+            PredictBreakableImpacts(velocity * stepTime);
+            CollisionFlags flags = controller.Move(velocity * stepTime);
+            if ((flags & CollisionFlags.Above) != 0 && velocity.y > 0f) velocity.y = 0f;
+            if ((flags & CollisionFlags.Below) != 0)
+            {
+                groundedForSweep = true;
+                grounded = true;
+                if (!wasGrounded && !landedThisFrame)
+                {
+                    landedThisFrame = true;
+                    pounding = false;
+                    Landed?.Invoke(impactSpeed, impactWasPound);
+                }
+                if (velocity.y < 0f) velocity.y = -stats.Evaluate(PlayerStat.GroundStickSpeed, groundStickSpeed);
+            }
+        }
+    }
+
+    // Sweep the same capsule along this substep, nearest first. A solid obstacle
+    // blocks prediction of objects behind it. A broken target is disabled before Move.
+    void PredictBreakableImpacts(Vector3 displacement)
+    {
+        float distance = displacement.magnitude;
+        if (distance <= 0.00001f) return;
+        Vector3 scale = transform.lossyScale;
+        float radius = controller.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+        float height = Mathf.Max(radius * 2f, controller.height * Mathf.Abs(scale.y));
+        float castRadius = Mathf.Max(0.01f, radius - controller.skinWidth);
+        Vector3 center = transform.TransformPoint(controller.center);
+        float halfSegment = Mathf.Max(0f, height * 0.5f - radius);
+        Vector3 top = center + Vector3.up * halfSegment;
+        Vector3 bottom = center - Vector3.up * halfSegment;
+        Vector3 direction = displacement / distance;
+        float castDistance = distance + controller.skinWidth;
+        int count = Physics.CapsuleCastNonAlloc(top, bottom, castRadius, direction, sweepBuffer, castDistance, ~0, QueryTriggerInteraction.Ignore);
+        // Do not miss an intervening wall when the buffer fills.
+        var hits = count == sweepBuffer.Length
+            ? Physics.CapsuleCastAll(top, bottom, castRadius, direction, castDistance, ~0, QueryTriggerInteraction.Ignore) : sweepBuffer;
+        if (count == sweepBuffer.Length) count = hits.Length;
+        Array.Sort(hits, 0, count, HitDistanceComparer);
+        for (int i = 0; i < count; i++)
+        {
+            var hit = hits[i];
+            if (hit.collider == null || hit.collider == controller || hit.collider.transform.IsChildOf(transform)) continue;
+            if (Physics.GetIgnoreLayerCollision(gameObject.layer, hit.collider.gameObject.layer) || Physics.GetIgnoreCollision(controller, hit.collider)) continue;
+            // Ground-stick motion must not hide a wall in a horizontal sweep.
+            if (!pounding && groundedForSweep && hit.normal.y > 0.5f) continue;
+            if (Vector3.Dot(displacement, hit.normal) >= -0.00001f) continue;
+            var target = hit.collider.GetComponentInParent<ImpactTarget>();
+            if (target != null && target.WillBreak(this, velocity, hit.normal, pounding))
+            {
+                target.ReceiveImpact(this, velocity, hit.normal, pounding);
+                if (target.IsBroken) continue;
+            }
+            break;
+        }
+    }
+
+    void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (sliding && HorizontalSpeed >= slideMinimumSpeed)
+        {
+            var door = hit.collider.GetComponentInParent<RoomDoor>();
+            if (door != null && !door.IsOpen) { door.Open(); return; }
+        }
+        // Publish the pre-collision velocity before removing the blocked component.
+        var target = hit.collider.GetComponentInParent<ImpactTarget>();
+        if (target != null)
+        {
+            target.ReceiveImpact(this, velocity, hit.normal, pounding);
+            if (target.IsBroken) return;
+        }
+        if (Mathf.Abs(hit.normal.y) < 0.5f)
+        {
+            float intoWall = Vector3.Dot(velocity, hit.normal);
+            if (intoWall < 0f) velocity -= hit.normal * intoWall;
+        }
+    }
+}

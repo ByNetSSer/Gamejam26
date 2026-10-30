@@ -1,0 +1,17 @@
+---
+tags: [gamejam, enemigos, prototipo, salas]
+estado: experimental
+---
+# Aplanadora: prueba aislada
+
+Prototipo sin integrar en los pools de salas ni activación aleatoria. En Unity elegir **Tools → Runner → Crear prueba aislada de aplanadora**, entrar en Play y correr hasta la zona verde. La herramienta crea una escena temporal; guardar si se desea conservarla. El HUD provisional muestra espera, aviso y bajada. La prueba no añade Flupin ni Dontsee; la coordinación simultánea necesita una prueba adicional.
+
+`RoomCrusher` tiene marcadores de inicio, final y punto seguro, tamaño de caja y una figura visual. Ambos extremos del recorrido y toda la caja deben quedar dentro de la sala; el código valida descenso vertical y referencias, pero no comprueba que quepa ni que la sala sea recta. El creador de una sala debe comprobarlo en Scene View con los gizmos, incluyendo el volumen completo y el área segura. El punto seguro debe estar fuera de la caja, ser accesible y estar sobre una ruta recta sin obstáculos. El prototipo no analiza tiles, no calcula rutas ni comprueba obstáculos. No usarlo en salas de producción sin validación de autoría.
+
+Al solicitar turno espera a que el jugador esté en suelo; conserva el turno durante aviso y bajada incluso si salta. El aviso estima distancia horizontal al punto seguro usando velocidad actual proyectada, aceleración mínima de movimiento/giro, 70 % de la velocidad objetivo por defecto y dos segundos de margen. El cálculo supone movimiento directo; no modela obstáculos, superficies, salto, cambios de velocidad ni tiempo real de reacción y no garantiza seguridad. Si los valores no permiten una estimación finita dentro del máximo configurable, se cancela. Después del aviso la placa baja a velocidad configurable hasta el final y desaparece. El contacto se evalúa con un barrido de caja aproximado usando el volumen del CharacterController; aplica provisionalmente 50 % de vida actual una vez y termina el encuentro. El visual no tiene collider físico y no empuja al jugador. El recorrido no se extiende más allá de los marcadores, pero debe ser configurado dentro de la sala.
+
+En una sala hija de `RoomManager`, el componente espera a que la sala sea la actual, obtiene el director del jugador y se cancela al salir. Aún no se ha probado esta integración ni la combinación con Flupin, Dontsee o trampas. Comparte el turno del director, pero las trampas externas no participan. El turno no tiene timeout: se libera al terminar, cancelar o desactivar el objeto. La escena aislada se puede reiniciar saliendo y volviendo a Play.
+
+`CrusherStat` admite por instancia `Aggressiveness`, `DescentSpeed`, `CurrentHealthFraction` y `ReactionMargin` mediante `GetStat`, `AddModifier` y `RemoveModifiers`. La agresividad multiplica solo la velocidad de bajada; el margen se calcula al recibir el turno. Las estadísticas son preparación para futuros buffs, no hay selección ni aplicación automática. El cambio de velocidad durante el descenso es inmediato. El aviso calculado no se reduce con agresividad; el aumento puede reducir el tiempo adicional que aporta la bajada.
+
+Compilación runtime y editor verificadas con proyectos temporales que incluyen ambos scripts. **Pendiente Play Mode y build:** avisos con velocidades y aceleraciones distintas, salto, giros de sala, límites de la placa, movimientos rápidos y tirones, detección de contacto, salud, cancelación al salir y coordinación. No hay garantía de una ruta justa ni validación automática del tamaño de la sala.

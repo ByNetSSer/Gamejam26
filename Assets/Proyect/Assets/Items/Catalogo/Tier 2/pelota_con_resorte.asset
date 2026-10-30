@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
+  m_Name: "Pelota con resorte"
+  m_EditorClassIdentifier: 
+  displayName: "Pelota con resorte"
+  visualDescription: "Una pelota de juguete atravesada por un resorte que nunca deja de vibrar."
+  effectDescription: "Flupin tiene +15 % de agresividad; ganas +15 % de puntos."
+  tier: 2
+  category: 4
+  disposition: 1
+  requiredEnemy: 1
+  designNotes: ""
+  icon: {fileID: 0}

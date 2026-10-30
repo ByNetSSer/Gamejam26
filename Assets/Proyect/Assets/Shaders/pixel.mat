@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: pixel
+  m_Shader: {fileID: 4800000, guid: 02f82474fc9e722428fe26959c15b127, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 727a75301c3d24613a3ebcec4a24c2c8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ColorLevels: 18.4
+    - _Contrast: 0.863
+    - _Dither: 0.844
+    - _DitherScale: 1.87
+    - _OutlineStrength: 0.511
+    - _PaletteMix: 1
+    - _PixelAspect: 1.26
+    - _PixelSize: 19.3
+    - _PixelSnapStrength: 0.161
+    - _Saturation: 0.66
+    - _ShadowSteps: 1.99
+    - _TexturePixelAspect: 0.37
+    - _TexturePixelSize: 116
+    - _TexturePixelStrength: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HighlightColor: {r: 1, g: 0.96, b: 0.83, a: 1}
+    - _OutlineColor: {r: 0.079999976, g: 0.049999982, b: 0.11999995, a: 1}
+    - _PixelGridOffset: {r: 0, g: 0, b: 0, a: 0}
+    - _ShadowColor: {r: 0.45, g: 0.37999994, b: 0.56, a: 1}
+    - _TextureGridOffset: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

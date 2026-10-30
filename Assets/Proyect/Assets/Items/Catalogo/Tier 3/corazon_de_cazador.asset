@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
+  m_Name: "Corazón de cazador"
+  m_EditorClassIdentifier: 
+  displayName: "Corazón de cazador"
+  visualDescription: "Un corazón de rubí engarzado en una trampa de plata abierta."
+  effectDescription: "Al repeler a Flupin, recuperas 5 % de vida máxima. Máximo una vez cada 10 segundos."
+  tier: 3
+  category: 7
+  disposition: 0
+  requiredEnemy: 1
+  designNotes: ""
+  icon: {fileID: 0}

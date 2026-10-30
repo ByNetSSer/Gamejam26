@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
+  m_Name: "Botas sanguinarias"
+  m_EditorClassIdentifier: 
+  displayName: "Botas sanguinarias"
+  visualDescription: "Botas negras con runas rojas que brillan al correr."
+  effectDescription: "+18 % de velocidad; pierdes 1  de vida máxima cada 6 segundos."
+  tier: 2
+  category: 2
+  disposition: 1
+  requiredEnemy: 0
+  designNotes: "El texto seleccionado dice «pierdes 1 de vida máxima» sin unidad. Pendiente confirmar si es 1 punto o 1 %; se conserva literalmente."
+  icon: {fileID: 0}

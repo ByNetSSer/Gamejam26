@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
+  m_Name: familia_orbital
+  m_EditorClassIdentifier: 
+  displayName: Familia orbital
+  visualDescription: "Un m\xF3vil de cuna con varias pelotas p\xFArpuras girando
+    alrededor de un coraz\xF3n."
+  effectDescription: Aparece un Flupin adicional;
+  tier: 3
+  category: 4
+  disposition: 1
+  requiredEnemy: 1
+  designNotes: "El texto seleccionado solo especifica un Flupin adicional; no se
+    ha a\xF1adido ning\xFAn beneficio."
+  icon: {fileID: 0}

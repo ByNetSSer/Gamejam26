@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
+  m_Name: "Monóculo de la fortuna"
+  m_EditorClassIdentifier: 
+  displayName: "Monóculo de la fortuna"
+  visualDescription: "Un monóculo dorado que hace brillar todo lo que merece una recompensa."
+  effectDescription: "+15 % de puntos."
+  tier: 2
+  category: 3
+  disposition: 0
+  requiredEnemy: 0
+  designNotes: ""
+  icon: {fileID: 0}
