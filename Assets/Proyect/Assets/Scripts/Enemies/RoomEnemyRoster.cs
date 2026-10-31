@@ -14,6 +14,7 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     [SerializeField] bool dontseeSelected;
     [SerializeField] bool maskChargerSelected;
     [SerializeField] bool corridorChaserSelected;
+    [SerializeField] bool guiltSelected;
     [SerializeField, Min(0f)] float delayAfterLeavingStart = 5f;
     [SerializeField, Min(1)] int maxCopiesPerEnemy = 4;
     struct FlupinModifier { public object Source; public FlupinStat Stat; public StatModifierType Type; public float Value; }
@@ -24,7 +25,8 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     readonly List<DontseeModifier> dontseeModifiers = new List<DontseeModifier>();
     readonly List<Flupin> extraFlupins = new List<Flupin>();
     readonly List<MaskCharger> extraMasks = new List<MaskCharger>();
-    int flupinCount = 1, maskCount = 1;
+    int flupinCount = 1;
+    [SerializeField, Min(1)] int maskCount = 1;
     readonly List<IDisposable> subscriptions = new List<IDisposable>();
     RoomManager rooms;
     PlayerController player;
@@ -33,6 +35,14 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     public bool DontseeSelected => dontseeSelected;
     public bool FlupinSelected => flupinSelected;
     public bool MaskChargerSelected => maskChargerSelected;
+    public bool GuiltSelected => guiltSelected;
+    public bool CanChooseGuilt => !guiltSelected;
+    public bool ChooseGuiltCurse()
+    {
+        if (!CanChooseGuilt) return false;
+        guiltSelected = true;
+        return true;
+    }
     public bool CorridorChaserSelected => corridorChaserSelected;
     public bool CanChooseCorridorChaser => GetComponent<CorridorChaserEncounter>() != null;
     public bool ChooseCorridorChaserCurse()
@@ -44,7 +54,7 @@ public sealed class RoomEnemyRoster : MonoBehaviour
         return true;
     }
     // Persistent roster counts selected enemies, including those temporarily absent in safe rooms.
-    public int AccumulatedEnemyCount => FlupinCount + MaskChargerCount + (dontseeSelected ? 1 : 0) + (corridorChaserSelected ? 1 : 0);
+    public int AccumulatedEnemyCount => FlupinCount + MaskChargerCount + (dontseeSelected ? 1 : 0) + (corridorChaserSelected ? 1 : 0) + (guiltSelected ? 1 : 0);
     public int FlupinCount => flupinSelected ? flupinCount : 0;
     public int MaskChargerCount => maskChargerSelected ? maskCount : 0;
     public bool CanChooseFlupin => flupin != null && (!flupinSelected || flupinCount < Mathf.Max(1, maxCopiesPerEnemy));
@@ -61,6 +71,7 @@ public sealed class RoomEnemyRoster : MonoBehaviour
     void Awake()
     {
         rooms = GetComponent<RoomManager>();
+        if (GetComponent<GuiltEncounter>() == null) gameObject.AddComponent<GuiltEncounter>();
         if (GetComponent<CorridorChaserEncounter>() == null) gameObject.AddComponent<CorridorChaserEncounter>();
         if (flupin != null) flupin.gameObject.SetActive(false);
         if (maskCharger != null) maskCharger.gameObject.SetActive(false);

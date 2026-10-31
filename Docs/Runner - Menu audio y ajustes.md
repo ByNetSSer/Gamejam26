@@ -1,4 +1,4 @@
-# Menú, audio y ajustes
+﻿# Menú, audio y ajustes
 
 Implementación inicial, 2026-10-30. Revisión visual y pruebas interactivas en Play Mode pendientes.
 
@@ -171,3 +171,10 @@ Las superficies seleccionan su cue FootstepIce/Tar/Lava, y si no tiene clip usan
 ### Condición vigente de música intensa
 
 Esta regla sustituye las referencias anteriores a «tercera sala»: la lista intensa requiere simultáneamente torre 4 o superior y al menos 5 enemigos acumulados. Los mínimos `Intense From Tower` y `Intense From Accumulated Enemies` se configuran en GameplayMusicSettings. RoomEnemyRoster cuenta copias seleccionadas de Flupin y máscara, más un Dontsee y un perseguidor de pasillo cuando estén seleccionados. Aumentar la frecuencia de un enemigo sin añadir otra copia no suma enemigos. Se cuentan selecciones persistentes, no solo enemigos activos en pantalla, y el director reevalúa si cambia el roster. Si no hay roster o lista intensa con clips, usa gameplay tranquilo. Las salas seguras y la prioridad de último minuto conservan sus reglas. Compilación runtime comprobada; pendiente escuchar transiciones en Play Mode con las combinaciones de umbrales.
+
+
+### Pasos según desplazamiento y eco de Guilt
+
+GroundSurfaceSensor ya no silencia los pasos por sprint, deslizamiento o ausencia de input si hay desplazamiento sobre el suelo. Los pasos requieren jugador/controlador activos, contacto con suelo, tiempo avanzando y velocidad horizontal real mínima de 0,15 m/s. Se mantiene menor volumen al agacharse y fallback a pasos normales cuando falta clip de superficie.
+
+El bucle ajusta pitch/cadencia según raíz cuadrada de velocidad / 6 m/s, limitado a 0,65–1,8 para evitar extremos, con transición suave sin reiniciar el clip al cambiar de velocidad. El pitch altera también el tono. Guilt conserva el estado y pitch históricos y emite los pasos normales invertidos como pista espacial con 4 s de retraso. El original no se altera; el clip invertido se genera en memoria y se libera al destruir el encuentro. Compilación verificada; falta escucha en Play Mode caminando/corriendo, frenando, saltando, pausando y con los ajustes de volumen.

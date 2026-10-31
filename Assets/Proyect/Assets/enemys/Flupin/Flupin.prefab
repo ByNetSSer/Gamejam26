@@ -813,8 +813,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b8b4d3406bd71e247b1cb57349bc24b5, type: 2}
-  - {fileID: 2100000, guid: e516c05fb7aeb2844b7dc8bb9bd9beb0, type: 2}
+  - {fileID: 2100000, guid: f9e3451bce8149309dbe7bc6f01f7f0b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -889,16 +888,57 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlupinVisual
   faceCamera: 1
   skins:
+  - name: Flupin animado
+    weight: 90
+    idle: {fileID: 21300000, guid: 23ff83da3061c5349abd86cc05e3105a, type: 3}
+    attack: {fileID: 21300000, guid: 8531c8a3a71502047b3c828952d363a9, type: 3}
+    idleFrames:
+    - {fileID: 21300000, guid: 23ff83da3061c5349abd86cc05e3105a, type: 3}
+    - {fileID: 21300000, guid: 98f5702881923bc43bc89601175641f1, type: 3}
+    - {fileID: 21300000, guid: c23bb5a536c1f404289a440403196738, type: 3}
+    - {fileID: 21300000, guid: 5116d7db648c78241a3e4f9351893fb3, type: 3}
+    - {fileID: 21300000, guid: b97ae5c005dd8694d872233f3d577b2d, type: 3}
+    - {fileID: 21300000, guid: d6670d46f13168d43b024ca8a8464f4b, type: 3}
+    - {fileID: 21300000, guid: 654326fed8e63c145bfb9d851bba1662, type: 3}
+    - {fileID: 21300000, guid: 732be4019f9a10746a219a6667b9cd80, type: 3}
+    - {fileID: 21300000, guid: 502564a13cd984b41808e0ad15d248be, type: 3}
+    - {fileID: 21300000, guid: 890f16f8f5912d842aa333b775e4f402, type: 3}
+    - {fileID: 21300000, guid: d0f9046fa08143a4ab63f3a86d7565d0, type: 3}
+    - {fileID: 21300000, guid: f7b2e90bf3cd325499f17ffcd68bafa7, type: 3}
+    - {fileID: 21300000, guid: 7165a23a460a80b4abc3f4e53542801b, type: 3}
+    - {fileID: 21300000, guid: 2079836a39729e847a79e12c34f87c95, type: 3}
+    - {fileID: 21300000, guid: c50214ec0b515be4d8ed2b21af11e538, type: 3}
+    attackFrames:
+    - {fileID: 21300000, guid: 8531c8a3a71502047b3c828952d363a9, type: 3}
+    - {fileID: 21300000, guid: b9b33e28bb408da49b9bc6fc22ba025a, type: 3}
+    - {fileID: 21300000, guid: 86c150d293ca2a94b82067df5b41b9f7, type: 3}
+    - {fileID: 21300000, guid: b33491976c572a547a23d74a95d2e673, type: 3}
+    - {fileID: 21300000, guid: b009c5f239a342641b479ffbca5d3ce4, type: 3}
+    - {fileID: 21300000, guid: 2278191c5db287647872e629874f1182, type: 3}
+    - {fileID: 21300000, guid: 5387be433f86d174aa66a89e775c7210, type: 3}
+    - {fileID: 21300000, guid: d4f602ddce442594abee80f4b27459b2, type: 3}
+    - {fileID: 21300000, guid: c7aaab3f1b9b4054f88cdd42552c778a, type: 3}
+    - {fileID: 21300000, guid: 6471abdeae1d4fd419a43415a2df222b, type: 3}
+    - {fileID: 21300000, guid: 0fc4672dc151b8047a3b17ffc3dafec3, type: 3}
+    - {fileID: 21300000, guid: ba6c02201349b2249a9ed4ef8127f039, type: 3}
+    - {fileID: 21300000, guid: 50a359d85f8498746ac32a2d1cb62e12, type: 3}
+    - {fileID: 21300000, guid: 62cd1e3f30ec43a4eb72b56500d5fa30, type: 3}
+    - {fileID: 21300000, guid: 0699b0af0ea6db84ca715c0e6e71d1f9, type: 3}
+    - {fileID: 21300000, guid: 44bc8a3cb2619804c9d2ab364129ee83, type: 3}
+    - {fileID: 21300000, guid: 9d84de5dbdd7b3e4fb510773f97d8a0e, type: 3}
+    framesPerSecond: 12
+    visualWidth: 1.25
+    visualScale: 1.1
   - name: Gato
-    weight: 60
+    weight: 4
     idle: {fileID: 21300000, guid: 055d149d2410b204cb44b3e6c87d7795, type: 3}
     attack: {fileID: 21300000, guid: 3dfb022c9e317b742bcc016e69b14f48, type: 3}
   - name: Carita sonriente
-    weight: 25
+    weight: 3
     idle: {fileID: 21300000, guid: 2cb11b1c7883f8f43896744e44786cba, type: 3}
     attack: {fileID: 21300000, guid: e81d438d4b373f740b2c32aec02dc31c, type: 3}
   - name: Variant2
-    weight: 15
+    weight: 3
     idle: {fileID: 21300000, guid: 7e5a953014fbc2f43834f41dbf07d6fa, type: 3}
     attack: {fileID: 0}
 --- !u!1 &5265346316289147656

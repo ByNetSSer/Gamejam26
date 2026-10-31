@@ -351,7 +351,8 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
         visual.transform.position = position;
         previousPlayer = PlayerCenter();
         hasPreviousPlayer = true;
-        damageAllowedAt = Time.time + Mathf.Max(0.1f, relocationGraceSeconds);
+        SpawnScaleFeedback.Play(visual.transform);
+        damageAllowedAt = Time.time + Mathf.Max(0.3f, relocationGraceSeconds);
     }
     void UpdateAttackVolume()
     {

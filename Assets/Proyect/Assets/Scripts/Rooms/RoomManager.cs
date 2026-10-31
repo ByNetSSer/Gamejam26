@@ -87,6 +87,7 @@ public sealed class RoomManager : MonoBehaviour
         eventBus = GetComponent<GameEventBus>();
         if (eventBus == null) eventBus = gameObject.AddComponent<GameEventBus>();
         if (GetComponent<GameplayMusicDirector>() == null) gameObject.AddComponent<GameplayMusicDirector>();
+        if (GetComponent<RoomFallRecovery>() == null) gameObject.AddComponent<RoomFallRecovery>();
     }
     void OnEnable()
     {

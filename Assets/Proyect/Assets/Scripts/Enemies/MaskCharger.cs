@@ -81,8 +81,9 @@ public sealed class MaskCharger : EnemyAgent
     public Vector3 ChargeDirection => chargeDirection;
     public float Aggressiveness => Mathf.Max(0.1f, Evaluate(MaskChargerStat.Aggressiveness, aggressiveness));
     public float StalkingDistance => Mathf.Min(Mathf.Max(0.5f, preferredDistance), Mathf.Max(0.5f, Evaluate(MaskChargerStat.AttackRange, attackRange) * 0.8f));
+    SpawnScaleFeedback appearance;
     public override AttackRequirement Requirement => AttackRequirement.Any;
-    public override bool CanRequestAttack => state == MaskChargerState.Following && attackCooldown <= 0f && Player != null &&
+    public override bool CanRequestAttack => (appearance == null || !appearance.IsAppearing) && state == MaskChargerState.Following && attackCooldown <= 0f && Player != null &&
         (PlayerCenter() - transform.position).sqrMagnitude <= Mathf.Pow(Evaluate(MaskChargerStat.AttackRange, attackRange), 2f);
     public override bool CanBeRepelled => false;
     // The distance is fixed at launch, so a long charge must retain its turn.
@@ -99,6 +100,7 @@ public sealed class MaskCharger : EnemyAgent
     protected override void OnEnable()
     {
         base.OnEnable();
+        appearance = SpawnScaleFeedback.Play(transform);
         PrepareCollision();
         state = MaskChargerState.Following;
         attackCooldown = AttackCooldown;
@@ -250,6 +252,9 @@ public sealed class MaskCharger : EnemyAgent
         if (trajectory == null)
         {
             var go = new GameObject("Trayectoria de embestida");
+            int overlayLayer = LayerMask.NameToLayer("FlupinOverlay");
+            if (overlayLayer >= 0) go.layer = overlayLayer;
+            else Debug.LogWarning("La línea de aviso necesita la capa FlupinOverlay para verse sobre el escenario.", this);
             go.transform.SetParent(transform, false);
             trajectory = go.AddComponent<LineRenderer>();
             trajectory.useWorldSpace = true; trajectory.positionCount = 2;

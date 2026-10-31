@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum RoomKind { Initial, Intermediate, Final }
 public enum RoomExitReason { Advanced, Completed, Defeated }
-public enum RunLossReason { PlayerHealthDepleted, TimeExpired, Flupin, Dontsee, MaskCharger, Crusher, HazardousSurface, CorridorChaser }
+public enum RunLossReason { PlayerHealthDepleted, TimeExpired, Flupin, Dontsee, MaskCharger, Crusher, HazardousSurface, CorridorChaser, Guilt }
 
 public readonly struct CorridorChaserWarningEvent
 {

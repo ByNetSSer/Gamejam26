@@ -240,3 +240,46 @@ La máscara apunta al centro del jugador al comenzar el aviso y fija esa direcci
 ### Corredor: recorrido rápido y recolocación segura
 
 Velocidad base de 40 m/s y espera máxima de aviso de 6 s (antes 26 m/s y 10 s), tanto en código como en la escena `e`. `Relocation Grace Seconds` vale 0,75 s: al aparecer o recolocarse al último punto de una sala activa porque se eliminó su sala anterior, sigue avanzando pero no causa daño. Cada recolocación reinicia el margen y la posición previa del jugador; no se barre el salto del teletransporte. El fotograma que atraviesa el final del margen también queda sin daño para evitar impactos retroactivos. Las transiciones normales del recorrido no reinician la protección. Pendiente comprobar en Play Mode las puertas consecutivas a alta velocidad y el ajuste del margen.
+
+
+### Guilt: sombra de los pasos del jugador
+
+`GuiltEncounter` se añade automáticamente al gestor desde `RoomEnemyRoster`. La maldición «Invocar a Guilt» se ofrece en los modos de maldiciones existentes y solo puede obtenerse una vez; no hay mejoras ni copias. Cuenta como un enemigo para la música.
+
+Aspecto generado en runtime: esfera negra de radio 0,55 m y dos ojos blancos HDR, con materiales unlit para que se vean en oscuridad (halo dependiente del bloom). No tiene colliders sólidos ni bloquea objetos. Guarda muestras temporales de la posición del jugador y reproduce la trayectoria interpolada con 4 s de retraso, configurable de 4 a 6 s. No recorta esquinas para perseguir la posición actual; también reproduce altura y pausas. El historial usa coordenadas de mundo y descarta muestras anteriores a la reproducción, independientemente de la destrucción de salas.
+
+El contacto equivale a permanecer dentro de un trigger: drena 8 % de vida máxima por segundo, acumulando tiempo de contacto y aplicando daño cada 0,25 s o al salir para conservar contactos cortos. Usa PlayerHealth y motivo de derrota Guilt, sin ocupar turnos de EnemyDirector. Antes de acumular los primeros 4 s no aparece ni causa daño. No funciona en salas protegidas, final, derrota ni victoria; reinicia historial entre torres y ante saltos discontinuos grandes de posición. No se recoloca en puertas por eliminación de salas.
+
+Verificado: compilación runtime con todos los scripts actuales. Pendiente en Play Mode: quedarse quieto, volver sobre el rastro, saltar/caer, contactos breves, zonas seguras, pausa, cambio de torre y visibilidad de los ojos. El drenaje y radio son valores iniciales de balance.
+
+
+### Animación de la skin principal
+
+El prefab de Flupin usa la skin animada con peso 90; Gato pesa 4, Carita sonriente 3 y Variant2 3 (90 %, 4 %, 3 %). Sus fotogramas se asignan en orden en `Idle Frames` y `Attack Frames`: rondando usa los 15 archivos de `Sprites/Flupin/Idle` y el acercamiento de ataque los 17 de `Sprites/Flupin/Attack`. Ambos se repiten a 12 fotogramas por segundo, ajustable por skin en `Frames Per Second`, y empiezan desde el primer fotograma al cambiar de estado. Los demás estados usan rondando. Las skins antiguas siguen usando sus sprites individuales. Se conservan el material, contorno y capa superpuesta. Pendiente validar el ritmo y la apariencia en Play Mode.
+
+La apariencia de Flupin usa un material propio basado en `latest` y un shader sin iluminación; los materiales compartidos conservan su comportamiento. La skin animada usa `Visual Width` 1,25 (25 % más ancha); las demás conservan ancho 1. La anchura se aplica al material de imagen sin cambiar la escala del objeto ni interferir con FEEL. El prefab usa un solo material: se retiró el segundo material de la escena que duplicaba la imagen con otra iluminación y proporción. Pendiente comprobar en Play Mode la oscuridad, el encuadre y la proporción visual.
+
+
+### Apariencia animada de la máscara
+
+En la escena `e`, `MaskChargerVisual` muestra las secuencias de `Sprites/Mask`: Idle durante seguimiento y recuperación, Warning al apuntar, y Attack durante embestida y frenada. Se reproducen en bucle a 12 fotogramas por segundo, ajustables en el componente. El plano conserva las proporciones de la imagen, mira a la cámara y usa `MaskUnlit`, independiente de las luces y con profundidad normal del escenario. El renderer del modelo 3D se oculta mientras el componente está activo y se restaura al desactivarlo; el prefab original no cambia. Pendiente probar en Play Mode el tamaño, ritmo, ocultación por paredes y las copias.
+
+
+### Coordinación ocasional de máscaras
+
+Al llegar una máscara elegible al turno, el director puede organizar un dúo (20 %) o, si hay al menos tres máscaras listas, una ráfaga (5 %). La ráfaga reúne hasta cinco máscaras distintas y comienza cada aviso con al menos 0,6 s de separación; como máximo dos mantienen el turno simultáneamente. Son valores ajustables en `EnemyDirector`. El evento espera a que termine cualquier ataque previo y reserva los turnos para las máscaras hasta que terminen; los demás enemigos permanecen en cola. Después se aplica la pausa normal. No se modifican las estadísticas ni el aviso individual de las máscaras. Pendiente probar el ritmo, la legibilidad, cancelaciones y equilibrio en Play Mode.
+
+
+Guilt está activado de inicio en la escena `e` mediante `RoomEnemyRoster > Guilt Selected`. Desmarcarlo permite obtenerlo por la lista de maldiciones, donde ya está integrado. No aparece en la inicial, primera intermedia ni final: espera a la primera sala no protegida, luego la demora del roster (3 s en `e`) y los 4 s necesarios de historial. Al estar preseleccionado no se ofrece otra invocación.
+
+
+### Guilt: aviso por pasos invertidos
+
+Retraso por defecto reducido a 4 s. Cada muestra registra también si el jugador emitía pasos y su velocidad de reproducción. Al reproducir ese tramo, Guilt emite desde su propia posición un bucle mono de los pasos normales invertidos temporalmente. El clip se genera una sola vez en runtime a partir de `footstep.normal`, mezclando canales a mono y revirtiendo muestras, sin modificar el original. Requiere Decompress On Load (el clip actual ya lo usa). Se conservan silencios al estar quieto o en el aire. Audio 3D lineal, distancia mínima 2 m y máxima 30 m, sin Doppler; volumen sujeto a master y efectos. Se detiene en pausa y al retirar al enemigo. Pendiente escuchar en Play Mode la orientación, mezcla y distancia de aviso.
+
+
+### Entradas con FEEL
+
+`SpawnScaleFeedback` reproduce `MMF_Scale` desde el 8 % hasta la escala original durante 0,3 s, con entrada/salida suave. Lo usan Flupin y máscaras al activarse, Guilt al mostrarse después del historial, corredor al aparecer/recolocarse y aplanadora al preparar su visual. Dontsee mantiene su entrada existente de 0,25 s. El reproductor de aparición es independiente de los otros feedbacks. El componente restaura escala al desactivarse y conserva la escala completa al clonar un enemigo que aún esté apareciendo.
+
+Flupin, máscaras y aplanadora no solicitan ataque hasta completar la entrada; Guilt no drena durante ella. Corredor conserva su margen de recolocación (mínimo 0,3 s). Duración y escala inicial son editables agregando/configurando SpawnScaleFeedback en el objetivo antes de ejecutar. Compilación comprobada; pendiente verificar visualmente nuevas copias, cambios de torre, cancelación durante aparición y materiales/animaciones en Play Mode.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum EnemyCurse { None, Flupin, Dontsee, MaskCharger, FlupinHaste, FlupinFury, MaskHaste, MaskFury, MaskStalking, DontseeFury, CorridorChaser, CorridorChaserSpeed, CorridorChaserHaste }
+public enum EnemyCurse { None, Flupin, Dontsee, MaskCharger, FlupinHaste, FlupinFury, MaskHaste, MaskFury, MaskStalking, DontseeFury, CorridorChaser, CorridorChaserSpeed, CorridorChaserHaste, Guilt }
 
 // Temporary reward room; effects are explicit until catalog items have runtime implementations.
 [RequireComponent(typeof(RoomManager))]
@@ -142,6 +142,8 @@ public sealed class TowerRewardStation : MonoBehaviour
         var roster = GetComponent<RoomEnemyRoster>();
         if (roster != null)
         {
+            if (roster.CanChooseGuilt)
+                enemyChoices.Add(new Reward("Invocar a Guilt", "Tu sombra repite tus pasos con 4 s de retraso. El contacto drena vida poco a poco.", EnemyCurse.Guilt));
             if (CopiesOnly)
             {
                 if (roster.CanChooseFlupin)
@@ -210,10 +212,12 @@ public sealed class TowerRewardStation : MonoBehaviour
         if (roster == null) return false;
         if (CopiesOnly && curse != EnemyCurse.Flupin && curse != EnemyCurse.MaskCharger &&
             !(curse == EnemyCurse.Dontsee && !roster.DontseeSelected) &&
-            !(curse == EnemyCurse.CorridorChaser && !roster.CorridorChaserSelected)) return false;
+            !(curse == EnemyCurse.CorridorChaser && !roster.CorridorChaserSelected) &&
+            !(curse == EnemyCurse.Guilt && roster.CanChooseGuilt)) return false;
         object source = new object();
         switch (curse)
         {
+            case EnemyCurse.Guilt: return roster.ChooseGuiltCurse();
             case EnemyCurse.Flupin: return roster.ChooseFlupinCurse();
             case EnemyCurse.MaskCharger: return roster.ChooseMaskCurse();
             case EnemyCurse.Dontsee: return roster.ChooseDontseeCurse();

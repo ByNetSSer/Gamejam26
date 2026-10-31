@@ -12,6 +12,11 @@ public sealed class FlupinVisual : MonoBehaviour
         public Sprite idle;
         [Tooltip("Opcional. Si está vacío se mantiene Idle durante el ataque.")]
         public Sprite attack;
+        [Tooltip("Fotogramas opcionales de reposo, en orden.")] public Sprite[] idleFrames;
+        [Tooltip("Fotogramas opcionales de ataque, en orden.")] public Sprite[] attackFrames;
+        [Min(0.1f)] public float framesPerSecond = 12f;
+        [Min(0.1f), Tooltip("Anchura visual relativa de esta skin.")] public float visualWidth = 1f;
+        [Min(0.1f), Tooltip("Tamaño visual relativo de esta skin.")] public float visualScale = 1f;
     }
 
     [SerializeField] bool faceCamera = true;
@@ -19,7 +24,12 @@ public sealed class FlupinVisual : MonoBehaviour
     [SerializeField] Skin[] skins = new Skin[0];
     Skin selectedSkin;
     bool skinSelected;
+    bool attacking;
+    float animationTime;
+    int displayedFrame = -1;
     MaterialPropertyBlock properties;
+    static readonly int VisualScale = Shader.PropertyToID("_VisualScale");
+    static readonly int VisualWidth = Shader.PropertyToID("_VisualWidth");
     static readonly int BaseMap = Shader.PropertyToID("_BaseMap");
     static readonly int BaseMapST = Shader.PropertyToID("_BaseMap_ST");
     static readonly int BaseMapTexelSize = Shader.PropertyToID("_BaseMap_TexelSize");
@@ -29,6 +39,8 @@ public sealed class FlupinVisual : MonoBehaviour
     Flupin enemy;
     Camera view;
     int originalLayer;
+    Bounds originalBounds;
+    bool boundsChanged;
     bool changedLayer, originalAllowOcclusion;
 
     void Awake()
@@ -42,6 +54,16 @@ public sealed class FlupinVisual : MonoBehaviour
         if (enemy == null) enemy = GetComponent<Flupin>();
         enemy.StateChanged += OnStateChanged;
         if (!skinSelected) SelectSkin();
+        if (selectedSkin != null)
+        {
+            originalBounds = targetRenderer.localBounds;
+            Bounds bounds = originalBounds;
+            float width = selectedSkin.visualWidth > 0f ? selectedSkin.visualWidth : 1f;
+            float scale = selectedSkin.visualScale > 0f ? selectedSkin.visualScale : 1f;
+            bounds.extents = new Vector3(bounds.extents.x * Mathf.Max(1f, width * scale), bounds.extents.y * Mathf.Max(1f, scale), bounds.extents.z);
+            targetRenderer.localBounds = bounds;
+            boundsChanged = true;
+        }
         // Flupin resets to Waiting on enable; component callback order is unspecified.
         OnStateChanged(FlupinState.Waiting);
         int overlayLayer = LayerMask.NameToLayer("FlupinOverlay");
@@ -63,6 +85,8 @@ public sealed class FlupinVisual : MonoBehaviour
             targetRenderer.gameObject.layer = originalLayer;
         if (changedLayer && targetRenderer != null) targetRenderer.allowOcclusionWhenDynamic = originalAllowOcclusion;
         changedLayer = false;
+        if (boundsChanged && targetRenderer != null) targetRenderer.localBounds = originalBounds;
+        boundsChanged = false;
     }
     void SelectSkin()
     {
@@ -89,9 +113,21 @@ public sealed class FlupinVisual : MonoBehaviour
 
     void OnStateChanged(FlupinState state)
     {
+        attacking = state == FlupinState.Approaching;
+        animationTime = 0f;
+        displayedFrame = -1;
+        UpdateAnimation();
+    }
+    void UpdateAnimation()
+    {
         if (selectedSkin == null || targetRenderer == null) return;
-        Sprite sprite = state == FlupinState.Approaching && selectedSkin.attack != null
-            ? selectedSkin.attack : selectedSkin.idle;
+        Sprite[] frames = attacking ? selectedSkin.attackFrames : selectedSkin.idleFrames;
+        Sprite fallback = attacking && selectedSkin.attack != null ? selectedSkin.attack : selectedSkin.idle;
+        int frame = frames != null && frames.Length > 0
+            ? Mathf.FloorToInt(animationTime * Mathf.Max(0.1f, selectedSkin.framesPerSecond)) % frames.Length : 0;
+        if (frame == displayedFrame) return;
+        displayedFrame = frame;
+        Sprite sprite = frames != null && frames.Length > 0 && frames[frame] != null ? frames[frame] : fallback;
         if (sprite == null) return;
         if (targetRenderer is SpriteRenderer spriteRenderer)
         {
@@ -111,6 +147,8 @@ public sealed class FlupinVisual : MonoBehaviour
             if (materials[i] == null || !materials[i].HasProperty(BaseMap)) continue;
             properties.Clear();
             targetRenderer.GetPropertyBlock(properties, i);
+            if (materials[i].HasProperty(VisualScale)) properties.SetFloat(VisualScale, selectedSkin.visualScale > 0f ? selectedSkin.visualScale : 1f);
+            if (materials[i].HasProperty(VisualWidth)) properties.SetFloat(VisualWidth, selectedSkin.visualWidth > 0f ? selectedSkin.visualWidth : 1f);
             properties.SetTexture(BaseMap, texture);
             properties.SetVector(BaseMapST, uv);
             properties.SetVector(BaseMapTexelSize, new Vector4(1f / texture.width, 1f / texture.height, texture.width, texture.height));
@@ -119,6 +157,8 @@ public sealed class FlupinVisual : MonoBehaviour
     }
     void LateUpdate()
     {
+        animationTime += Time.deltaTime;
+        UpdateAnimation();
         if (!faceCamera) return;
         if (view == null && enemy != null && enemy.TargetPlayer != null) view = enemy.TargetPlayer.GetComponentInChildren<Camera>();
         if (view == null) view = Camera.main;

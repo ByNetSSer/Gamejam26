@@ -24,10 +24,11 @@ public sealed class RoomCrusher : EnemyAgent
     CharacterController playerBody;
     Vector3 previousPlayer;
     float warning;
+    SpawnScaleFeedback appearance;
     bool granted, descending, finished, roomActive;
     public string DebugStatus => finished ? "Terminado" : !granted ? "Esperando turno" : !descending ? $"Aviso: {warning:0.0} s" : "Bajando";
     public override AttackRequirement Requirement => AttackRequirement.Any;
-    public override bool CanRequestAttack => roomActive && Player != null && Player.IsGrounded && !finished && !granted && ValidSetup();
+    public override bool CanRequestAttack => (appearance == null || !appearance.IsAppearing) && roomActive && Player != null && Player.IsGrounded && !finished && !granted && ValidSetup();
     public override bool CanBeRepelled => false;
     public override bool UsesAttackTimeout => false;
     public override bool TryRepel(float power) => false;
@@ -61,6 +62,7 @@ public sealed class RoomCrusher : EnemyAgent
         if (!ValidSetup()) { Debug.LogWarning("Aplanadora de prueba: revisa marcadores, dimensiones y descenso vertical.", this); finished = true; return; }
         visual.SetPositionAndRotation(top.position, top.rotation);
         visual.localScale = size;
+        appearance = SpawnScaleFeedback.Play(visual);
     }
     void Update()
     {

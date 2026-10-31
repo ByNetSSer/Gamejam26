@@ -277,7 +277,7 @@ namespace MenuUIBase.Audio
         }
 
         // One reusable loop prevents overlapping and stops when movement ends.
-        public void SetFootsteps(AudioCue cue, float volumeScale)
+        public void SetFootsteps(AudioCue cue, float volumeScale, float playbackPitch = 1f)
         {
             if (cue == null || cue.Clip == null)
             {
@@ -291,6 +291,9 @@ namespace MenuUIBase.Audio
                 footstepsSource.loop = true;
                 footstepsSource.spatialBlend = 0f;
             }
+            float targetPitch = Mathf.Clamp(playbackPitch, 0.65f, 1.8f);
+            footstepsSource.pitch = footstepsSource.isPlaying
+                ? Mathf.MoveTowards(footstepsSource.pitch, targetPitch, Time.unscaledDeltaTime * 3f) : targetPitch;
             footstepsVolume = cue.Volume * Mathf.Clamp01(volumeScale);
             footstepsSource.volume = masterVolume * soundEffectsVolume * footstepsVolume;
             if (footstepsSource.clip == cue.Clip && footstepsSource.isPlaying) return;

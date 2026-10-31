@@ -13,6 +13,9 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
     bool touchingLava;
     [SerializeField, Min(0f)] float minFootstepSpeed = 0.15f;
     [SerializeField, Range(0f, 1f)] float crouchFootstepVolume = 0.55f;
+    [SerializeField, Min(0.1f)] float footstepReferenceSpeed = 6f;
+    public bool FootstepsActive { get; private set; }
+    public float FootstepPitch { get; private set; } = 1f;
     Vector3 previousPosition;
     bool positionValid;
     public SurfaceAudioKind FootstepSurface { get; private set; }
@@ -68,15 +71,17 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
         foreach (var surface in current) active.Add(surface);
         Vector3 position = transform.position;
         Vector3 delta = position - previousPosition; delta.y = 0f;
-        bool walking = positionValid && player.enabled && controller.enabled && player.IsGrounded && !player.IsPounding &&
-            !player.IsSliding && !player.IsSprinting && player.HasMovementInput && Time.deltaTime > 0f &&
-            delta.magnitude / Time.deltaTime >= minFootstepSpeed;
+        float actualSpeed = Time.deltaTime > 0f ? delta.magnitude / Time.deltaTime : 0f;
+        bool walking = positionValid && player.enabled && controller.enabled && player.IsGrounded &&
+            Time.deltaTime > 0f && actualSpeed >= minFootstepSpeed;
+        FootstepsActive = walking;
+        FootstepPitch = Mathf.Clamp(Mathf.Sqrt(actualSpeed / Mathf.Max(0.1f, footstepReferenceSpeed)), 0.65f, 1.8f);
         previousPosition = position; positionValid = true;
         if (walking)
         {
             var cue = GameSfx.Find(FootstepCueId);
             if (cue == null || cue.Clip == null) cue = GameSfx.Find("footstep.normal");
-            AudioManager.Instance.SetFootsteps(cue, player.IsCrouching ? crouchFootstepVolume : 1f);
+            AudioManager.Instance.SetFootsteps(cue, player.IsCrouching ? crouchFootstepVolume : 1f, FootstepPitch);
         }
         else if (AudioManager.HasInstance) AudioManager.Instance.SetFootsteps(null, 0f);
         var names = new List<string>();
@@ -87,6 +92,7 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
     {
         foreach (var surface in active) if (surface != null) surface.Exit(player);
         active.Clear(); current.Clear(); SurfaceNames = "Normal";
+        FootstepsActive = false;
         touchingLava = false; FootstepSurface = SurfaceAudioKind.Normal; positionValid = false;
         if (AudioManager.HasInstance) AudioManager.Instance.SetFootsteps(null, 0f);
     }

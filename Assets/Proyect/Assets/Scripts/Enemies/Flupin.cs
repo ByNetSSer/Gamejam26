@@ -47,8 +47,9 @@ public sealed class Flupin : EnemyAgent
     [SerializeField] MMF_Player warningFeedback;
     [SerializeField] MMF_Player repelFeedback;
     [SerializeField] MMF_Player hitFeedback;
+    SpawnScaleFeedback appearance;
     public override AttackRequirement Requirement => AttackRequirement.Any;
-    public override bool CanRequestAttack => state == FlupinState.Waiting;
+    public override bool CanRequestAttack => (appearance == null || !appearance.IsAppearing) && state == FlupinState.Waiting;
     public FlupinState State => state;
     public float Aggressiveness => Mathf.Max(0.1f, Evaluate(FlupinStat.Aggressiveness, aggressiveness));
     public float SpawnDistance => Mathf.Max(1f, Evaluate(FlupinStat.ApproachStartDistance, approachStartDistance));
@@ -77,6 +78,7 @@ public sealed class Flupin : EnemyAgent
     protected override void OnEnable()
     {
         base.OnEnable();
+        appearance = SpawnScaleFeedback.Play(transform);
         timer = Mathf.Max(0f, Evaluate(FlupinStat.InitialDelay, initialDelay));
         state = FlupinState.Waiting;
         flightVelocity = Vector3.zero;
