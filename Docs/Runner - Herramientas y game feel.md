@@ -194,7 +194,7 @@ El botón derecho conserva el parry y golpea el primer destructible bajo la mira
 
 
 
-Las vidas existentes distinguen objetos ligeros (taza 6, libros/candelabro pequeño 10–12), medianos (16–24) y pesados (30–35). En props con daño proporcional, al primer impacto se escala vida y velocidad de rotura por la relación entre velocidad objetivo de sprint al inicio de la torre y la de la primera torre, con mínimo 1. La referencia se fija por torre; cambios posteriores de velocidad no alteran los props ya generados. El daño de colisión sigue creciendo con velocidad perpendicular y los modificadores de impacto. Trampillas y props con daño no proporcional conservan sus reglas anteriores. Valores iniciales sujetos a balance en Play Mode.
+Las vidas existentes distinguen objetos ligeros (taza 6, libros/candelabro pequeño 10–12), medianos (16–24) y pesados (30–35). En props con daño proporcional, al primer impacto se escalan vida y velocidad de rotura según la relación entre la velocidad objetivo de sprint al inicio de la torre y la de la primera torre. El escalado es `min(3, 1 + 0,25 × (relación − 1))`, con relación mínima 1. La referencia se fija por torre y los props no superan el triple de su vida y umbral iniciales. Para los impactos horizontales proporcionales, la velocidad de referencia de daño es el mayor entre el umbral escalado y el 45 % de la velocidad máxima actual; el daño crece con la velocidad perpendicular y los modificadores de impacto. Los golpes lentos pueden dañar un objeto sin romperlo de inmediato y el multiplicador de velocidad, los ítems y el daño acumulado también influyen. El pisotón mantiene su cálculo vertical. Trampillas y props con daño no proporcional conservan sus reglas anteriores. Valores iniciales sujetos a balance en Play Mode.
 
 
 
@@ -218,3 +218,8 @@ Los prefabs de props proporcionales del pool tienen 20 % menos vida y 15 % menos
 ## Bonus de velocidad y ojo de pez (2026-10-30)
 
 El bonus contra props comienza al 50 % de la velocidad horizontal de sprint máximo y sube linealmente de 1× a 2,5× al 100 %. Afecta al hachazo y a los impactos, incluida la predicción de rotura. El ojo de pez usa el mismo porcentaje en el volumen global temporal de velocidad: respuesta cuadrática desde 0 hasta Lens Distortion −0,12 al 100 %, suavizado de 0,3 s. La aberración cromática conserva su escala 0–1. La distorsión anterior por velocidades absolutas queda sustituida por este cálculo relativo. El efecto se limita al 100 % si un impulso supera el sprint objetivo y usa velocidad horizontal. Los valores requieren validación visual y de balance en Play Mode.
+
+
+## Dígitos animados en interfaz (2026-10-30)
+
+`CharacterCounterFeedback` anima dígitos en textos uGUI `Text`: sacudida independiente y transición de compresión al cambiar. El reloj aumenta la intensidad durante el último minuto; el encabezado del combo aumenta con su rango y el registro de puntos también usa el efecto. Shake, duración y frecuencia se ajustan en el componente; Intensity permite control desde código. Usa tiempo escalado. El panel de diagnóstico `ScoreDebugView` sigue usando OnGUI y no admite directamente este componente. Pendiente validar en Play Mode la legibilidad, los cambios rápidos, saltos de línea y el aspecto con la tipografía final.

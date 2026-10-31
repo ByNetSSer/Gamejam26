@@ -56,8 +56,13 @@ public sealed class ImpactTarget : MonoBehaviour
 
     float ImpactDamage(PlayerController player, float speed, bool downwardPound)
     {
+        // Keep late-game props responsive without making a slow brush lethal.
+        // Pound speed is vertical and must not be compared to horizontal sprint.
+        float requiredSpeed = breakSpeed;
+        if (proportionalSpeedDamage && !downwardPound)
+            requiredSpeed = Mathf.Max(requiredSpeed, player.MaximumRunSpeed * 0.45f);
         float damage = proportionalSpeedDamage
-            ? maxHealth * speed / Mathf.Max(0.01f, breakSpeed)
+            ? maxHealth * speed / Mathf.Max(0.01f, requiredSpeed)
             : speed * damagePerSpeed;
         if (downwardPound) damage += poundBonusDamage;
         return player.Stats.Evaluate(PlayerStat.ImpactDamage, damage) * SpeedDamageMultiplier(player);

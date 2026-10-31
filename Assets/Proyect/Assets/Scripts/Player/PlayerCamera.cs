@@ -19,7 +19,8 @@ public sealed class PlayerCamera : MonoBehaviour
     static void LockCursor(bool locked) { Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None; Cursor.visible = !locked; }
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) LockCursor(false);
+        if (GameplayPauseMenu.IsPaused) return;
+        if (gameObject.scene.name != "e" && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) LockCursor(false);
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked) LockCursor(true);
         if (player == null || Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
         float speedFraction = Mathf.Clamp01(player.HorizontalSpeed / Mathf.Max(0.01f, player.Stats.Evaluate(PlayerStat.CameraPenaltySpeed, speedForMaxPenalty)));

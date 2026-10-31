@@ -10,13 +10,21 @@ using UnityEngine.Rendering.Universal;
 [RequireComponent(typeof(RoomManager), typeof(RoomEnemyRoster))]
 public sealed class CorridorChaserEncounter : MonoBehaviour
 {
+    [Tooltip("Prefab editable del corredor; si está vacío se carga Resources/Enemies/Corredor.")]
+    [SerializeField] GameObject enemyPrefab;
     [SerializeField] Sprite sprite;
     [SerializeField, Range(0f, 1f)] float spawnChance = 0.3f;
     [SerializeField, Min(0)] int safeRoomsBetween = 2;
-    [SerializeField, Min(1f)] float speed = 26f;
-    [SerializeField, Min(1f)] float warningWaitSeconds = 10f;
-    [SerializeField, Min(0.1f)] float contactRadius = 1.1f;
-    [SerializeField, Range(0f, 1f)] float damageFraction = 0.33f;
+    [SerializeField, Min(1f)] float speed = 40f;
+    [SerializeField, Min(1f)] float warningWaitSeconds = 6f;
+    [Header("Daño y zona de impacto")]
+    [Tooltip("Radio alternativo si el prefab no tiene SphereCollider. Si existe, se usa el radio del collider del prefab.")]
+    [SerializeField, Min(0.05f)] float contactRadius = 0.45f;
+    [Tooltip("Fracción de la vida máxima que quita por impacto, con el mínimo configurado.")]
+    [SerializeField, Range(0f, 1f)] float damageFraction = 0.5f;
+    [SerializeField, Min(0f)] float minimumDamage = 50f;
+    [Tooltip("Tiempo sin daño al aparecer o recolocarse cuando se elimina una sala antigua. Sigue avanzando durante este margen.")]
+    [SerializeField, Min(0.1f)] float relocationGraceSeconds = 0.75f;
     [SerializeField, Min(0f)] float heightOffset = 1f;
     [Header("Sacudida por cercanía")]
     [SerializeField, Min(0.1f)] float shakeDistance = 70f;
@@ -33,6 +41,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     readonly List<IDisposable> subscriptions = new List<IDisposable>();
     readonly List<Vector3> path = new List<Vector3>();
     GameObject visual;
+    SphereCollider hitbox;
     Sprite fallbackSprite;
     readonly AudioSource[] attackSources = new AudioSource[2];
     int attackActive;
@@ -52,6 +61,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     int frequencyBuffs, speedBuffs, impatienceBuffs;
     Vector3 previousPlayer;
     bool hasPreviousPlayer;
+    float damageAllowedAt;
 
     public void IncreaseFrequency() => frequencyBuffs++;
     public void IncreaseSpeed() => speedBuffs++;
@@ -73,6 +83,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     void Stop()
     {
         warning = running = hit = hasPreviousPlayer = false;
+        damageAllowedAt = 0f;
         path.Clear(); pathRoom = null;
         for (int i = 0; i < attackSources.Length; i++)
         {
@@ -80,6 +91,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
             attackSources[i] = null;
         }
         attackCue = null;
+        hitbox = null;
         if (cameraTransform != null && shakePivot != null) cameraTransform.SetParent(cameraOriginalParent, false);
         if (shakePivot != null) Destroy(shakePivot.gameObject);
         cameraShaker = null; shakePivot = cameraTransform = cameraOriginalParent = null;
@@ -119,15 +131,22 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
         // The first intermediate room is used only after the player has left it.
         pathRoomIndex = Mathf.Max(2, rooms.RoomsEntered - 1);
         pathRoom = null; pathIndex = 0;
-        visual = new GameObject("Perseguidor de pasillo");
-        visual.transform.SetParent(transform, false);
-        var renderer = visual.AddComponent<SpriteRenderer>();
-        if (sprite == null && fallbackSprite == null) fallbackSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
-        renderer.sprite = sprite != null ? sprite : fallbackSprite;
-        renderer.color = sprite != null ? Color.white : new Color(0.9f, 0.15f, 0.15f, 1f);
-        visual.transform.localScale = new Vector3(2f, 2f, 1f);
+        var prefab = enemyPrefab != null ? enemyPrefab : Resources.Load<GameObject>("Enemies/Corredor");
+        if (prefab != null) visual = Instantiate(prefab, transform);
+        else
+        {
+            visual = new GameObject("Perseguidor de pasillo");
+            visual.transform.SetParent(transform, false);
+            var renderer = visual.AddComponent<SpriteRenderer>();
+            if (sprite == null && fallbackSprite == null) fallbackSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+            renderer.sprite = sprite != null ? sprite : fallbackSprite;
+            renderer.color = sprite != null ? Color.white : new Color(0.9f, 0.15f, 0.15f, 1f);
+            visual.transform.localScale = new Vector3(2f, 2f, 1f);
+        }
+        hitbox = visual.GetComponent<SphereCollider>();
+        if (hitbox != null) hitbox.enabled = false; // Radius is used by the swept test, not by physics contacts.
         if (!SetPath(RoomForIndex(pathRoomIndex))) { Stop(); return; }
-        visual.transform.position = path[0];
+        Relocate(path[0]);
         SetupCameraShake();
         attackCue = GameSfx.Find("corredor.attack");
         if (attackCue != null && attackCue.Clip != null && attackCue.Clip.length > 0.04f)
@@ -281,8 +300,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
             if (pathRoomIndex > endRoomIndex) { Stop(); return; }
             if (!SetPath(RoomForIndex(pathRoomIndex))) { Stop(); return; }
             pathIndex = lastPointIndex;
-            visual.transform.position = path[pathIndex];
-            previousPlayer = PlayerCenter(); hasPreviousPlayer = true;
+            Relocate(path[pathIndex]);
         }
         var camera = rooms.Player.GetComponentInChildren<Camera>();
         if (camera != null)
@@ -291,6 +309,10 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
             if (facing.sqrMagnitude > 0.001f) visual.transform.rotation = Quaternion.LookRotation(facing, Vector3.up);
         }
         float distance = Mathf.Max(0f, speed * (1f + 0.2f * speedBuffs) * Time.deltaTime);
+        float frameDistance = distance;
+        // A sweep represents the whole frame. If grace ends part-way through it,
+        // skip that sweep rather than retroactively hitting during the safe time.
+        bool canDamage = Time.time - Time.deltaTime >= damageAllowedAt;
         Vector3 playerCenter = PlayerCenter();
         UpdateCameraShake(playerCenter);
         while (distance > 0f && running)
@@ -306,17 +328,30 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
             Vector3 target = path[pathIndex];
             float step = Vector3.Distance(before, target);
             visual.transform.position = Vector3.MoveTowards(before, target, distance);
-            if (!hit && hasPreviousPlayer && Flupin.TouchesPlayer(before, visual.transform.position, previousPlayer, playerCenter, contactRadius))
+            float travelled = Mathf.Min(distance, step);
+            float startFraction = frameDistance > 0f ? (frameDistance - distance) / frameDistance : 0f;
+            float endFraction = frameDistance > 0f ? (frameDistance - distance + travelled) / frameDistance : 1f;
+            Vector3 playerBefore = Vector3.Lerp(previousPlayer, playerCenter, startFraction);
+            Vector3 playerAfter = Vector3.Lerp(previousPlayer, playerCenter, endFraction);
+            Vector3 hitboxOffset = hitbox != null ? hitbox.transform.TransformVector(hitbox.center) : Vector3.zero;
+            if (canDamage && !hit && hasPreviousPlayer && Flupin.TouchesPlayer(before + hitboxOffset, visual.transform.position + hitboxOffset, playerBefore, playerAfter, HitRadius()))
             {
                 hit = true;
                 var health = rooms.Player.GetComponent<PlayerHealth>();
-                if (health != null) health.TakeDamage(health.DamageForCurrentHealthFraction(damageFraction), RunLossReason.CorridorChaser);
+                if (health != null) health.TakeDamage(Mathf.Max(minimumDamage, health.MaxHealth * Mathf.Clamp01(damageFraction)), RunLossReason.CorridorChaser);
                 if (!running) break;
             }
-            distance -= Mathf.Min(distance, step);
+            distance -= travelled;
             if (step <= 0.001f || visual.transform.position == target) pathIndex++;
         }
         previousPlayer = playerCenter; hasPreviousPlayer = true;
+    }
+    void Relocate(Vector3 position)
+    {
+        visual.transform.position = position;
+        previousPlayer = PlayerCenter();
+        hasPreviousPlayer = true;
+        damageAllowedAt = Time.time + Mathf.Max(0.1f, relocationGraceSeconds);
     }
     void UpdateAttackVolume()
     {
@@ -343,5 +378,18 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     void OnGUI()
     {
         if (warning) GUI.Box(new Rect(Screen.width * 0.5f - 200f, 65f, 400f, 55f), "¡PERSEGUIDOR EN CAMINO!\nApártate hacia una pared.");
+    }
+    void OnDrawGizmosSelected()
+    {
+        if (visual == null) return;
+        Gizmos.color = Color.red;
+        Vector3 center = hitbox != null ? hitbox.transform.TransformPoint(hitbox.center) : visual.transform.position;
+        Gizmos.DrawWireSphere(center, HitRadius());
+    }
+    float HitRadius()
+    {
+        if (hitbox == null) return Mathf.Max(0f, contactRadius);
+        Vector3 scale = hitbox.transform.lossyScale;
+        return Mathf.Max(0f, hitbox.radius) * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
     }
 }

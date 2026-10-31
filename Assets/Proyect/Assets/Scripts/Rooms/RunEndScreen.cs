@@ -21,6 +21,7 @@ public sealed class RunEndScreen : MonoBehaviour
     int lastTickSecond = -1;
     RoomManager rooms;
     Text clockText;
+    CharacterCounterFeedback clockFeedback;
     GameObject clockCanvas;
     Transform content;
     IDisposable won, lost;
@@ -174,6 +175,7 @@ public sealed class RunEndScreen : MonoBehaviour
             label.transform.SetParent(clockCanvas.transform, false);
             clockText = label.GetComponent<Text>();
             clockText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            clockFeedback = label.AddComponent<CharacterCounterFeedback>();
             clockText.fontSize = 30; clockText.alignment = TextAnchor.MiddleCenter; clockText.raycastTarget = false;
             var r = clockText.rectTransform;
             r.anchorMin = r.anchorMax = new Vector2(0.5f, 1f);
@@ -197,6 +199,7 @@ public sealed class RunEndScreen : MonoBehaviour
         }
         else lastTickSecond = -1;
         clockText.text = $"{seconds / 60:00}:{seconds % 60:00}" + (lastMinute ? "\n¡ÚLTIMO MINUTO!" : "");
+        clockFeedback.Intensity = lastMinute ? 2.8f : 1f;
         clockText.color = lastMinute ? new Color(1f, 0.35f, 0.25f) : Color.white;
     }
 

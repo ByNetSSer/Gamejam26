@@ -13,6 +13,7 @@ public sealed class ComboHud : MonoBehaviour
     PlayerScore score;
     GameObject canvasObject;
     Text header, log, wallet;
+    CharacterCounterFeedback headerFeedback;
     Image timer;
     float window;
     int displayedTier;
@@ -27,11 +28,13 @@ public sealed class ComboHud : MonoBehaviour
         var rect = panel.GetComponent<RectTransform>(); rect.anchorMin = rect.anchorMax = new Vector2(1, 0.5f); rect.pivot = new Vector2(1, 0.5f); rect.anchoredPosition = new Vector2(-35, 0); rect.sizeDelta = new Vector2(350, 300);
         panel.GetComponent<Image>().color = new Color(0.03f, 0.03f, 0.05f, 0.8f);
         header = MakeText(panel.transform, "Tier", new Vector2(12, -8), new Vector2(326, 45), 26);
+        headerFeedback = header.gameObject.AddComponent<CharacterCounterFeedback>();
         wallet = MakeText(panel.transform, "Monedas", new Vector2(12, -52), new Vector2(326, 30), 18);
         var bar = new GameObject("Tiempo", typeof(RectTransform), typeof(Image)); bar.transform.SetParent(panel.transform, false);
         var br = bar.GetComponent<RectTransform>(); br.anchorMin = br.anchorMax = new Vector2(0, 1); br.pivot = new Vector2(0, 1); br.anchoredPosition = new Vector2(12, -87); br.sizeDelta = new Vector2(326, 7);
         timer = bar.GetComponent<Image>(); timer.color = new Color(1f, 0.7f, 0.2f); timer.type = Image.Type.Filled; timer.fillMethod = Image.FillMethod.Horizontal;
         log = MakeText(panel.transform, "Registro", new Vector2(12, -105), new Vector2(326, 180), 18);
+        log.gameObject.AddComponent<CharacterCounterFeedback>();
         Refresh();
     }
     static Text MakeText(Transform parent, string name, Vector2 position, Vector2 size, int fontSize)
@@ -73,6 +76,7 @@ public sealed class ComboHud : MonoBehaviour
         if (tierThresholds != null) for (int i = 0; i < tierThresholds.Length && i < tierNames.Length; i++) if (score.ComboPoints >= tierThresholds[i]) tier = i;
         if (tier > displayedTier) GameSfx.Play("combo.tier");
         displayedTier = tier;
+        headerFeedback.Intensity = 1f + 0.35f * tier;
         header.text = $"{tierNames[tier]}   COMBO {score.ComboCount}   {score.ComboPoints} pts";
         wallet.text = $"MONEDAS  {score.Coins}";
         log.text = string.Join("\n", entries.ToArray());

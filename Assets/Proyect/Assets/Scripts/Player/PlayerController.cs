@@ -80,7 +80,9 @@ public sealed class PlayerController : MonoBehaviour
     {
         float speed = Mathf.Max(0.01f, TargetSpeed * sprintSpeedMultiplier);
         if (firstTowerSpeed <= 0f) firstTowerSpeed = speed;
-        DestructibleTowerScale = Mathf.Max(1f, speed / firstTowerSpeed);
+        // Growth is intentionally modest and capped, so later props remain breakable.
+        float speedRatio = Mathf.Max(1f, speed / firstTowerSpeed);
+        DestructibleTowerScale = Mathf.Min(3f, 1f + (speedRatio - 1f) * 0.25f);
     }
     // Sprint is the reference maximum; slides and external impulses can exceed it.
     public float MaximumRunSpeed => Mathf.Max(0f, TargetSpeed * sprintSpeedMultiplier);

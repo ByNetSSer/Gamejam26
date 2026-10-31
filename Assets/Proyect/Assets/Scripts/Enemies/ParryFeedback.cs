@@ -53,6 +53,7 @@ public sealed class ParryFeedback : MonoBehaviour
     void Update()
     {
         if (!slowing) return;
+        if (GameplayPauseMenu.IsPaused) { startedAt += Time.unscaledDeltaTime; return; }
         if (!Mathf.Approximately(Time.timeScale, appliedScale)) { slowing = false; return; }
         float elapsed = Time.unscaledTime - startedAt;
         if (elapsed < slowDuration) return;

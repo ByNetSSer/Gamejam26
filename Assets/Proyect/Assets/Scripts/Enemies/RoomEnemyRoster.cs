@@ -107,18 +107,24 @@ public sealed class RoomEnemyRoster : MonoBehaviour
             foreach (var m in maskModifiers) copy.AddModifier(m.Source, m.Stat, m.Type, m.Value);
             extraMasks.Add(copy);
         }
-        PlaceMask(maskCharger, director, 0);
-        for (int i = 0; i < extraMasks.Count && i < maskCount - 1; i++) PlaceMask(extraMasks[i], director, i + 1);
+        float phase = UnityEngine.Random.Range(0f, 360f);
+        PlaceMask(maskCharger, director, 0, phase);
+        for (int i = 0; i < extraMasks.Count && i < maskCount - 1; i++) PlaceMask(extraMasks[i], director, i + 1, phase);
     }
-    void PlaceMask(MaskCharger enemy, EnemyDirector director, int index)
+    void PlaceMask(MaskCharger enemy, EnemyDirector director, int index, float phase)
     {
         if (enemy == null || enemy.gameObject.activeSelf) return;
         enemy.transform.SetParent(null, true);
-        Vector3 forward = Vector3.ProjectOnPlane(player.Velocity, Vector3.up);
-        if (forward.sqrMagnitude < 0.25f) forward = Vector3.ProjectOnPlane(player.transform.forward, Vector3.up);
-        if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
-        float angle = maskCount <= 1 ? 45f : Mathf.Lerp(-65f, 65f, index / (float)(maskCount - 1));
-        enemy.transform.position = player.transform.position + Vector3.up * 0.5f + Quaternion.Euler(0f, angle, 0f) * forward.normalized * 8f;
+        Vector3 direction;
+        if (maskCount <= 1) direction = UnityEngine.Random.onUnitSphere;
+        else
+        {
+            float y = 1f - 2f * (index + 0.5f) / maskCount;
+            float angle = (phase + index * 137.50776f) * Mathf.Deg2Rad;
+            float horizontal = Mathf.Sqrt(Mathf.Max(0f, 1f - y * y));
+            direction = new Vector3(Mathf.Cos(angle) * horizontal, y, Mathf.Sin(angle) * horizontal);
+        }
+        enemy.transform.position = player.transform.position + Vector3.up * 0.5f + direction * enemy.StalkingDistance;
         enemy.SetDirector(director);
         enemy.gameObject.SetActive(true);
     }

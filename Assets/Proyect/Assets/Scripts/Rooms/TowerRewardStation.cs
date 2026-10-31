@@ -89,18 +89,34 @@ public sealed class TowerRewardStation : MonoBehaviour
         started = rooms.Events.Subscribe<TowerStartedEvent>(OnStarted);
     }
     void OnDisable() { completed?.Dispose(); started?.Dispose(); completed = started = null; Clear(); }
+    bool CopiesOnly => GetComponent<EnemyCopiesMode>() is EnemyCopiesMode mode && mode.isActiveAndEnabled && mode.enemyCopiesOnly;
     void OnStarted(TowerStartedEvent e)
     {
         Clear();
         if (!TowerSafetyRules.RequiresStartingCurse(rooms.TowerNumber) || rooms.CurrentRoom == null || rooms.Player == null) return;
+        var enemyChoices = EnemyChoices();
+        if (CopiesOnly && enemyChoices.Count == 0)
+        {
+            Debug.LogWarning("No quedan enemigos disponibles para las maldiciones; la salida permanece abierta.", this);
+            return;
+        }
         CreateStage("Maldición obligatoria");
         curseSelection = true;
         rooms.SetStartingExitLocked(true);
         offersRoot = new GameObject("Maldiciones"); offersRoot.transform.SetParent(stage.transform, false);
-        var choices = new List<Reward>(curses);
-        var enemyChoices = EnemyChoices();
+        var choices = CopiesOnly ? new List<Reward>() : new List<Reward>(curses);
         var offered = new List<Reward>();
-        if (enemyChoices.Count > 0)
+        if (CopiesOnly)
+        {
+            var remaining = new List<Reward>(enemyChoices);
+            while (offered.Count < 3)
+            {
+                if (remaining.Count == 0) remaining.AddRange(enemyChoices);
+                int pick = UnityEngine.Random.Range(0, remaining.Count);
+                offered.Add(remaining[pick]); remaining.RemoveAt(pick);
+            }
+        }
+        else if (enemyChoices.Count > 0)
         {
             // Keep the new enemy discoverable: offer its unlock until chosen.
             // After that, all enemy upgrades return to the normal random pool.
@@ -110,7 +126,7 @@ public sealed class TowerRewardStation : MonoBehaviour
             offered.Add(enemyChoices[pick]);
             enemyChoices.RemoveAt(pick);
         }
-        choices.AddRange(enemyChoices);
+        if (!CopiesOnly) choices.AddRange(enemyChoices);
         while (offered.Count < 3)
         {
             int pick = UnityEngine.Random.Range(0, choices.Count);
@@ -126,6 +142,18 @@ public sealed class TowerRewardStation : MonoBehaviour
         var roster = GetComponent<RoomEnemyRoster>();
         if (roster != null)
         {
+            if (CopiesOnly)
+            {
+                if (roster.CanChooseFlupin)
+                    enemyChoices.Add(new Reward(roster.FlupinSelected ? "+1 Flupin" : "Invocar a Flupin", "Añade un Flupin a las siguientes salas.", EnemyCurse.Flupin));
+                if (roster.CanChooseMaskCharger)
+                    enemyChoices.Add(new Reward(roster.MaskChargerSelected ? "+1 máscara" : "Invocar a la máscara", "Añade una máscara a las siguientes salas.", EnemyCurse.MaskCharger));
+                if (!roster.DontseeSelected && roster.CanChooseDontsee)
+                    enemyChoices.Add(new Reward("Invocar a Dontsee", "Dontsee podrá aparecer en las siguientes salas.", EnemyCurse.Dontsee));
+                if (!roster.CorridorChaserSelected && roster.CanChooseCorridorChaser)
+                    enemyChoices.Add(new Reward("Invocar al perseguidor", "El perseguidor podrá aparecer en las siguientes salas.", EnemyCurse.CorridorChaser));
+                return enemyChoices;
+            }
             if (roster.CanChooseCorridorChaser)
                 enemyChoices.Add(new Reward(roster.CorridorChaserSelected ? "Rastro persistente" : "Invocar al perseguidor", roster.CorridorChaserSelected ? "El perseguidor aparece con más frecuencia." : "Un perseguidor veloz recorrerá los puntos de las salas; apártate hacia las paredes.", EnemyCurse.CorridorChaser));
             if (roster.CorridorChaserSelected)
@@ -161,6 +189,12 @@ public sealed class TowerRewardStation : MonoBehaviour
         int tower = rooms.TowerNumber;
         if (!TowerSafetyRules.ShouldApplyTowerCurse(tower, rooms.TotalTowers, lastAutomaticCurseTower) || rooms.Player == null) return;
         var choices = EnemyChoices();
+        if (CopiesOnly && choices.Count == 0)
+        {
+            lastAutomaticCurseTower = tower;
+            Debug.LogWarning("No quedan enemigos disponibles para la maldición automática de esta torre.", this);
+            return;
+        }
         Reward reward = choices.Count > 0 ? choices[UnityEngine.Random.Range(0, choices.Count)] : curses[UnityEngine.Random.Range(0, curses.Length)];
         if (reward.enemy != EnemyCurse.None)
         {
@@ -174,6 +208,9 @@ public sealed class TowerRewardStation : MonoBehaviour
     {
         var roster = GetComponent<RoomEnemyRoster>();
         if (roster == null) return false;
+        if (CopiesOnly && curse != EnemyCurse.Flupin && curse != EnemyCurse.MaskCharger &&
+            !(curse == EnemyCurse.Dontsee && !roster.DontseeSelected) &&
+            !(curse == EnemyCurse.CorridorChaser && !roster.CorridorChaserSelected)) return false;
         object source = new object();
         switch (curse)
         {

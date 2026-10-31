@@ -33,12 +33,10 @@ public sealed class MaskCharger : EnemyAgent
     [Header("Seguimiento")]
     [SerializeField, Min(0f)] float followSpeed = 3f;
     [SerializeField, Min(0f)] float catchUpBonus = 4f;
-    [SerializeField, Min(0.1f)] float attackRange = 10f;
-    [SerializeField, Min(0f)] float preferredDistance = 8f;
-    [Tooltip("Velocidad angular máxima al rondar y recuperar una posición adelantada.")]
-    [SerializeField, Min(0f)] float orbitDegreesPerSecond = 70f;
-    [Tooltip("Ángulo máximo a cada lado de la dirección de avance del jugador.")]
-    [SerializeField, Range(0f, 85f)] float stalkingArc = 65f;
+    [SerializeField, Min(0.1f)] float attackRange = 16f;
+    [SerializeField, Min(0f)] float preferredDistance = 12f;
+    [Tooltip("Velocidad angular al acechar alrededor del jugador en tres dimensiones.")]
+    [SerializeField, Min(0f)] float orbitDegreesPerSecond = 15f;
     [SerializeField, Min(0f)] float attackInterval = 4f;
     [Tooltip("Multiplica el intervalo configurado, también en prefabs existentes. La recuperación cuenta dentro de esa espera.")]
     [SerializeField, Range(0.1f, 1f)] float attackCadenceMultiplier = 0.5f;
@@ -49,6 +47,7 @@ public sealed class MaskCharger : EnemyAgent
     [SerializeField, Min(0.1f)] float contactRadius = 0.8f;
     [SerializeField, Range(0f, 1f)] float currentHealthFraction = 0.33f;
     [SerializeField, Min(0f)] float recoveryDuration = 1.5f;
+    [Tooltip("Distancia mínima que recorre después de la posición del jugador al apuntar. La duración y la frenada pueden prolongar el recorrido.")]
     [SerializeField, Min(0f)] float overshootDistance = 4f;
     [Tooltip("Tiempo de frenada al finalizar la carrera. El recorrido extra aparece en la línea de aviso.")]
     [SerializeField, Min(0.01f)] float brakingDuration = 0.35f;
@@ -66,8 +65,8 @@ public sealed class MaskCharger : EnemyAgent
     float attackCooldown;
     float aimSoundAt;
     bool aimSoundPlayed;
-    float timer, chargeRemaining, lockedChargeSpeed, lockedBrakingDuration, brakingElapsed, orbitPhase;
-    float orbitSide = 1f;
+    float timer, chargeRemaining, lockedChargeSpeed, lockedBrakingDuration, brakingElapsed;
+    Vector3 orbitDirection, orbitAxis;
     Vector3 chargeDirection, previousPlayer;
     bool hasPrevious, hitPlayer;
     SphereCollider damageTrigger;
@@ -81,10 +80,10 @@ public sealed class MaskCharger : EnemyAgent
     public MaskChargerState State => state;
     public Vector3 ChargeDirection => chargeDirection;
     public float Aggressiveness => Mathf.Max(0.1f, Evaluate(MaskChargerStat.Aggressiveness, aggressiveness));
+    public float StalkingDistance => Mathf.Min(Mathf.Max(0.5f, preferredDistance), Mathf.Max(0.5f, Evaluate(MaskChargerStat.AttackRange, attackRange) * 0.8f));
     public override AttackRequirement Requirement => AttackRequirement.Any;
     public override bool CanRequestAttack => state == MaskChargerState.Following && attackCooldown <= 0f && Player != null &&
-        (PlayerCenter() - transform.position).sqrMagnitude <= Mathf.Pow(Evaluate(MaskChargerStat.AttackRange, attackRange), 2f) &&
-        IsAhead(PlayerCenter());
+        (PlayerCenter() - transform.position).sqrMagnitude <= Mathf.Pow(Evaluate(MaskChargerStat.AttackRange, attackRange), 2f);
     public override bool CanBeRepelled => false;
     // The distance is fixed at launch, so a long charge must retain its turn.
     public override bool UsesAttackTimeout => false;
@@ -104,8 +103,14 @@ public sealed class MaskCharger : EnemyAgent
         state = MaskChargerState.Following;
         attackCooldown = AttackCooldown;
         hasPrevious = false;
-        orbitPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
-        orbitSide = Player != null && Vector3.Dot(transform.position - PlayerCenter(), Vector3.Cross(Vector3.up, TravelForward())) < 0f ? -1f : 1f;
+        Vector3 offset = Player != null ? transform.position - PlayerCenter() : Vector3.forward;
+        orbitDirection = offset.sqrMagnitude > 0.001f ? offset.normalized : UnityEngine.Random.onUnitSphere;
+        // A horizontal axis perpendicular to the initial direction gives the
+        // orbit vertical travel even when the mask starts directly to a side.
+        Vector3 axis = Vector3.Cross(Vector3.up, orbitDirection);
+        if (axis.sqrMagnitude <= 0.001f)
+            axis = Quaternion.AngleAxis(UnityEngine.Random.Range(0f, 360f), Vector3.up) * Vector3.right;
+        orbitAxis = axis.normalized * (UnityEngine.Random.value < 0.5f ? -1f : 1f);
     }
     protected override void OnDisable()
     {
@@ -200,20 +205,13 @@ public sealed class MaskCharger : EnemyAgent
     }
     void Follow(Vector3 center, float dt)
     {
-        Vector3 forward = TravelForward();
-        Vector3 offset = Vector3.ProjectOnPlane(transform.position - center, Vector3.up);
-        Vector3 radial = offset.sqrMagnitude > 0.001f ? offset.normalized : -forward;
-        float radius = Mathf.Min(Mathf.Max(0.5f, preferredDistance), Mathf.Max(0.5f, Evaluate(MaskChargerStat.AttackRange, attackRange) * 0.8f));
+        float radius = StalkingDistance;
         float angularSpeed = Mathf.Max(0f, Evaluate(MaskChargerStat.OrbitSpeed, orbitDegreesPerSecond)) * Aggressiveness;
-        orbitPhase += dt * angularSpeed * Mathf.Deg2Rad * 0.35f;
-        float angle = orbitSide * Mathf.Clamp(stalkingArc, 0f, 85f) * (0.65f + 0.35f * Mathf.Sin(orbitPhase));
-        Vector3 desiredRadial = Quaternion.AngleAxis(angle, Vector3.up) * forward;
-        float signedAngle = Vector3.SignedAngle(radial, desiredRadial, Vector3.up);
-        // Resolve the ambiguous directly-behind case consistently to the chosen side.
-        if (Mathf.Abs(signedAngle) > 179f) signedAngle = 180f * orbitSide;
-        float turn = Mathf.Clamp(signedAngle, -angularSpeed * dt, angularSpeed * dt);
-        Vector3 nextRadial = Quaternion.AngleAxis(turn, Vector3.up) * radial;
-        Vector3 target = center + nextRadial * radius;
+        // Recovery retains the side where the charge ended; following then
+        // drifts around a vertical orbit instead of returning to the front.
+        if (state == MaskChargerState.Following)
+            orbitDirection = (Quaternion.AngleAxis(angularSpeed * dt, orbitAxis) * orbitDirection).normalized;
+        Vector3 target = center + orbitDirection * radius;
         // Translation is already inherited above; speed is available for the orbit and catch-up.
         float speed = Mathf.Max(0f, Evaluate(MaskChargerStat.FollowSpeed, followSpeed)) * Aggressiveness;
         speed += radius * angularSpeed * Mathf.Deg2Rad;
@@ -222,18 +220,13 @@ public sealed class MaskCharger : EnemyAgent
         transform.position = Vector3.MoveTowards(transform.position, target, speed * dt);
         Face(center - transform.position);
     }
-    Vector3 TravelForward()
+    void Face(Vector3 direction)
     {
-        Vector3 forward = Vector3.ProjectOnPlane(Player.Velocity, Vector3.up);
-        if (forward.sqrMagnitude < 0.25f) forward = Vector3.ProjectOnPlane(Player.transform.forward, Vector3.up);
-        return forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
+        if (direction.sqrMagnitude <= 0.0001f) return;
+        Vector3 forward = direction.normalized;
+        Vector3 up = Mathf.Abs(Vector3.Dot(forward, Vector3.up)) > 0.99f ? Vector3.forward : Vector3.up;
+        transform.rotation = Quaternion.LookRotation(forward, up);
     }
-    bool IsAhead(Vector3 center)
-    {
-        Vector3 offset = Vector3.ProjectOnPlane(transform.position - center, Vector3.up);
-        return offset.sqrMagnitude > 0.01f && Vector3.Dot(offset.normalized, TravelForward()) > 0.1f;
-    }
-    void Face(Vector3 direction) { if (direction.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up); }
     void PrepareCollision()
     {
         var found = new List<Collider>();
@@ -314,7 +307,11 @@ public sealed class MaskCharger : EnemyAgent
         if (trajectory != null) trajectory.enabled = false;
         if (damageTrigger != null) damageTrigger.enabled = false;
         ReleaseAttack();
-        orbitSide = -orbitSide;
+        if (Player != null)
+        {
+            Vector3 offset = transform.position - PlayerCenter();
+            if (offset.sqrMagnitude > 0.001f) orbitDirection = offset.normalized;
+        }
         timer = Mathf.Max(0.25f, Evaluate(MaskChargerStat.RecoveryDuration, recoveryDuration));
         attackCooldown = AttackCooldown;
         SetState(MaskChargerState.Recovery);
