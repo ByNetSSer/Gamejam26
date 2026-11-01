@@ -264,6 +264,7 @@ GameObject:
   - component: {fileID: 211997920}
   - component: {fileID: 211997928}
   - component: {fileID: 211997927}
+  - component: {fileID: 211997929}
   m_Layer: 0
   m_Name: Jugador
   m_TagString: Untagged
@@ -448,6 +449,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDirector
   graceAfterAttack: 1
   maxAttackDuration: 6
+--- !u!114 &211997929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 211997918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f710a002bcda4f2c8f616c9e9fe0c35e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::FirstPersonHandAnimation
+  actionFramesPerSecond: 16
+  slowRunFramesPerSecond: 9
+  fastRunFramesPerSecond: 22
+  minimumVisibleRunSpeed: 0.35
+  minimumBaseSpeed: 6
+  maximumBaseSpeed: 1000
+  planeDistance: 0.4
+  screenWidthFraction: 1
+  bottomMarginFraction: 0
+  walkingHandDistance: 0.3
+  minimumHandDistanceAtMaximumSpeed: 0.02
+  sortingOrder: 32000
+  previewInEditMode: 1
+  previewSpeed: 6
+  previewAnimationPhase: 0.25
+  previewBothHands: 1
 --- !u!1 &233569834
 GameObject:
   m_ObjectHideFlags: 0

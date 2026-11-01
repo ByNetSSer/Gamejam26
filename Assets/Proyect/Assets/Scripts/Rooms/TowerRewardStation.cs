@@ -1239,6 +1239,8 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         {
 
+            rooms.Player.GetComponent<FirstPersonHandAnimation>()?.PlayGrab();
+
             if (focused.IsReroll)
 
             {

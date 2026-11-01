@@ -129,6 +129,8 @@ public sealed class PlayerRepel : MonoBehaviour
 
             nextStrike = Time.time + Mathf.Max(0f, strikeCooldown);
 
+            Events.Publish(new PlayerHandActionEvent(director.Player, PlayerHandAction.Punch));
+
             HitDestructibles(strikeRange, strikeDamageFraction);
 
         }
@@ -142,6 +144,8 @@ public sealed class PlayerRepel : MonoBehaviour
         float extra = Mathf.Min(Mathf.Max(0f, maximumExtraCooldown), rapidParries * Mathf.Max(0f, repeatCooldownStep));
 
         nextUse = Time.time + Mathf.Max(0f, cooldown) + extra;
+
+        Events.Publish(new PlayerHandActionEvent(director.Player, PlayerHandAction.Parry));
 
         HitDestructibles(propHitRange, parryDamageFraction);
 

@@ -259,6 +259,8 @@ public sealed class PlayerController : MonoBehaviour
 
         if (GetComponent<PlayerSpeedFeedback>() == null) gameObject.AddComponent<PlayerSpeedFeedback>();
 
+        if (GetComponent<FirstPersonHandAnimation>() == null) gameObject.AddComponent<FirstPersonHandAnimation>();
+
     }
 
 
@@ -780,8 +782,6 @@ public sealed class PlayerController : MonoBehaviour
                 wallCrashRecoveryRemaining = Mathf.Max(0f, wallCrashRecoveryTime);
 
                 nextWallCrashTime = Time.time + Mathf.Max(0f, wallCrashCooldown);
-
-                landingOffset = -0.09f;
 
                 WallCrashed?.Invoke(speed, hit.normal);
 

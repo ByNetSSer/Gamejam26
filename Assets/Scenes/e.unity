@@ -785,6 +785,7 @@ GameObject:
   - component: {fileID: 439266923}
   - component: {fileID: 439266922}
   - component: {fileID: 2100020000}
+  - component: {fileID: 2083935533}
   m_Layer: 0
   m_Name: Jugador
   m_TagString: Untagged
@@ -2067,6 +2068,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80e985339f23bb94587623334c7b4d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flupin
+--- !u!114 &2083935533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 439266909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f710a002bcda4f2c8f616c9e9fe0c35e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FirstPersonHandAnimation
+  actionFramesPerSecond: 16
+  slowRunFramesPerSecond: 9
+  fastRunFramesPerSecond: 22
+  minimumVisibleRunSpeed: 0.35
+  minimumBaseSpeed: 6
+  maximumBaseSpeed: 6000
+  planeDistance: 0.4
+  screenWidthFraction: 1
+  bottomMarginFraction: 0
+  walkingHandDistance: 0.33
+  minimumHandDistanceAtMaximumSpeed: 0.15
+  sortingOrder: 32000
+  previewInEditMode: 1
+  previewSpeed: 6
+  previewAnimationPhase: 0.25
+  previewBothHands: 1
 --- !u!1 &2100010000
 GameObject:
   m_ObjectHideFlags: 0
