@@ -16,6 +16,8 @@ public sealed class RoomCrusher : EnemyAgent
     [SerializeField, Min(0f)] float reactionMargin = 2f;
     [SerializeField, Range(0.1f, 1f)] float speedAllowance = 0.7f;
     [SerializeField, Range(0f, 1f)] float currentHealthFraction = 0.5f;
+    [Tooltip("Daño mínimo por impacto; conserva el valor anterior hasta ajustar el balance.")]
+    [SerializeField, Min(0f)] float minimumDamage = 1f;
     [SerializeField, Min(0.1f)] float aggressiveness = 1f;
     [SerializeField, Min(1f)] float maxEstimatedSeconds = 20f;
     readonly Dictionary<CrusherStat, StatValue> modifiers = new Dictionary<CrusherStat, StatValue>();
@@ -89,7 +91,7 @@ public sealed class RoomCrusher : EnemyAgent
         if (SweptContact(oldPosition, visual.position, previousPlayer, center, playerBody.bounds.extents))
         {
             var health = Player.GetComponent<PlayerHealth>();
-            float damage = health != null ? health.DamageForCurrentHealthFraction(Value(CrusherStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
+            float damage = health != null ? health.DamageForCurrentHealthFraction(Value(CrusherStat.CurrentHealthFraction, currentHealthFraction), minimumDamage) : 0f;
             Finish();
             if (health != null) health.TakeDamage(damage, RunLossReason.Crusher);
             return;

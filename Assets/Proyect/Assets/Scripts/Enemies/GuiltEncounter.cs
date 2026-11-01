@@ -11,6 +11,8 @@ public sealed class GuiltEncounter : MonoBehaviour
     [SerializeField, Range(4f, 6f)] float delaySeconds = 4f;
     [SerializeField, Min(0.1f)] float radius = 0.55f;
     [SerializeField, Range(0f, 1f)] float maxHealthDrainPerSecond = 0.08f;
+    [Tooltip("Daño mínimo por segundo de contacto, aplicado proporcionalmente al tiempo.")]
+    [SerializeField, Min(0f)] float minimumDamagePerSecond = 1f;
     [Header("Pasos invertidos")]
     [SerializeField, Range(0f, 1f)] float footstepVolume = 0.65f;
     [SerializeField, Min(1f)] float audibleDistance = 30f;
@@ -106,7 +108,7 @@ public sealed class GuiltEncounter : MonoBehaviour
             float duration = contactSeconds;
             contactSeconds = 0f;
             var health = player.GetComponent<PlayerHealth>();
-            if (health != null) health.TakeDamage(health.MaxHealth * maxHealthDrainPerSecond * duration, RunLossReason.Guilt);
+            if (health != null) health.TakeDamage(Mathf.Max(Mathf.Max(0f, minimumDamagePerSecond), health.MaxHealth * Mathf.Clamp01(maxHealthDrainPerSecond)) * duration, RunLossReason.Guilt);
         }
     }
     void CreateVisual()

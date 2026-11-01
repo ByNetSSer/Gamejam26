@@ -88,7 +88,7 @@ public sealed class WallLeverEncounter : EnemyAgent
     void Update()
     {
         focused = null;
-        if (finished || !selected || Player == null || !Player.enabled || Player.TutorialBlocksActions) return;
+        if (finished || !selected || Player == null || !Player.enabled || Player.TutorialBlocksActions || GameplayPauseMenu.IsPaused) return;
         if (!active) { RequestAttack(); return; }
         if (view == null) view = Player.GetComponentInChildren<Camera>();
         if (view == null || Cursor.lockState != CursorLockMode.Locked) return;
@@ -129,8 +129,8 @@ public sealed class WallLeverEncounter : EnemyAgent
     void OnGUI()
     {
         if (!selected || finished) return;
-        GUI.Box(new Rect(20, 100, 250, 28), active ? $"Palancas: {activated}/{levers.Count}" : "Pared: esperando turno");
-        if (focused != null) GUI.Box(new Rect(Screen.width * 0.5f - 70f, Screen.height * 0.5f + 24f, 140f, 26f), "E - Activar palanca");
+        GUI.Box(new Rect(20, 100, 250, 28), active ? $"{LanguageOptions.Choose("Palancas", "Levers")}: {activated}/{levers.Count}" : LanguageOptions.Choose("Pared: esperando turno", "Wall: waiting for turn"));
+        if (focused != null) GUI.Box(new Rect(Screen.width * 0.5f - 70f, Screen.height * 0.5f + 24f, 140f, 26f), LanguageOptions.Choose("E - Activar palanca", "E - Activate lever"));
     }
     void OnDrawGizmos()
     {
@@ -138,4 +138,5 @@ public sealed class WallLeverEncounter : EnemyAgent
         Gizmos.color = Color.yellow;
         foreach (var marker in leverPositions) if (marker != null) Gizmos.DrawWireSphere(marker.position, 0.25f);
     }
-}
+}
+

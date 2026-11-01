@@ -36,6 +36,8 @@ public sealed class Flupin : EnemyAgent
     [Header("Ataque y expulsiÃƒÂ³n")]
     [SerializeField, Min(0.1f)] float contactRadius = 0.7f;
     [SerializeField, Range(0f, 1f)] float currentHealthFraction = 1f / 3f;
+    [Tooltip("Daño mínimo por impacto; nunca supera la vida restante.")]
+    [SerializeField, Min(0f)] float minimumDamage = 15f;
     [SerializeField, Min(0f)] float repelSpeed = 8f;
     [SerializeField, Min(0f)] float hitRecoilSpeed = 14f;
     [SerializeField, Min(0.1f)] float travelDistance = 8f;
@@ -215,7 +217,7 @@ public sealed class Flupin : EnemyAgent
     void HitPlayer()
     {
         var health = Player.GetComponent<PlayerHealth>();
-        if (health != null) health.TakeDamage(health.DamageForCurrentHealthFraction(Evaluate(FlupinStat.CurrentHealthFraction, currentHealthFraction)), RunLossReason.Flupin);
+        if (health != null) health.TakeDamage(health.DamageForCurrentHealthFraction(Evaluate(FlupinStat.CurrentHealthFraction, currentHealthFraction), minimumDamage), RunLossReason.Flupin);
         if (hitFeedback != null) hitFeedback.PlayFeedbacks(transform.position);
         ThrowAway(Evaluate(FlupinStat.HitRecoilSpeed, hitRecoilSpeed), Mathf.Max(1f, Evaluate(FlupinStat.HitTravelMultiplier, hitTravelMultiplier)));
     }

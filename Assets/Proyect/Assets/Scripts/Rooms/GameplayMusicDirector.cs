@@ -69,6 +69,6 @@ public sealed class GameplayMusicDirector : MonoBehaviour
     {
         foreach (var subscription in subscriptions) subscription.Dispose();
         subscriptions.Clear();
-        if (AudioManager.HasInstance) MusicPlaylistPlayer.Instance.Suspend();
+        if (MusicPlaylistPlayer.TryGetExisting(out var playlist)) playlist.Suspend();
     }
 }

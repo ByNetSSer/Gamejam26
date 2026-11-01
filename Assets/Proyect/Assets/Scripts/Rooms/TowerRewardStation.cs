@@ -78,6 +78,10 @@ public sealed class TowerRewardStation : MonoBehaviour
 
     [SerializeField, Min(1f)] float offerEnergyRingSize = 180f;
 
+    [Tooltip("Tamaño máximo en unidades de mundo de los iconos de maldición.")]
+
+    [SerializeField, Min(0.1f)] float curseIconSize = 0.75f;
+
     [SerializeField, Min(0f)] float offerExtraHeight = 0.4f;
 
     [SerializeField, Min(0f)] float offerFloatHeight = 0.12f;
@@ -102,7 +106,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
     [Tooltip("Todas las ofertas de tienda serán legendarias, también al renovar. Desactivar para restaurar las probabilidades normales.")]
 
-    [SerializeField] bool debugAllLegendary = true;
+    [SerializeField] bool debugAllLegendary = false;
 
     [SerializeField, Range(0f, 1f)] float legendaryChance = 0.02f;
 
@@ -826,7 +830,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         }
 
-        if (!curse) visualPosition += Vector3.up * Mathf.Max(0f, offerExtraHeight);
+        visualPosition += Vector3.up * Mathf.Max(0f, offerExtraHeight);
 
         var point = pedestal.AddComponent<RewardPedestal>();
 
@@ -842,7 +846,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         ItemDefinition definition = catalog != null ? catalog.Find(reward.name) : null;
 
-        if (tier == 3)
+        if (!curse && tier == 3)
 
         {
 
@@ -892,7 +896,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         {
 
-            Sprite sprite = definition != null && definition.Icon != null ? definition.Icon : commonSprite;
+            Sprite sprite = curse ? CurseIcon(reward.enemy) : definition != null && definition.Icon != null ? definition.Icon : commonSprite;
 
             // Reuse existing icons for offers whose individual artwork is still pending.
 
@@ -926,7 +930,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
                 float size = Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y);
 
-                if (size > 0f) visual.transform.localScale = Vector3.one * (0.75f / size);
+                if (size > 0f) visual.transform.localScale = Vector3.one * ((curse ? Mathf.Max(0.1f, curseIconSize) : 0.75f) / size);
 
             }
 
@@ -946,7 +950,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
             }
 
-            if (!curse && auraSprite != null)
+            if (auraSprite != null)
 
             {
 
@@ -962,7 +966,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
                 if (auraMaterial != null) auraRenderer.sharedMaterial = auraMaterial;
 
-                Color auraColor = tier == 1 ? Color.white : tier == 2 ? new Color(0.25f, 1f, 0.3f) : new Color(0.25f, 0.5f, 1f);
+                Color auraColor = curse ? new Color(0.7f, 0.25f, 1f) : tier == 1 ? Color.white : tier == 2 ? new Color(0.25f, 1f, 0.3f) : new Color(0.25f, 0.5f, 1f);
 
                 var auraProperties = new MaterialPropertyBlock();
 
@@ -985,6 +989,30 @@ public sealed class TowerRewardStation : MonoBehaviour
             AttachVisual(point, visual, tier, curse, index);
 
         }
+
+    }
+
+    static Sprite CurseIcon(EnemyCurse curse)
+
+    {
+
+        string icon = curse switch
+
+        {
+
+            EnemyCurse.Flupin or EnemyCurse.FlupinHaste or EnemyCurse.FlupinFury => "FLupinIcon",
+
+            EnemyCurse.MaskCharger or EnemyCurse.MaskHaste or EnemyCurse.MaskFury or EnemyCurse.MaskStalking => "MaskIcon",
+
+            EnemyCurse.Dontsee or EnemyCurse.DontseeFury => "dontseeIcon",
+
+            EnemyCurse.CorridorChaser or EnemyCurse.CorridorChaserSpeed or EnemyCurse.CorridorChaserHaste => "CorredorIcon",
+
+            _ => "UpgradeTowreIcon"
+
+        };
+
+        return Resources.Load<Sprite>("Sprite/IconsMaldiciones/" + icon);
 
     }
 
@@ -1040,13 +1068,11 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         hitbox.size = new Vector3(Mathf.Max(0.1f, size.x), Mathf.Max(0.1f, size.y), Mathf.Max(0.25f, size.z));
 
-        if (!curse)
-
         {
 
             point.SetFloating(visual.transform, offerFloatHeight, offerFloatSpeed, index);
 
-            Color color = tier == 1 ? Color.white : tier == 2 ? new Color(0.25f, 1f, 0.3f) : tier == 3 ? new Color(1f, 0.72f, 0.22f) : new Color(0.25f, 0.5f, 1f);
+            Color color = curse ? new Color(0.7f, 0.25f, 1f) : tier == 1 ? Color.white : tier == 2 ? new Color(0.25f, 1f, 0.3f) : tier == 3 ? new Color(1f, 0.72f, 0.22f) : new Color(0.25f, 0.5f, 1f);
 
             if (offerEnergyPrefab != null)
 
@@ -1195,7 +1221,7 @@ public sealed class TowerRewardStation : MonoBehaviour
     {
 
         if (stage == null || view == null || rooms.Player == null || !rooms.Player.enabled) return;
-        if (rooms.Player.TutorialBlocksActions) { focused = null; return; }
+        if (rooms.Player.TutorialBlocksActions || GameplayPauseMenu.IsPaused) { focused = null; return; }
 
         focused = null;
 
@@ -1295,11 +1321,11 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         if (curseSelection)
 
-            GUI.Box(new Rect(Screen.width * 0.5f - 190f, 20f, 380f, 28f), "Elige una maldición para abrir la trampilla");
+            GUI.Box(new Rect(Screen.width * 0.5f - 190f, 20f, 380f, 28f), LanguageOptions.Choose("Elige una maldición para abrir la trampilla", "Choose a curse to open the hatch"));
 
         else if (offersRoot != null)
 
-            GUI.Box(new Rect(Screen.width * 0.5f - 240f, 20f, 480f, 28f), rooms.HasLinkedNextTower ? "Rompe la trampilla para bajar a la siguiente torre" : "N - Continuar a la siguiente torre");
+            GUI.Box(new Rect(Screen.width * 0.5f - 240f, 20f, 480f, 28f), rooms.HasLinkedNextTower ? LanguageOptions.Choose("Rompe la trampilla para bajar a la siguiente torre", "Break the hatch to descend to the next tower") : LanguageOptions.Choose("N - Continuar a la siguiente torre", "N - Continue to the next tower"));
 
         if (focused != null && !focused.Purchased)
 
@@ -1393,6 +1419,8 @@ public sealed class RewardPedestal : MonoBehaviour
 
     string title, description;
 
+    int victoryTowers;
+
     public string RewardName { get; private set; }
 
     public string Description => description;
@@ -1441,7 +1469,7 @@ public sealed class RewardPedestal : MonoBehaviour
 
     public void InitializeButton(TowerRewardStation owner) { station = owner; IsButton = true; title = "SIGUIENTE TORRE"; description = "Continúa el descenso."; }
 
-    public void InitializeVictory(TowerRewardStation owner, int totalTowers) { station = owner; IsVictory = true; title = "VICTORIA"; description = $"Completaste {totalTowers} torres."; }
+    public void InitializeVictory(TowerRewardStation owner, int totalTowers) { station = owner; IsVictory = true; title = "VICTORIA"; victoryTowers = totalTowers; }
 
     public void InitializeReroll(TowerRewardStation owner, int price) { station = owner; IsReroll = true; Price = price; title = "RENOVAR TIENDA"; description = "Cambia las ofertas y sube sus precios."; }
 
@@ -1449,13 +1477,13 @@ public sealed class RewardPedestal : MonoBehaviour
 
     {
 
-        string action = IsVictory ? "E - Ganar partida" : IsButton ? "E - Continuar" :
+        string action = IsVictory ? LanguageOptions.Choose("E - Ganar partida", "E - Win the game") : IsButton ? LanguageOptions.Choose("E - Continuar", "E - Continue") :
 
-            IsReroll ? $"{Price} monedas\n" + (coins >= Price ? "E - Renovar" : "Monedas insuficientes") :
+            IsReroll ? $"{Price} {LanguageOptions.Choose("monedas", "coins")}\n" + (coins >= Price ? LanguageOptions.Choose("E - Renovar", "E - Reroll") : LanguageOptions.Choose("Monedas insuficientes", "Not enough coins")) :
 
-            IsCurse ? "E - Elegir maldición" : $"{Price} monedas\n" + (coins >= Price ? "E - Comprar" : "Monedas insuficientes");
+            IsCurse ? LanguageOptions.Choose("E - Elegir maldición", "E - Choose curse") : $"{Price} {LanguageOptions.Choose("monedas", "coins")}\n" + (coins >= Price ? LanguageOptions.Choose("E - Comprar", "E - Buy") : LanguageOptions.Choose("Monedas insuficientes", "Not enough coins"));
 
-        return title + "\n" + description + "\n" + action;
+        return GameplayTranslation.Text(title) + "\n" + (IsVictory ? LanguageOptions.Choose($"Completaste {victoryTowers} torres.", $"You completed {victoryTowers} towers.") : GameplayTranslation.Text(description)) + "\n" + action;
 
     }
 

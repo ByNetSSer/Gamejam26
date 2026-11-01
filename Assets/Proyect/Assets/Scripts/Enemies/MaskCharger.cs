@@ -46,6 +46,8 @@ public sealed class MaskCharger : EnemyAgent
     [SerializeField, Min(0.1f)] float chargeDuration = 1.2f;
     [SerializeField, Min(0.1f)] float contactRadius = 0.8f;
     [SerializeField, Range(0f, 1f)] float currentHealthFraction = 0.33f;
+    [Tooltip("Daño mínimo por impacto; nunca supera la vida restante.")]
+    [SerializeField, Min(0f)] float minimumDamage = 20f;
     [SerializeField, Min(0f)] float recoveryDuration = 1.5f;
     [Tooltip("Distancia mínima que recorre después de la posición del jugador al apuntar. La duración y la frenada pueden prolongar el recorrido.")]
     [SerializeField, Min(0f)] float overshootDistance = 4f;
@@ -286,7 +288,7 @@ public sealed class MaskCharger : EnemyAgent
         if (hitPlayer || Player == null || !Player.enabled) return;
         hitPlayer = true;
         var health = Player.GetComponent<PlayerHealth>();
-        float damage = health != null ? health.DamageForCurrentHealthFraction(Evaluate(MaskChargerStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
+        float damage = health != null ? health.DamageForCurrentHealthFraction(Evaluate(MaskChargerStat.CurrentHealthFraction, currentHealthFraction), minimumDamage) : 0f;
         Events.Publish(new MaskChargerHitEvent(this, Player, transform.position, damage));
         if (hitFeedback != null) hitFeedback.PlayFeedbacks(transform.position);
         if (health != null) health.TakeDamage(damage, RunLossReason.MaskCharger);

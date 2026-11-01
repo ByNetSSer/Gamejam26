@@ -23,7 +23,8 @@ public sealed class ItemAcquisitionHud : MonoBehaviour
     GameObject canvasObject;
     Texture2D generatedTexture;
     Sprite generatedGlow;
-    bool showing;
+    bool showing, displayedEnglish;
+    Notice currentNotice;
     float elapsed;
 
     public static string Describe(PlayerStat stat, StatModifierType type, float value)
@@ -33,10 +34,16 @@ public sealed class ItemAcquisitionHud : MonoBehaviour
             "aceleración de giro", "gravedad", "velocidad máxima de caída", "velocidad por sala", "pisotón por sala",
             "margen para saltar", "anticipación del salto", "adherencia al suelo", "sensibilidad", "penalización de cámara",
             "control mínimo de cámara", "límite vertical de cámara", "descuento de tienda", "control lateral en suelo" };
+        string[] englishNames = { "speed", "acceleration", "braking", "air control", "jump", "stomp speed",
+            "impact damage", "camera control", "combo duration", "combo growth", "points",
+            "turn acceleration", "gravity", "maximum fall speed", "speed per room", "stomp per room",
+            "jump grace period", "jump buffering", "ground adhesion", "sensitivity", "camera penalty",
+            "minimum camera control", "vertical camera limit", "shop discount", "ground lateral control" };
+        if (LanguageOptions.IsEnglish) names = englishNames;
         int index = (int)stat;
         string name = index >= 0 && index < names.Length ? names[index] : stat.ToString();
         float amount = type == StatModifierType.Flat ? value : value * 100f;
-        return $"{(amount >= 0f ? "+" : "")}{amount:0.##}{(type == StatModifierType.Flat ? "" : " %")} de {name}.";
+        return $"{(amount >= 0f ? "+" : "")}{amount:0.##}{(type == StatModifierType.Flat ? "" : " %")}{LanguageOptions.Choose(" de ", " ")}{name}.";
     }
 
     public static void Show(PlayerController player, string name, string effect, Sprite sprite, ItemAcquisitionSource source)
@@ -50,6 +57,7 @@ public sealed class ItemAcquisitionHud : MonoBehaviour
     {
         if (!showing && pending.Count > 0) Begin(pending.Dequeue());
         if (!showing) return;
+        if (displayedEnglish != LanguageOptions.IsEnglish) RefreshText(currentNotice);
         elapsed += Time.unscaledDeltaTime;
         float duration = Mathf.Max(1f, displaySeconds);
         group.alpha = Mathf.Min(Mathf.Clamp01(elapsed / 0.18f), Mathf.Clamp01((duration - elapsed) / 0.55f));
@@ -62,23 +70,32 @@ public sealed class ItemAcquisitionHud : MonoBehaviour
     void Begin(Notice notice)
     {
         if (group == null) Build();
+        currentNotice = notice;
+        RefreshText(notice);
         Color color;
         switch (notice.Source)
         {
-            case ItemAcquisitionSource.Curse: origin.text = "MALDICIÓN"; color = new Color(0.79f, 0.47f, 1f); break;
-            case ItemAcquisitionSource.Shop: origin.text = "TIENDA"; color = new Color(1f, 0.79f, 0.32f); break;
-            case ItemAcquisitionSource.Tower: origin.text = "LA TORRE"; color = new Color(1f, 0.36f, 0.38f); break;
-            default: origin.text = "HALLAZGO"; color = new Color(0.34f, 0.91f, 0.8f); break;
+            case ItemAcquisitionSource.Curse: color = new Color(0.79f, 0.47f, 1f); break;
+            case ItemAcquisitionSource.Shop: color = new Color(1f, 0.79f, 0.32f); break;
+            case ItemAcquisitionSource.Tower: color = new Color(1f, 0.36f, 0.38f); break;
+            default: color = new Color(0.34f, 0.91f, 0.8f); break;
         }
         origin.color = color;
         glow.color = new Color(color.r, color.g, color.b, 0.65f);
-        title.text = notice.Name;
-        description.text = notice.Description;
         icon.sprite = notice.Icon;
         icon.enabled = notice.Icon != null;
         fallback.text = notice.Source == ItemAcquisitionSource.Tower || notice.Source == ItemAcquisitionSource.Curse ? "!" : "+";
         fallback.enabled = notice.Icon == null;
         elapsed = 0f; showing = true; group.alpha = 0f;
+    }
+    void RefreshText(Notice notice)
+    {
+        displayedEnglish = LanguageOptions.IsEnglish;
+        origin.text = notice.Source == ItemAcquisitionSource.Curse ? LanguageOptions.Choose("MALDICIÓN", "CURSE") :
+            notice.Source == ItemAcquisitionSource.Shop ? LanguageOptions.Choose("TIENDA", "SHOP") :
+            notice.Source == ItemAcquisitionSource.Tower ? LanguageOptions.Choose("LA TORRE", "THE TOWER") : LanguageOptions.Choose("HALLAZGO", "FOUND");
+        title.text = GameplayTranslation.Text(notice.Name);
+        description.text = GameplayTranslation.Text(notice.Description);
     }
     void Build()
     {

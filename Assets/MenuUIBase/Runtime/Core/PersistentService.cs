@@ -13,7 +13,14 @@ namespace MenuUIBase.Core
 
         protected static void ResetServiceState() { instance = null; isQuitting = false; }
 
-        public static bool HasInstance => instance != null;
+        public static bool HasInstance => !isQuitting && instance != null;
+
+        // Teardown must never discover or create a service, especially after quit.
+        public static bool TryGetExisting(out T existing)
+        {
+            existing = isQuitting ? null : instance;
+            return existing != null;
+        }
 
         public static T Instance
         {

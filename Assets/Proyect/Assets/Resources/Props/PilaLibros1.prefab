@@ -132,6 +132,7 @@ MonoBehaviour:
   breakSpeed: 6.8
   damagePerSpeed: 0.5
   proportionalSpeedDamage: 1
+  maximumAdaptiveBreakSpeed: 35
   poundBonusDamage: 3
   impactCooldown: 0.25
   hatch: 0
@@ -170,7 +171,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.48313904, y: 0.9564213, z: 0.4877667}
+  m_Size: {x: 0.3, y: 0.9564213, z: 0.32}
   m_Center: {x: 0, y: 0.47821066, z: 0}
 --- !u!1 &7400000000000000000
 GameObject:

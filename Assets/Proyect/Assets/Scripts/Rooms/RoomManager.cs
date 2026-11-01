@@ -125,6 +125,8 @@ public sealed class RoomManager : MonoBehaviour
     {
         current = Instantiate(startingRoom, transform.position, transform.rotation, transform);
         if (!current.ConfigureSafeRoom(true)) { Fail("No se pudo preparar la zona segura inicial."); return; }
+        var safeRoom = current.GetComponent<SafeRoomLayout>();
+        if (safeRoom != null) safeRoom.SetFirstRoomTutorialActive(towerNumber == 1);
         if (!current.Prepare(hatchPrefab, doorPrefab)) { Fail("No se pudo preparar la salida de la sala inicial."); return; }
         ActivateTower(true);
     }
@@ -304,7 +306,7 @@ public sealed class RoomManager : MonoBehaviour
     void Update()
     {
         if (started && !lost && !failed && !victoryReported && health != null && health.CurrentHealth <= 0f) OnPlayerDied();
-        if (failed || current == null || player == null) return;
+        if (failed || lost || victoryReported || current == null || player == null) return;
         if (finished)
         {
             if (!lost && !victoryReported && linkedNextTower && current.Exit != null && current.Exit.HasPassed(player.transform.position)) StartNextTower();

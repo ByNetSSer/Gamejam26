@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 8100000000000000001}
   - component: {fileID: 5679892013261188064}
   - component: {fileID: 6399994763232076869}
+  - component: {fileID: 7143995184016843217}
   m_Layer: 9
   m_Name: CandelabroLarge
   m_TagString: Untagged
@@ -293,7 +294,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -314,6 +315,7 @@ MonoBehaviour:
   breakSpeed: 9.35
   damagePerSpeed: 0.5
   proportionalSpeedDamage: 1
+  maximumAdaptiveBreakSpeed: 35
   poundBonusDamage: 3
   impactCooldown: 0.25
   hatch: 0
@@ -427,6 +429,27 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!65 &7143995184016843217
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2218198903803302462}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.32, y: 1.7080624, z: 0.3441992}
+  m_Center: {x: 0.03, y: 0.8540312, z: 0}
 --- !u!1 &2381404546150182839
 GameObject:
   m_ObjectHideFlags: 0

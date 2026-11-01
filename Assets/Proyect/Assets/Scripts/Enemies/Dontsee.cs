@@ -54,6 +54,8 @@ public sealed class Dontsee : EnemyAgent
     [SerializeField, Min(0f)] float approachSpeed = 7f;
     [SerializeField, Min(0.1f)] float contactRadius = 0.7f;
     [SerializeField, Range(0f, 1f)] float currentHealthFraction = 0.33f;
+    [Tooltip("Daño mínimo por impacto; nunca supera la vida restante.")]
+    [SerializeField, Min(0f)] float minimumDamage = 25f;
     [Tooltip("Capas que impiden considerar que se mira a Dontsee. Nothing ignora paredes y objetos.")]
     [SerializeField] LayerMask sightObstacles = 0;
     [Header("Apariencia")]
@@ -165,7 +167,7 @@ public sealed class Dontsee : EnemyAgent
         if (Flupin.TouchesPlayer(before, transform.position, previousPlayer, center, Evaluate(DontseeStat.ContactRadius, contactRadius)))
         {
             var health = Player.GetComponent<PlayerHealth>();
-            float damage = health != null ? health.DamageForCurrentHealthFraction(Evaluate(DontseeStat.CurrentHealthFraction, currentHealthFraction)) : 0f;
+            float damage = health != null ? health.DamageForCurrentHealthFraction(Evaluate(DontseeStat.CurrentHealthFraction, currentHealthFraction), minimumDamage) : 0f;
             eventBus?.Publish(new DontseeHitEvent(this, Player, room, transform.position, damage));
             Finish(DontseeEndReason.HitPlayer);
             if (health != null) health.TakeDamage(damage, RunLossReason.Dontsee);

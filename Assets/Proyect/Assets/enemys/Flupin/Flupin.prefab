@@ -864,6 +864,7 @@ MonoBehaviour:
   recoveryDuration: 1.2
   contactRadius: 0.7
   currentHealthFraction: 0.33333334
+  minimumDamage: 15
   repelSpeed: 8
   hitRecoilSpeed: 14
   travelDistance: 8

@@ -14,6 +14,11 @@ public sealed class SafeRoomLayout : MonoBehaviour
         return null;
     }
     public Transform Reroll => FindChild("reroll");
+    public void SetFirstRoomTutorialActive(bool active)
+    {
+        var tutorial = FindChild("Tutorial primera sala");
+        if (tutorial != null) tutorial.gameObject.SetActive(active);
+    }
     public bool HasRequiredParts => FindChild("entrada") != null && FindChild("salida") != null && FindChild("spawninicio") != null;
     public bool Configure(RoomDefinition room, bool starting)
     {
@@ -21,6 +26,7 @@ public sealed class SafeRoomLayout : MonoBehaviour
         var exit = FindChild("salida");
         var spawn = FindChild("spawninicio");
         if (entry == null || exit == null || spawn == null) return false;
+        SetFirstRoomTutorialActive(false);
         SetAltarsActive(!starting);
         if (Reroll != null) Reroll.gameObject.SetActive(false);
         Transform marker = RoomAutoLayout.CreateHatchMarker(transform, starting ? exit : entry, !starting);
@@ -49,6 +55,7 @@ public sealed class SafeRoomLayout : MonoBehaviour
         var entryMarker = RoomAutoLayout.CreateHatchMarker(transform, entry, true);
         var exitMarker = RoomAutoLayout.CreateHatchMarker(transform, exit, false);
         if (entryMarker == null || exitMarker == null) return false;
+        SetFirstRoomTutorialActive(false);
         SetAltarsActive(false);
         if (Reroll != null) Reroll.gameObject.SetActive(false);
         room.ConfigureMarkers(RoomConnection.Hatch, entryMarker, spawn, RoomConnection.Hatch, exitMarker);

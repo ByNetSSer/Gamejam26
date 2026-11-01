@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public enum TutorialEnemy { Flupin, MaskCharger, Dontsee, CorridorChaser, Guilt }
 
@@ -9,6 +10,7 @@ public enum TutorialEnemy { Flupin, MaskCharger, Dontsee, CorridorChaser, Guilt 
 public sealed class EnemyTutorialPresenter : MonoBehaviour
 {
     [SerializeField] SpriteRenderer sheet;
+    [SerializeField] GameObject continueHint;
     [Header("Láminas editables")]
     [SerializeField] Sprite flupin, maskCharger, dontsee, corridorChaser, guilt;
     [Header("Tamaño máximo de la hoja en metros")]
@@ -21,6 +23,8 @@ public sealed class EnemyTutorialPresenter : MonoBehaviour
     readonly Queue<TutorialEnemy> pending = new Queue<TutorialEnemy>();
     readonly HashSet<TutorialEnemy> seen = new HashSet<TutorialEnemy>();
     PlayerController player;
+    Vector3 authoredSheetScale;
+    const float ReferenceSheetScale = 0.05f;
     enum Phase { Idle, Entering, Reading, Exiting }
     Phase phase;
     float elapsed;
@@ -28,7 +32,12 @@ public sealed class EnemyTutorialPresenter : MonoBehaviour
     void Awake()
     {
         player = GetComponentInParent<PlayerController>();
-        if (sheet != null) sheet.gameObject.SetActive(false);
+        if (continueHint != null) continueHint.SetActive(false);
+        if (sheet != null)
+        {
+            authoredSheetScale = sheet.transform.localScale;
+            sheet.gameObject.SetActive(false);
+        }
     }
     public void Enqueue(TutorialEnemy enemy)
     {
@@ -60,10 +69,21 @@ public sealed class EnemyTutorialPresenter : MonoBehaviour
                 Vector2 spriteSize = sheet.sprite.rect.size / sheet.sprite.pixelsPerUnit;
                 float scale = Mathf.Min(Mathf.Max(0.001f, sheetSize.x) / Mathf.Max(0.001f, spriteSize.x),
                     Mathf.Max(0.001f, sheetSize.y) / Mathf.Max(0.001f, spriteSize.y));
-                sheet.transform.localScale = Vector3.one * scale;
+                // Retain the artist's editable transform scale while normalizing
+                // images with different pixel dimensions to the configured sheet size.
+                sheet.transform.localScale = new Vector3(
+                    scale * authoredSheetScale.x / ReferenceSheetScale,
+                    scale * authoredSheetScale.y / ReferenceSheetScale,
+                    scale * authoredSheetScale.z / ReferenceSheetScale);
             }
             sheet.transform.localPosition = entrancePosition;
             sheet.gameObject.SetActive(true);
+            if (continueHint != null)
+            {
+                foreach (var label in continueHint.GetComponentsInChildren<Text>(true))
+                    label.text = LanguageOptions.Choose("E  PARA CONTINUAR", "E  TO CONTINUE");
+                continueHint.SetActive(true);
+            }
             elapsed = 0f; openedFrame = Time.frameCount; phase = Phase.Entering;
         }
         if (phase == Phase.Entering)
@@ -85,11 +105,13 @@ public sealed class EnemyTutorialPresenter : MonoBehaviour
             sheet.transform.localPosition = Vector3.Lerp(entrancePositionAtClose, exitPosition, t * t);
             if (t >= 1f)
             {
-                sheet.gameObject.SetActive(false); phase = Phase.Idle;
+                sheet.gameObject.SetActive(false);
+                if (continueHint != null) continueHint.SetActive(false);
+                phase = Phase.Idle;
                 if (pending.Count == 0 && player != null) player.SetReadingTutorial(false);
             }
         }
     }
     Vector3 entrancePositionAtClose;
-    void OnDisable() { pending.Clear(); phase = Phase.Idle; if (sheet != null) sheet.gameObject.SetActive(false); if (player != null) player.SetReadingTutorial(false); }
+    void OnDisable() { pending.Clear(); phase = Phase.Idle; if (continueHint != null) continueHint.SetActive(false); if (sheet != null) sheet.gameObject.SetActive(false); if (player != null) player.SetReadingTutorial(false); }
 }

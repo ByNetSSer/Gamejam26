@@ -27,10 +27,11 @@ public sealed class PlayerHealth : MonoBehaviour
         if (GetComponent<PlayerDamageFeedback>() == null) gameObject.AddComponent<PlayerDamageFeedback>();
     }
     // Fractional enemy attacks retain their percentage at high health but can finish a run.
-    public float DamageForCurrentHealthFraction(float fraction)
+    public float DamageForCurrentHealthFraction(float fraction, float minimumDamage = 1f)
     {
+        if (CurrentHealth <= 0f) return 0f;
         fraction = Mathf.Clamp01(fraction);
-        return fraction <= 0f || CurrentHealth <= 0f ? 0f : Mathf.Min(CurrentHealth, Mathf.Max(1f, CurrentHealth * fraction));
+        return Mathf.Min(CurrentHealth, Mathf.Max(Mathf.Max(0f, minimumDamage), CurrentHealth * fraction));
     }
     public void Heal(float amount)
     {

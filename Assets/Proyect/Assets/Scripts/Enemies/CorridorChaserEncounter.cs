@@ -385,7 +385,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     }
     void OnGUI()
     {
-        if (showWarningText && warning) GUI.Box(new Rect(Screen.width * 0.5f - 200f, 65f, 400f, 55f), "¡PERSEGUIDOR EN CAMINO!\nApártate hacia una pared.");
+        if (showWarningText && warning) GUI.Box(new Rect(Screen.width * 0.5f - 200f, 65f, 400f, 55f), LanguageOptions.Choose("¡PERSEGUIDOR EN CAMINO!\nApártate hacia una pared.", "PURSUER INCOMING!\nMove towards a wall."));
     }
     void OnDrawGizmosSelected()
     {

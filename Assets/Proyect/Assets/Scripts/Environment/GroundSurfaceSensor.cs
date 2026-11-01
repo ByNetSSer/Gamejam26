@@ -83,7 +83,7 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
             if (cue == null || cue.Clip == null) cue = GameSfx.Find("footstep.normal");
             AudioManager.Instance.SetFootsteps(cue, player.IsCrouching ? crouchFootstepVolume : 1f, FootstepPitch);
         }
-        else if (AudioManager.HasInstance) AudioManager.Instance.SetFootsteps(null, 0f);
+        else if (AudioManager.TryGetExisting(out var audio)) audio.SetFootsteps(null, 0f);
         var names = new List<string>();
         foreach (var surface in active) if (surface != null) names.Add(surface.name);
         SurfaceNames = names.Count == 0 ? "Normal" : string.Join(", ", names);
@@ -94,6 +94,6 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
         active.Clear(); current.Clear(); SurfaceNames = "Normal";
         FootstepsActive = false;
         touchingLava = false; FootstepSurface = SurfaceAudioKind.Normal; positionValid = false;
-        if (AudioManager.HasInstance) AudioManager.Instance.SetFootsteps(null, 0f);
+        if (AudioManager.TryGetExisting(out var audio)) audio.SetFootsteps(null, 0f);
     }
 }

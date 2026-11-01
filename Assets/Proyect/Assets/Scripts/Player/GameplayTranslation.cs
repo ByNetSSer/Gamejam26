@@ -1,0 +1,80 @@
+using System.Collections.Generic;
+
+// Spanish source text remains the gameplay identifier; translate only at presentation.
+public static class GameplayTranslation
+{
+    static readonly Dictionary<string, string> English = new Dictionary<string, string>
+    {
+        { "SOMBRAS INQUIETAS", "RESTLESS SHADOWS" }, { "TE ESTÁN MIRANDO", "THEY ARE WATCHING" },
+        { "SIN DESCANSO", "NO REST" }, { "FURIA DESATADA", "UNLEASHED FURY" },
+        { "NO TE DETENDRÁN", "THEY WON'T STOP YOU" }, { "FUERA DE CONTROL", "OUT OF CONTROL" },
+        { "Sala completada", "Room cleared" }, { "Flupin repelido", "Flupin repelled" },
+        { "Trampilla rota", "Hatch broken" }, { "Caja rota", "Crate broken" },
+        { "Caja de tortura destruida", "Torture box destroyed" }, { "Candelabro pequeño derribado", "Small candelabrum knocked over" },
+        { "Banca destrozada", "Bench smashed" }, { "Candelabro derribado", "Candelabrum knocked over" },
+        { "Copa hecha pedazos", "Goblet smashed" }, { "Gran candelabro derribado", "Large candelabrum knocked over" },
+        { "Jaula destrozada", "Cage smashed" }, { "Cofre de madera destrozado", "Wooden chest smashed" },
+        { "Cofre de plata destrozado", "Silver chest smashed" }, { "Estante derribado", "Shelf knocked over" },
+        { "Mesa destrozada", "Table smashed" }, { "Pila de libros dispersada", "Book pile scattered" }, { "Libros por los aires", "Books sent flying" },
+        { "Gota de rocío", "Dewdrop" }, { "Zapatillas de mecha", "Fuse Sneakers" }, { "Cordones del paje", "Page's Laces" },
+        { "Suelas gastadas", "Worn Soles" }, { "Reloj atrasado", "Slow Clock" }, { "Moneda de la suerte", "Lucky Coin" },
+        { "Cupón del mercader", "Merchant's Coupon" }, { "Impulso", "Boost" }, { "Resorte", "Spring" }, { "Guantes de piedra", "Stone Gloves" },
+        { "Musgo vital", "Vital Moss" }, { "Trofeo del corredor", "Runner's Trophy" }, { "Botas del viajero", "Traveler's Boots" },
+        { "Anillo de maniobra", "Maneuver Ring" }, { "Pluma del acróbata", "Acrobat's Feather" }, { "Reloj del bufón", "Jester's Clock" },
+        { "Suelas del guardia", "Guard's Soles" }, { "Resorte encantado", "Enchanted Spring" }, { "Monóculo de la fortuna", "Fortune Monocle" },
+        { "Botas del meteorito", "Meteor Boots" }, { "Corazón de carrera", "Racing Heart" }, { "Corazón de cazador", "Hunter's Heart" },
+        { "Corona del temerario", "Daredevil's Crown" }, { "Botas del vendaval", "Gale Boots" }, { "Alas del halcón", "Hawk's Wings" },
+        { "Ancla del explorador", "Explorer's Anchor" }, { "Corona del espectáculo", "Showman's Crown" }, { "Monóculo dorado", "Golden Monocle" },
+        { "Maldición de la torre", "Tower's Curse" }, { "Paso inestable", "Unsteady Step" }, { "Carga pesada", "Heavy Load" },
+        { "Mirada inquieta", "Restless Gaze" }, { "Salto encadenado", "Chained Jump" },
+        { "Recupera 1 % de vida máxima cada 10 segundos.", "Restore 1% of maximum health every 10 seconds." },
+        { "Recupera 2 % de vida máxima cada 10 segundos.", "Restore 2% of maximum health every 10 seconds." },
+        { "+35 % de velocidad al entrar durante 3,5 s; sin combo ni puntos, fatiga de 2,5 s.", "+35% speed for 3.5 s upon entering; no combo or points, then 2.5 s of fatigue." },
+        { "+3 % de velocidad de movimiento.", "+3% movement speed." }, { "+5 % de control lateral en suelo.", "+5% ground lateral control." },
+        { "+5 % de duración del combo.", "+5% combo duration." }, { "+3 % de puntos.", "+3% points." },
+        { "+5 % de descuento (máximo 20 %).", "+5% discount (maximum 20%)." }, { "+8 % de aceleración.", "+8% acceleration." },
+        { "+6 % de salto.", "+6% jump." }, { "+10 % de daño por impacto.", "+10% impact damage." },
+        { "+10 % de puntos.", "+10% points." }, { "+10 % de velocidad de movimiento.", "+10% movement speed." },
+        { "+15 % de aceleración de giro.", "+15% turn acceleration." }, { "+15 % de control aéreo.", "+15% air control." },
+        { "+20 % de duración del combo.", "+20% combo duration." }, { "+15 % de control lateral en suelo.", "+15% ground lateral control." },
+        { "+15 % de velocidad de salto.", "+15% jump speed." }, { "+15 % de puntos.", "+15% points." },
+        { "+30 % de velocidad y -20 % de control lateral en suelo.", "+30% speed and -20% ground lateral control." },
+        { "+30 % de velocidad y +15 % de aceleración; pierdes 1 % de vida máxima cada 3 segundos.", "+30% speed and +15% acceleration; lose 1% of maximum health every 3 seconds." },
+        { "Al repeler a Flupin recuperas 5 % de vida máxima, como máximo una vez cada 10 segundos.", "Repelling Flupin restores 5% of maximum health, at most once every 10 seconds." },
+        { "+30 % de puntos y -20 % de duración del combo.", "+30% points and -20% combo duration." },
+        { "+25 % de velocidad de movimiento.", "+25% movement speed." }, { "+25 % de control aéreo.", "+25% air control." },
+        { "+30 % de control lateral en suelo.", "+30% ground lateral control." },
+        { "+25 % de crecimiento del multiplicador de combo.", "+25% combo multiplier growth." }, { "+25 % de puntos.", "+25% points." },
+        { "+30 % al aumento de velocidad por sala.", "+30% speed increase per room." }, { "-15 % de control lateral en suelo.", "-15% ground lateral control." },
+        { "-15 % de aceleración.", "-15% acceleration." }, { "-15 % de control de cámara.", "-15% camera control." }, { "-10 % de fuerza de salto.", "-10% jump strength." },
+        { "Invocar a Guilt", "Summon Guilt" }, { "Invocar a Flupin", "Summon Flupin" }, { "+1 máscara", "+1 mask" },
+        { "Invocar a la máscara", "Summon the mask" }, { "Invocar a Dontsee", "Summon Dontsee" }, { "Invocar al perseguidor", "Summon the pursuer" },
+        { "Rastro persistente", "Persistent trail" }, { "Perseguidor furioso", "Furious pursuer" }, { "Perseguidor impaciente", "Impatient pursuer" },
+        { "Enjambre de Flupin", "Flupin swarm" }, { "Doble máscara", "Double mask" }, { "Flupin impaciente", "Impatient Flupin" },
+        { "Flupin furioso", "Furious Flupin" }, { "Máscaras sin respiro", "Relentless masks" }, { "Máscaras furiosas", "Furious masks" },
+        { "Acecho implacable", "Unyielding pursuit" }, { "Dontsee furioso", "Furious Dontsee" }, { "Mirada frecuente", "Frequent gaze" },
+        { "Tu sombra repite tus pasos con 4 s de retraso. El contacto drena vida poco a poco.", "Your shadow repeats your steps 4 s later. Contact slowly drains health." },
+        { "Añade un Flupin a las siguientes salas.", "Add a Flupin to the following rooms." }, { "Añade una máscara a las siguientes salas.", "Add a mask to the following rooms." },
+        { "Dontsee podrá aparecer en las siguientes salas.", "Dontsee can appear in the following rooms." }, { "El perseguidor podrá aparecer en las siguientes salas.", "The pursuer can appear in the following rooms." },
+        { "El perseguidor aparece con más frecuencia.", "The pursuer appears more often." },
+        { "Un perseguidor veloz recorrerá los puntos de las salas; apártate hacia las paredes.", "A fast pursuer travels through the rooms; move towards the walls." },
+        { "El perseguidor recorre su ruta un 20 % más rápido.", "The pursuer follows its route 20% faster." },
+        { "El aviso por esperar en la sala dura un 20 % menos.", "The warning for waiting in a room is 20% shorter." },
+        { "Aparece un Flupin adicional en cada torre.", "An additional Flupin appears in each tower." }, { "Flupin aparecerá en las siguientes salas.", "Flupin will appear in the following rooms." },
+        { "Aparece una máscara adicional en cada torre.", "An additional mask appears in each tower." }, { "La máscara aparecerá en las siguientes salas.", "The mask will appear in the following rooms." },
+        { "Flupin espera un 20 % menos antes de atacar y recuperarse.", "Flupin waits 20% less before attacking and recovering." },
+        { "+20 % de agresividad de Flupin: se acerca más rápido y reduce sus esperas.", "+20% Flupin aggression: approaches faster and waits less." },
+        { "Las máscaras reducen un 20 % su aviso, intervalo y recuperación (aviso mínimo: 0,3 s).", "Masks reduce warning, interval and recovery by 20% (minimum warning: 0.3 s)." },
+        { "+20 % de agresividad: embestidas más rápidas, mejor acecho y menos espera.", "+20% aggression: faster charges, better tracking and less waiting." },
+        { "+30 % de velocidad de seguimiento, alcance de ataque, giro y capacidad de alcanzar al jugador.", "+30% tracking speed, attack range, turning and ability to catch the player." },
+        { "+20 % de agresividad de Dontsee: acelera su acercamiento y agota antes el aviso.", "+20% Dontsee aggression: approaches faster and ends its warning sooner." },
+        { "+15 puntos de probabilidad y una sala menos de espera.", "+15 percentage points of chance and one fewer room of waiting." },
+        { "SIGUIENTE TORRE", "NEXT TOWER" }, { "Continúa el descenso.", "Continue the descent." },
+        { "VICTORIA", "VICTORY" }, { "RENOVAR TIENDA", "REROLL SHOP" }, { "Cambia las ofertas y sube sus precios.", "Changes the offers and raises their prices." }
+    };
+    public static string Text(string spanish)
+    {
+        if (!LanguageOptions.IsEnglish || string.IsNullOrEmpty(spanish)) return spanish;
+        return English.TryGetValue(spanish, out var english) ? english : spanish;
+    }
+}

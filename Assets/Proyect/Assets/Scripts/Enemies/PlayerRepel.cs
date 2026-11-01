@@ -120,7 +120,7 @@ public sealed class PlayerRepel : MonoBehaviour
 
         RefreshAvailability();
 
-        if (director.Player.TutorialBlocksActions) { ClearAvailability(); return; }
+        if (director.Player.TutorialBlocksActions || GameplayPauseMenu.IsPaused) { ClearAvailability(); return; }
         if (Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;
 
         if (Mouse.current.leftButton.wasPressedThisFrame && Time.time >= nextStrike)

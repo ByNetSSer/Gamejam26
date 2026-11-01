@@ -110,6 +110,7 @@ MonoBehaviour:
   approachSpeed: 7
   contactRadius: 0.7
   currentHealthFraction: 0.33
+  minimumDamage: 25
   sightObstacles:
     serializedVersion: 2
     m_Bits: 0

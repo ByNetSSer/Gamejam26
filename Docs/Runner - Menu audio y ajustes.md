@@ -185,3 +185,16 @@ El bucle ajusta pitch/cadencia según raíz cuadrada de velocidad / 6 m/s, limit
 Jugar eleva el menú y presenta tres botones de dificultad. La selección dura la partida y por defecto es Normal al arrancar directamente la escena. Fácil: 8 torres, +2 pisos por torre y máximo 25; Normal: 13, +4 y máximo 32; Imposible: 25, +4 y máximo 50. El primer tamaño sigue configurado en la escena y cuenta salas inicial y final. Las rutas deben permitir una longitud compatible dentro del máximo.
 
 Los precios base se multiplican linealmente desde 100 % en la primera tienda hasta 450 %, 670 % o 1300 % en la última tienda anterior a la victoria (torres 7, 12 o 24). Se conservan el incremento previo del 15 % por compra y el descuento; cada renovación añade 10 % acumulativo a ese incremento. Renovar cuesta inicialmente 3 monedas y sube 1 moneda por uso, sin reiniciarse entre torres. Los valores de renovación son configurables en TowerRewardStation. Estos porcentajes describen multiplicadores finales de la curva de torre, antes de compras, renovaciones y descuentos. Pendiente validar presentación y balance en Play Mode.
+
+
+## HUD editable de vida y reloj
+
+En `e`, `UI Monedas` contiene `UI Vida` y `Reloj de torre`. El contador de vida sigue a `PlayerHealth`, anima tanto daño como curación y usa `CharacterCounterFeedback`; `HealthHud` expone duración y crecimiento. El reloj usa el panel y texto de la escena, incluyendo su fondo, y FEEL mueve el panel completo desde su posición visible hasta el desplazamiento oculto configurado en `RunEndScreen`. La UI de resultado sigue generándose por separado. El fallback del reloj se conserva para escenas de prueba sin referencias. Falta validación visual en Play Mode.
+
+
+### Limpieza del audio al cerrar
+
+Al desactivar el sensor de superficies o el director de música, la limpieza consulta únicamente instancias ya existentes mediante `TryGetExisting`: no busca ni crea servicios al descargar una escena o cerrar el juego. `PersistentService` considera que no hay instancia utilizable una vez iniciado el cierre y `MusicPlaylistPlayer` comprueba que el gestor de audio exista. Compilación y secuencia de cierre de servicios verificadas; falta probar cambios de escena y cierre del build en Unity.
+
+
+El HUD de vida usa el sprite pixelado `heart` en lugar del rótulo: su doble latido acelera con la pérdida de vida y, por debajo del umbral crítico, añade escala, oscilación, temblor y cambio de tono. `HealthHud` expone velocidades, intensidad, umbral y referencias opcionales a feedbacks FEEL para daño y entrada en estado crítico. El número animado continúa mostrando la vida real. Pendiente ajustar la sensación visual en Play Mode.

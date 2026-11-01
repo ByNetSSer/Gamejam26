@@ -14,13 +14,18 @@ using UnityEngine.UI;
 public sealed class RunEndScreen : MonoBehaviour
 {
     [SerializeField, Min(0.1f)] float darknessDuration = 1.6f;
+    [SerializeField, Min(0.01f)] float deathSlowDuration = 0.35f;
     [SerializeField, Range(0f, 30f)] float skullShake = 12f;
     [SerializeField, Min(0.05f)] float clockSlideDuration = 0.45f;
+    [Header("Reloj editable en escena")]
+    [SerializeField] RectTransform clockVisual;
+    [SerializeField] Text clockText;
+    [Tooltip("Distancia vertical de la posición visible a la posición oculta.")]
+    [SerializeField, Min(0f)] float clockHiddenOffset = 155f;
     MMF_Player clockEnter, clockExit;
     bool clockVisible;
     int lastTickSecond = -1;
     RoomManager rooms;
-    Text clockText;
     CharacterCounterFeedback clockFeedback;
     GameObject clockCanvas;
     Transform content;
@@ -42,6 +47,7 @@ public sealed class RunEndScreen : MonoBehaviour
     {
         if (showing) return;
         showing = true;
+        GameplayPauseMenu.AbortForEnd();
         if (!victory) GameSfx.BeginDeath(Mathf.Max(0.1f, darknessDuration));
         if (rooms.Player != null)
         {
@@ -49,6 +55,12 @@ public sealed class RunEndScreen : MonoBehaviour
             var cameraController = rooms.Player.GetComponentInChildren<PlayerCamera>();
             if (cameraController != null) cameraController.enabled = false;
         }
+        StartCoroutine(ShowAfterSlowdown(victory, score, reason));
+    }
+    IEnumerator ShowAfterSlowdown(bool victory, long score, RunLossReason reason)
+    {
+        if (!victory && Time.timeScale > 0f)
+            yield return GameplayTimeFreeze.Freeze(Time.timeScale, deathSlowDuration);
         Time.timeScale = 0f;
         if (clockCanvas != null) clockCanvas.SetActive(false);
         Cursor.lockState = CursorLockMode.None;
@@ -81,11 +93,11 @@ public sealed class RunEndScreen : MonoBehaviour
         panelRect.offsetMin = panelRect.offsetMax = Vector2.zero;
         content = panel.transform;
         RectTransform skull = victory ? null : CreateSkull();
-        Text("Título", victory ? "¡GANASTE!" : "HAS MUERTO", new Vector2(0f, 110f), 54, new Color(0.95f, 0.78f, 0.35f));
-        Text("Causa", victory ? "Has conquistado la torre." : DeathMessage(reason), new Vector2(0f, 0f), 28, Color.white);
-        Text("Puntuación", $"Puntos: {score}", new Vector2(0f, -90f), 28, Color.white);
-        var retry = Button("Reiniciar", new Vector2(0f, -185f), () => SceneLoader.Instance.LoadScene(gameObject.scene.name));
-        Button("Menú principal", new Vector2(0f, -275f), () => SceneLoader.Instance.LoadScene("MainMenu"));
+        Text("Título", victory ? LanguageOptions.Choose("¡GANASTE!", "YOU WON!") : LanguageOptions.Choose("HAS MUERTO", "YOU DIED"), new Vector2(0f, 110f), 54, new Color(0.95f, 0.78f, 0.35f));
+        Text("Causa", victory ? LanguageOptions.Choose("Has conquistado la torre.", "You conquered the tower.") : DeathMessage(reason), new Vector2(0f, 0f), 28, Color.white);
+        Text("Puntuación", $"{LanguageOptions.Choose("Puntos", "Score")}: {score}", new Vector2(0f, -90f), 28, Color.white);
+        var retry = Button(LanguageOptions.Choose("Reiniciar", "Retry"), new Vector2(0f, -185f), () => SceneLoader.Instance.LoadScene(gameObject.scene.name));
+        Button(LanguageOptions.Choose("Menú principal", "Main menu"), new Vector2(0f, -275f), () => SceneLoader.Instance.LoadScene("MainMenu"));
         StartCoroutine(Reveal(shade, panel.GetComponent<CanvasGroup>(), skull, retry, victory));
     }
 
@@ -148,41 +160,56 @@ public sealed class RunEndScreen : MonoBehaviour
     {
         switch (reason)
         {
-            case RunLossReason.Guilt: return "Guilt absorbió tu vida.\nSigue moviéndote y evita cruzarte con tus pasos anteriores.";
-            case RunLossReason.TimeExpired: return "El tiempo te ha alcanzado.\nLlega a la sala final antes de que termine la cuenta atrás.";
-            case RunLossReason.Flupin: return "Flupin te ha golpeado.\nClic derecho cuando esté cerca para repelerlo.";
-            case RunLossReason.Dontsee: return "Dontsee te ha alcanzado.\nMantenlo a la vista para detener su avance.";
-            case RunLossReason.MaskCharger: return "La máscara te ha arrollado.\nSal de la línea de aviso antes de su embestida.";
-            case RunLossReason.Crusher: return "La aplanadora te ha aplastado.\nSal de debajo de ella durante el aviso.";
-            case RunLossReason.HazardousSurface: return "Una superficie peligrosa agotó tu vida.\nEvita permanecer sobre la lava.";
-            default: return "Te has quedado sin vida.\nEvita los peligros y los ataques de los enemigos.";
+            case RunLossReason.Guilt: return LanguageOptions.Choose("Guilt absorbió tu vida.\nSigue moviéndote y evita cruzarte con tus pasos anteriores.", "Guilt drained your life.\nKeep moving and avoid your previous steps.");
+            case RunLossReason.TimeExpired: return LanguageOptions.Choose("El tiempo te ha alcanzado.\nLlega a la sala final antes de que termine la cuenta atrás.", "Time ran out.\nReach the final room before the countdown ends.");
+            case RunLossReason.Flupin: return LanguageOptions.Choose("Flupin te ha golpeado.\nClic derecho cuando esté cerca para repelerlo.", "Flupin hit you.\nRight-click when it is close to repel it.");
+            case RunLossReason.Dontsee: return LanguageOptions.Choose("Dontsee te ha alcanzado.\nMantenlo a la vista para detener su avance.", "Dontsee caught you.\nKeep it in sight to stop it moving.");
+            case RunLossReason.MaskCharger: return LanguageOptions.Choose("La máscara te ha arrollado.\nSal de la línea de aviso antes de su embestida.", "The mask ran you over.\nMove out of its path before it charges.");
+            case RunLossReason.Crusher: return LanguageOptions.Choose("La aplanadora te ha aplastado.\nSal de debajo de ella durante el aviso.", "The crusher crushed you.\nMove out from underneath it during the warning.");
+            case RunLossReason.HazardousSurface: return LanguageOptions.Choose("Una superficie peligrosa agotó tu vida.\nEvita permanecer sobre la lava.", "A hazardous surface drained your health.\nAvoid standing on lava.");
+            default: return LanguageOptions.Choose("Te has quedado sin vida.\nEvita los peligros y los ataques de los enemigos.", "You ran out of health.\nAvoid hazards and enemy attacks.");
         }
     }
 
     void LateUpdate()
     {
         if (showing) return;
-        if (clockCanvas == null)
+        if (clockEnter == null)
         {
-            if (!rooms.TimerRunning) return;
-            clockCanvas = new GameObject("Tiempo de torre", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
-            clockCanvas.transform.SetParent(transform, false);
-            clockCanvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-            clockCanvas.GetComponent<Canvas>().sortingOrder = 90;
-            var scale = clockCanvas.GetComponent<CanvasScaler>();
-            scale.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scale.referenceResolution = new Vector2(1920f, 1080f);
-            var label = new GameObject("Cuenta atrás", typeof(RectTransform), typeof(Text));
-            label.transform.SetParent(clockCanvas.transform, false);
-            clockText = label.GetComponent<Text>();
-            clockText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            clockFeedback = label.AddComponent<CharacterCounterFeedback>();
-            clockText.fontSize = 30; clockText.alignment = TextAnchor.MiddleCenter; clockText.raycastTarget = false;
-            var r = clockText.rectTransform;
-            r.anchorMin = r.anchorMax = new Vector2(0.5f, 1f);
-            r.anchoredPosition = new Vector2(0f, 90f); r.sizeDelta = new Vector2(600f, 100f);
-            clockEnter = CreateClockSlide("Mostrar reloj FEEL", label, -65f);
-            clockExit = CreateClockSlide("Ocultar reloj FEEL", label, 90f);
+            if (clockVisual != null && clockText != null)
+            {
+                // The authored position is the visible position; animate the whole
+                // panel so its background and text remain together.
+                clockCanvas = clockVisual.gameObject;
+                Vector2 shown = clockVisual.anchoredPosition;
+                Vector2 hidden = shown + Vector2.up * Mathf.Max(0f, clockHiddenOffset);
+                clockVisual.anchoredPosition = hidden;
+                clockFeedback = clockText.GetComponent<CharacterCounterFeedback>();
+                clockEnter = CreateClockSlide("Mostrar reloj FEEL", clockCanvas, shown);
+                clockExit = CreateClockSlide("Ocultar reloj FEEL", clockCanvas, hidden);
+            }
+            else
+            {
+                if (!rooms.TimerRunning) return;
+                clockCanvas = new GameObject("Tiempo de torre", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+                clockCanvas.transform.SetParent(transform, false);
+                clockCanvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+                clockCanvas.GetComponent<Canvas>().sortingOrder = 90;
+                var scale = clockCanvas.GetComponent<CanvasScaler>();
+                scale.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scale.referenceResolution = new Vector2(1920f, 1080f);
+                var label = new GameObject("Cuenta atrás", typeof(RectTransform), typeof(Text));
+                label.transform.SetParent(clockCanvas.transform, false);
+                clockText = label.GetComponent<Text>();
+                clockText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                clockFeedback = label.AddComponent<CharacterCounterFeedback>();
+                clockText.fontSize = 30; clockText.alignment = TextAnchor.MiddleCenter; clockText.raycastTarget = false;
+                var r = clockText.rectTransform;
+                r.anchorMin = r.anchorMax = new Vector2(0.5f, 1f);
+                r.anchoredPosition = new Vector2(0f, 90f); r.sizeDelta = new Vector2(600f, 100f);
+                clockEnter = CreateClockSlide("Mostrar reloj FEEL", label, new Vector2(0f, -65f));
+                clockExit = CreateClockSlide("Ocultar reloj FEEL", label, new Vector2(0f, 90f));
+            }
         }
         if (clockVisible != rooms.TimerRunning)
         {
@@ -199,12 +226,12 @@ public sealed class RunEndScreen : MonoBehaviour
             lastTickSecond = seconds;
         }
         else lastTickSecond = -1;
-        clockText.text = $"{seconds / 60:00}:{seconds % 60:00}" + (lastMinute ? "\n¡ÚLTIMO MINUTO!" : "");
-        clockFeedback.Intensity = lastMinute ? 2.8f : 1f;
+        clockText.text = $"{seconds / 60:00}:{seconds % 60:00}" + (lastMinute ? LanguageOptions.Choose("\n¡ÚLTIMO MINUTO!", "\nFINAL MINUTE!") : "");
+        if (clockFeedback != null) clockFeedback.Intensity = lastMinute ? 2.8f : 1f;
         clockText.color = lastMinute ? new Color(1f, 0.35f, 0.25f) : Color.white;
     }
 
-    MMF_Player CreateClockSlide(string name, GameObject target, float destinationY)
+    MMF_Player CreateClockSlide(string name, GameObject target, Vector2 destination)
     {
         var go = new GameObject(name);
         go.transform.SetParent(clockCanvas.transform, false);
@@ -218,7 +245,7 @@ public sealed class RunEndScreen : MonoBehaviour
                 Space = MMF_Position.Spaces.RectTransform,
                 RelativePosition = false,
                 DeterminePositionsOnPlay = true,
-                DestinationPosition = new Vector3(0f, destinationY, 0f),
+                DestinationPosition = new Vector3(destination.x, destination.y, 0f),
                 AnimatePositionDuration = Mathf.Max(0.05f, clockSlideDuration),
                 AnimatePositionTween = new MMTweenType(AnimationCurve.EaseInOut(0f, 0f, 1f, 1f)),
                 Timing = new MMFeedbackTiming { TimescaleMode = TimescaleModes.Unscaled }

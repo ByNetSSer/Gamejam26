@@ -293,3 +293,8 @@ En fácil, un parry confirmado con clic derecho concede 0,55 s de protección fr
 ## Láminas de tutorial
 
 Al recibir por primera vez en una partida a Flupin, la máscara, Dontsee, el perseguidor o Guilt, `RoomEnemyRoster` solicita su lámina al prefab `Tutorial enemigos` en la cámara. La cola muestra cada tipo una sola vez por partida. `PlayerController.IsReadingTutorial` expone el estado para futuras animaciones; mientras está activo se bloquean golpes, parry, compras, interacciones, salto y pisotón. E retira la hoja hacia abajo y muestra la siguiente, si existe. Se puede seguir caminando. Las imágenes incluidas son provisionales; sprites, posiciones, tamaño y duraciones se ajustan desde el prefab. Pendiente prueba en Play Mode de selección, presentación, bloqueo y cola.
+
+
+## Mínimos de daño y vida baja
+
+Flupin causa al menos 15, la máscara 20 y Dontsee 25 por contacto, sin superar la vida restante; su daño porcentual anterior sigue aplicándose cuando es mayor. El corredor mantiene su mínimo de 50. Guilt mantiene el drenaje porcentual, con un mínimo de 1 por segundo prorrateado por el tiempo de contacto. La aplanadora conserva su mínimo anterior de 1, ahora ajustable. La protección de parry fácil sigue decidiendo si se acepta el daño. En la escena `e`, `HealthVignette` controla una instancia del perfil de `Global Volume`, pasando progresivamente al rojo y aumentando la intensidad al bajar la vida; los volúmenes temporales de daño y corredor tienen mayor prioridad. Requiere prueba visual y de balance en Play Mode.

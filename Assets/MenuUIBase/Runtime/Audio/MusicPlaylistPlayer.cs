@@ -18,9 +18,17 @@ namespace MenuUIBase.Audio
             get
             {
                 var manager = AudioManager.Instance;
+                if (manager == null) return null;
                 var player = manager.GetComponent<MusicPlaylistPlayer>();
                 return player != null ? player : manager.gameObject.AddComponent<MusicPlaylistPlayer>();
             }
+        }
+        public static bool TryGetExisting(out MusicPlaylistPlayer player)
+        {
+            player = null;
+            if (!AudioManager.TryGetExisting(out var manager)) return false;
+            player = manager.GetComponent<MusicPlaylistPlayer>();
+            return player != null;
         }
         void Awake() => audioManager = GetComponent<AudioManager>();
         public void SetBase(MusicPlaylist playlist, bool clearOverrides = false)

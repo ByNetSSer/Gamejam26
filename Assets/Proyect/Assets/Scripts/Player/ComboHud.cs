@@ -35,7 +35,8 @@ public sealed class ComboHud : MonoBehaviour
     [SerializeField] RectTransform shakeTarget;
     [SerializeField, Min(0f)] float shakePerRank = 0.45f;
     [SerializeField, Min(0f)] float shakeFrequency = 19f;
-    readonly Queue<string> entries = new Queue<string>();
+    readonly Queue<KeyValuePair<string, int>> entries = new Queue<KeyValuePair<string, int>>();
+    bool displayedEnglish;
     PlayerScore score;
     GameObject fallbackCanvas;
     Vector3 rankBaseScale;
@@ -79,7 +80,7 @@ public sealed class ComboHud : MonoBehaviour
         if (award.ComboCount == 1) { entries.Clear(); displayedTier = 0; }
         int newTier = TierFor(score.ComboPoints);
         GameSfx.PlayCombo(newTier, Mathf.Max(1, tierNames != null ? tierNames.Length - 1 : 1));
-        entries.Enqueue($"{award.Reason}  +{award.Points}");
+        entries.Enqueue(new KeyValuePair<string, int>(award.Reason, award.Points));
         while (entries.Count > Mathf.Max(1, visibleEntries)) entries.Dequeue();
         window = Mathf.Max(0.01f, score.ComboWindowDuration);
         showUntil = Time.time + idleFadeDelay;
@@ -116,10 +117,11 @@ public sealed class ComboHud : MonoBehaviour
     }
     void Update()
     {
+        if (displayedEnglish != LanguageOptions.IsEnglish) Refresh(false);
         float remaining = score.ComboCount > 0 ? score.ComboRemaining : 0f;
         float fraction = score.ComboCount > 0 ? Mathf.Clamp01(remaining / Mathf.Max(0.01f, window)) : 0f;
         if (timerLabel != null)
-            timerLabel.text = score.ComboCount > 0 ? $"TIEMPO  {remaining:0.0} / {window:0.0} s" : "";
+            timerLabel.text = score.ComboCount > 0 ? $"{LanguageOptions.Choose("TIEMPO", "TIME")}  {remaining:0.0} / {window:0.0} s" : "";
         if (timer != null)
         {
             timer.fillAmount = fraction;
@@ -148,10 +150,11 @@ public sealed class ComboHud : MonoBehaviour
     Color ColorFor(int tier) => tierColors != null && tier >= 0 && tier < tierColors.Length ? tierColors[tier] : Color.white;
     void Refresh(bool paid)
     {
+        displayedEnglish = LanguageOptions.IsEnglish;
         int tier = Mathf.Clamp(displayedTier, 0, tierNames != null && tierNames.Length > 0 ? tierNames.Length - 1 : 0);
         Color color = ColorFor(tier);
         if (rankLabel != null) rankLabel.text = tierNames != null && tier < tierNames.Length ? tierNames[tier] : "D";
-        if (rankTitle != null) rankTitle.text = tierTitles != null && tier < tierTitles.Length ? tierTitles[tier] : "";
+        if (rankTitle != null) rankTitle.text = tierTitles != null && tier < tierTitles.Length ? GameplayTranslation.Text(tierTitles[tier]) : "";
         if (maskingColor != null) maskingColor.color = new Color(color.r, color.g, color.b, 0.35f);
         if (maskingParticles != null && maskingRates != null && maskingRates.Length > 0)
             maskingParticles.rateOverTime = Mathf.Max(0f, maskingRates[Mathf.Min(tier, maskingRates.Length - 1)]);
@@ -160,7 +163,12 @@ public sealed class ComboHud : MonoBehaviour
         if (rankTextFeedback != null) rankTextFeedback.Intensity = intensity;
         if (titleTextFeedback != null) titleTextFeedback.Intensity = intensity;
         if (statsLabel != null) statsLabel.text = paid ? "" : $"COMBO {score.ComboCount}   ·   {score.ComboPoints} pts";
-        if (log != null) log.text = string.Join("\n", entries.ToArray());
+        if (log != null)
+        {
+            var lines = new List<string>();
+            foreach (var entry in entries) lines.Add($"{GameplayTranslation.Text(entry.Key)}  +{entry.Value}");
+            log.text = string.Join("\n", lines.ToArray());
+        }
     }
     void BuildFallback()
     {
