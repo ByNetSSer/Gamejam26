@@ -30,6 +30,11 @@ public sealed class GuiltEncounter : MonoBehaviour
     float clock, contactSeconds;
     Vector3 lastPlayerPosition;
 
+    public bool TryGetEasyParryPoint(out Vector3 point)
+    {
+        point = visual != null ? visual.transform.position : default;
+        return isActiveAndEnabled && visual != null && visual.activeInHierarchy && (appearance == null || !appearance.IsAppearing);
+    }
     void Awake() { rooms = GetComponent<RoomManager>(); roster = GetComponent<RoomEnemyRoster>(); }
     void OnEnable()
     {
@@ -94,7 +99,8 @@ public sealed class GuiltEncounter : MonoBehaviour
         // Trigger-stay semantics without solid colliders or dependence on physics layers.
         Vector3 nearest = body != null ? body.ClosestPoint(visual.transform.position) : position;
         bool touching = (appearance == null || !appearance.IsAppearing) && (nearest - visual.transform.position).sqrMagnitude <= radius * radius;
-        if (touching) contactSeconds += dt;
+        var contactHealth = player.GetComponent<PlayerHealth>();
+        if (touching && (contactHealth == null || !contactHealth.EnemyParryProtected)) contactSeconds += dt;
         if (contactSeconds > 0f && (!touching || contactSeconds >= 0.25f))
         {
             float duration = contactSeconds;

@@ -13,6 +13,7 @@ public sealed class SafeRoomLayout : MonoBehaviour
             if (string.Equals(child.name, childName, StringComparison.OrdinalIgnoreCase)) return child;
         return null;
     }
+    public Transform Reroll => FindChild("reroll");
     public bool HasRequiredParts => FindChild("entrada") != null && FindChild("salida") != null && FindChild("spawninicio") != null;
     public bool Configure(RoomDefinition room, bool starting)
     {
@@ -21,10 +22,36 @@ public sealed class SafeRoomLayout : MonoBehaviour
         var spawn = FindChild("spawninicio");
         if (entry == null || exit == null || spawn == null) return false;
         SetAltarsActive(!starting);
+        if (Reroll != null) Reroll.gameObject.SetActive(false);
         Transform marker = RoomAutoLayout.CreateHatchMarker(transform, starting ? exit : entry, !starting);
         if (marker == null) return false;
         room.ConfigureMarkers(RoomConnection.Hatch, starting ? null : marker, starting ? spawn : null,
             RoomConnection.Hatch, starting ? marker : null);
+        return true;
+    }
+    // A shop keeps its current entry and opens its unused exit to the next tower.
+    public bool ConfigureShopExit(RoomDefinition room)
+    {
+        var exit = FindChild("salida");
+        if (exit == null || room == null || room.EntryAnchor == null) return false;
+        var marker = RoomAutoLayout.CreateHatchMarker(transform, exit, false);
+        if (marker == null) return false;
+        room.ConfigureMarkers(room.EntryType, room.EntryAnchor, room.PlayerStart, RoomConnection.Hatch, marker);
+        return true;
+    }
+    // The next initial room needs both connections; unlike the first one, it is entered physically.
+    public bool ConfigureLinkedStart(RoomDefinition room)
+    {
+        var entry = FindChild("entrada");
+        var exit = FindChild("salida");
+        var spawn = FindChild("spawninicio");
+        if (entry == null || exit == null || spawn == null || room == null) return false;
+        var entryMarker = RoomAutoLayout.CreateHatchMarker(transform, entry, true);
+        var exitMarker = RoomAutoLayout.CreateHatchMarker(transform, exit, false);
+        if (entryMarker == null || exitMarker == null) return false;
+        SetAltarsActive(false);
+        if (Reroll != null) Reroll.gameObject.SetActive(false);
+        room.ConfigureMarkers(RoomConnection.Hatch, entryMarker, spawn, RoomConnection.Hatch, exitMarker);
         return true;
     }
     public Transform[] GetAltars()

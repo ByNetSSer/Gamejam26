@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Corona del espectáculo"
+  m_Name: "Corona del espect\xE1culo"
   m_EditorClassIdentifier: 
-  displayName: "Corona del espectáculo"
-  visualDescription: "Una corona de oro con cascabeles y piedras que brillan al mantener un combo."
-  effectDescription: "+25 % de crecimiento del multiplicador de combo."
+  displayName: "Corona del espect\xE1culo"
+  visualDescription: Una corona de oro con cascabeles y piedras que brillan al mantener
+    un combo.
+  effectDescription: +25 % de crecimiento del multiplicador de combo.
   tier: 3
   category: 7
   disposition: 0
   requiredEnemy: 0
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 0}
+  legendaryModel: {fileID: 2592674903872602010, guid: b54213c90165abc448378500e248b3e6, type: 3}

@@ -17,6 +17,8 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     [SerializeField, Min(0)] int safeRoomsBetween = 2;
     [SerializeField, Min(1f)] float speed = 40f;
     [SerializeField, Min(1f)] float warningWaitSeconds = 6f;
+    [Tooltip("Mostrar el aviso provisional de texto del perseguidor.")]
+    [SerializeField] bool showWarningText;
     [Header("Daño y zona de impacto")]
     [Tooltip("Radio alternativo si el prefab no tiene SphereCollider. Si existe, se usa el radio del collider del prefab.")]
     [SerializeField, Min(0.05f)] float contactRadius = 0.45f;
@@ -63,6 +65,11 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     bool hasPreviousPlayer;
     float damageAllowedAt;
 
+    public bool TryGetEasyParryPoint(out Vector3 point)
+    {
+        point = visual != null ? visual.transform.position : default;
+        return isActiveAndEnabled && running && !hit && visual != null && Time.time >= damageAllowedAt;
+    }
     public void IncreaseFrequency() => frequencyBuffs++;
     public void IncreaseSpeed() => speedBuffs++;
     public void IncreaseImpatience() => impatienceBuffs++;
@@ -378,7 +385,7 @@ public sealed class CorridorChaserEncounter : MonoBehaviour
     }
     void OnGUI()
     {
-        if (warning) GUI.Box(new Rect(Screen.width * 0.5f - 200f, 65f, 400f, 55f), "¡PERSEGUIDOR EN CAMINO!\nApártate hacia una pared.");
+        if (showWarningText && warning) GUI.Box(new Rect(Screen.width * 0.5f - 200f, 65f, 400f, 55f), "¡PERSEGUIDOR EN CAMINO!\nApártate hacia una pared.");
     }
     void OnDrawGizmosSelected()
     {

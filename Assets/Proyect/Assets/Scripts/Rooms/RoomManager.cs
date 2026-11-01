@@ -26,7 +26,6 @@ public sealed class RoomManager : MonoBehaviour
         && towerNumber > 1 && roomsEntered > 1 && roomsEntered < RoomsPerTower;
     [Header("Torre (incluye inicial y final)")]
     [SerializeField, Min(2)] int roomsPerTower = 6;
-    [SerializeField, Min(1)] int totalTowers = 12;
     [SerializeField] TowerDifficulty difficulty = new TowerDifficulty();
     [SerializeField] bool useFixedSeed;
     [SerializeField] int seed = 12345;
@@ -49,7 +48,7 @@ public sealed class RoomManager : MonoBehaviour
     int towerNumber = 1;
     int additionalRooms;
     readonly object towerSpeedSource = new object();
-    bool finished, failed, lost, started, pendingDefeat, roomExitSent, victoryReported;
+    bool finished, failed, lost, started, pendingDefeat, roomExitSent, victoryReported, linkedNextTower;
     GameEventBus eventBus;
     PlayerHealth health;
     bool healthBound;
@@ -60,9 +59,10 @@ public sealed class RoomManager : MonoBehaviour
     public PlayerController Player => player;
     public int RoomsPerTower => difficulty.Rooms(roomsPerTower, towerNumber) + additionalRooms;
     public int TowerNumber => towerNumber;
-    public int TotalTowers => Mathf.Max(1, totalTowers);
+    public int TotalTowers => MenuUIBase.Core.RunDifficulty.Towers;
     public bool IsFinalTower => TowerSafetyRules.IsFinalTower(towerNumber, TotalTowers);
     public bool IsFinished => finished;
+    public bool HasLinkedNextTower => linkedNextTower;
     public bool IsLost => lost;
     public bool IsWon => victoryReported;
     public void SetStartingExitLocked(bool locked)
@@ -116,23 +116,31 @@ public sealed class RoomManager : MonoBehaviour
         BuildPools();
         if (!RoomRoutePlanner.TryReachAtLeast(RoomConnection.Hatch, RoomsPerTower - 2, RoomConnection.Hatch, routes, out int initialCount))
         { Fail("Los pools no contienen una ruta desde la sala inicial hasta la entrada de la sala final."); return; }
+        if (initialCount + 2 > MenuUIBase.Core.RunDifficulty.MaximumRooms) { Fail("Los pools no permiten respetar el máximo de pisos de esta dificultad."); return; }
         additionalRooms += initialCount - (RoomsPerTower - 2);
         random = useFixedSeed ? new System.Random(seed) : new System.Random();
         StartTower();
     }
     void StartTower()
     {
-        player.SnapshotTowerSpeed();
         current = Instantiate(startingRoom, transform.position, transform.rotation, transform);
         if (!current.ConfigureSafeRoom(true)) { Fail("No se pudo preparar la zona segura inicial."); return; }
         if (!current.Prepare(hatchPrefab, doorPrefab)) { Fail("No se pudo preparar la salida de la sala inicial."); return; }
+        ActivateTower(true);
+    }
+    void ActivateTower(bool placeAtSpawn)
+    {
+        player.SnapshotTowerSpeed();
         current.Populate(random, difficulty.SpawnMultiplier(towerNumber), false);
         roomsEntered = 1;
-        var cc = player.GetComponent<CharacterController>();
-        if (cc != null) cc.enabled = false;
-        player.transform.SetPositionAndRotation(current.PlayerStart.position, current.PlayerStart.rotation);
-        player.ResetMotion();
-        if (cc != null) cc.enabled = true;
+        if (placeAtSpawn)
+        {
+            var cc = player.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+            player.transform.SetPositionAndRotation(current.PlayerStart.position, current.PlayerStart.rotation);
+            player.ResetMotion();
+            if (cc != null) cc.enabled = true;
+        }
         foreach (var flupin in pausedFlupins) if (flupin != null) flupin.enabled = true;
         pausedFlupins.Clear();
         TimeRemaining = Mathf.Max(1f, towerTimeSeconds);
@@ -144,21 +152,68 @@ public sealed class RoomManager : MonoBehaviour
         started = true;
         if (pendingDefeat || (health != null && health.CurrentHealth <= 0f)) OnPlayerDied();
     }
+    // Prepare the connected safe room while the player can still shop.
+    void PrepareLinkedNextTower()
+    {
+        linkedNextTower = false;
+        if (IsFinalTower || current == null || startingRoom == null) return;
+        var shop = current.GetComponent<SafeRoomLayout>();
+        if (shop == null || startingRoom.GetComponent<SafeRoomLayout>() == null) return;
+        int baseCount = difficulty.Rooms(roomsPerTower, towerNumber + 1);
+        BuildPools();
+        if (!RoomRoutePlanner.TryReachAtLeast(RoomConnection.Hatch, baseCount - 2, RoomConnection.Hatch, routes, out int reachable) ||
+            reachable + 2 > MenuUIBase.Core.RunDifficulty.MaximumRooms)
+        { Debug.LogError("No hay una ruta válida para la siguiente torre dentro del máximo de pisos.", this); return; }
+        var candidate = Instantiate(startingRoom, transform);
+        var safe = candidate.GetComponent<SafeRoomLayout>();
+        if (safe == null || !safe.ConfigureLinkedStart(candidate) || !candidate.Prepare(hatchPrefab, doorPrefab))
+        {
+            candidate.gameObject.SetActive(false); Destroy(candidate);
+            Debug.LogError("No se pudo preparar la zona segura conectada; se mantiene el avance provisional.", this);
+            return;
+        }
+        if (!shop.ConfigureShopExit(current) || !current.Prepare(hatchPrefab, doorPrefab))
+        {
+            candidate.gameObject.SetActive(false); Destroy(candidate);
+            Debug.LogError("No se pudo preparar la salida de la tienda; se mantiene el avance provisional.", this);
+            return;
+        }
+        float yaw = RoomRotationSelector.ChooseQuarterTurns(random, hatchRotations) * 90f;
+        candidate.AlignTo(current.Exit.Anchor, yaw);
+        candidate.transform.position += Vector3.down * Mathf.Max(0f, hatchVerticalGap);
+        next = candidate;
+        linkedNextTower = true;
+    }
     public bool StartNextTower()
     {
         if (!started || !finished || lost || failed || IsFinalTower || player == null || health == null || health.CurrentHealth <= 0f) return false;
+        if (linkedNextTower && (current.Exit == null || !current.Exit.HasPassed(player.transform.position))) return false;
         int following = towerNumber + 1;
         BuildPools();
         int baseCount = difficulty.Rooms(roomsPerTower, following);
-        if (!RoomRoutePlanner.TryReachAtLeast(RoomConnection.Hatch, baseCount - 2, RoomConnection.Hatch, routes, out int reachableCount)) return false;
+        if (!RoomRoutePlanner.TryReachAtLeast(RoomConnection.Hatch, baseCount - 2, RoomConnection.Hatch, routes, out int reachableCount) || reachableCount + 2 > MenuUIBase.Core.RunDifficulty.MaximumRooms)
+        { Debug.LogError("Los pools no permiten respetar el máximo de pisos de esta dificultad.", this); return false; }
+        bool connected = linkedNextTower && next != null;
         if (previous != null) { previous.gameObject.SetActive(false); Destroy(previous.gameObject); previous = null; }
-        if (current != null) { current.gameObject.SetActive(false); Destroy(current.gameObject); current = null; }
-        if (next != null) { next.gameObject.SetActive(false); Destroy(next.gameObject); next = null; }
+        if (connected)
+        {
+            current.Exit.CloseBehind();
+            previous = current;
+            current = next;
+            next = null;
+        }
+        else
+        {
+            if (current != null) { current.gameObject.SetActive(false); Destroy(current.gameObject); current = null; }
+            if (next != null) { next.gameObject.SetActive(false); Destroy(next.gameObject); next = null; }
+        }
+        linkedNextTower = false;
         towerNumber = following; additionalRooms = reachableCount - (baseCount - 2); finished = false; roomExitSent = false;
         player.Stats.RemoveModifiers(towerSpeedSource);
         player.Stats.AddModifier(towerSpeedSource, PlayerStat.MoveSpeed, StatModifierType.Percent, difficulty.SpeedBonus(towerNumber));
         player.enabled = true;
-        StartTower();
+        if (connected) ActivateTower(false);
+        else StartTower();
         return !failed;
     }
     void BuildPools()
@@ -249,7 +304,12 @@ public sealed class RoomManager : MonoBehaviour
     void Update()
     {
         if (started && !lost && !failed && !victoryReported && health != null && health.CurrentHealth <= 0f) OnPlayerDied();
-        if (failed || finished || current == null || player == null) return;
+        if (failed || current == null || player == null) return;
+        if (finished)
+        {
+            if (!lost && !victoryReported && linkedNextTower && current.Exit != null && current.Exit.HasPassed(player.transform.position)) StartNextTower();
+            return;
+        }
         if (roomsEntered == RoomsPerTower)
         {
             if (!player.IsGrounded) return;
@@ -262,6 +322,7 @@ public sealed class RoomManager : MonoBehaviour
                     if (enemy is Flupin flupin && flupin.enabled) { pausedFlupins.Add(flupin); flupin.enabled = false; }
             PublishExited(RoomExitReason.Completed);
             Events.Publish(new TowerCompletedEvent(RoomsPerTower, CurrentScore()));
+            if (!lost && !failed && !victoryReported && !IsFinalTower) PrepareLinkedNextTower();
             try { TowerFinished?.Invoke(); } catch (Exception e) { Debug.LogException(e); }
             return;
         }

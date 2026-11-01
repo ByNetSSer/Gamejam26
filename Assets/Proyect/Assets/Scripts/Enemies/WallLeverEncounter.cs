@@ -88,7 +88,7 @@ public sealed class WallLeverEncounter : EnemyAgent
     void Update()
     {
         focused = null;
-        if (finished || !selected || Player == null || !Player.enabled) return;
+        if (finished || !selected || Player == null || !Player.enabled || Player.TutorialBlocksActions) return;
         if (!active) { RequestAttack(); return; }
         if (view == null) view = Player.GetComponentInChildren<Camera>();
         if (view == null || Cursor.lockState != CursorLockMode.Locked) return;
@@ -138,4 +138,4 @@ public sealed class WallLeverEncounter : EnemyAgent
         Gizmos.color = Color.yellow;
         foreach (var marker in leverPositions) if (marker != null) Gizmos.DrawWireSphere(marker.position, 0.25f);
     }
-}
+}

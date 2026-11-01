@@ -37,6 +37,24 @@ public static class SystemChecks
         var afterExpiry = combo.Register("Escotilla", 10, 3f, 2f, 0.5f, 2f);
         Check(afterExpiry.ComboCount == 1 && afterExpiry.Points == 20, "Expiración y amplificación");
 
+        Check(Mathf.Approximately(PlayerController.CalculateDestructibleScale(6.9f, 6.9f, 0.1f, 1.5f), 1f), "Resistencia inicial sin escalado");
+        Check(Mathf.Approximately(PlayerController.CalculateDestructibleScale(170f, 6.9f, 0.1f, 1.5f), 1.5f), "Límite de vida a velocidad alta");
+        Check(Mathf.Approximately(ImpactTarget.CalculateRequiredImpactSpeed(18f, 170f, 35f), 35f), "Límite de resistencia adaptativa");
+        Check(Mathf.Approximately(ImpactTarget.CalculateRequiredImpactSpeed(60f, 170f, 35f), 60f), "Respetar obstáculo diseñado resistente");
+        Check(Mathf.Approximately(ImpactTarget.CalculateScaledBreakSpeed(60f, 1.5f, 35f), 60f), "No aumentar resistencia base por encima del límite");
+
+        var comboDuration = new StatValue();
+        var durationSource = new object();
+        comboDuration.Add(durationSource, StatModifierType.Percent, 0.05f);
+        var timedCombo = new ComboState();
+        timedCombo.Register("Prueba", 1, 0f, comboDuration.Calculate(4f), 0f, 1f);
+        Check(Mathf.Abs(timedCombo.WindowDuration - 4.2f) < 0.001f && !timedCombo.Expire(4f), "Reloj común amplía la ventana");
+        Check(timedCombo.Expire(4.2f), "El combo ampliado vence al final exacto");
+        comboDuration.RemoveSource(durationSource);
+        comboDuration.Add(durationSource, StatModifierType.Percent, 0.2f);
+        timedCombo.Register("Prueba", 1, 10f, comboDuration.Calculate(4f), 0f, 1f);
+        Check(Mathf.Abs(timedCombo.WindowDuration - 4.8f) < 0.001f && !timedCombo.Expire(14f), "Reloj raro amplía la ventana");
+
         var go = new GameObject("SystemChecks");
         try
         {

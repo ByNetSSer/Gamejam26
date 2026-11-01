@@ -30,6 +30,12 @@ public sealed class RoomCrusher : EnemyAgent
     public override AttackRequirement Requirement => AttackRequirement.Any;
     public override bool CanRequestAttack => (appearance == null || !appearance.IsAppearing) && roomActive && Player != null && Player.IsGrounded && !finished && !granted && ValidSetup();
     public override bool CanBeRepelled => false;
+    public override bool TryGetEasyParryPoint(Vector3 playerPosition, out Vector3 point)
+    {
+        point = visual != null ? visual.TransformPoint(new Vector3(Mathf.Clamp(visual.InverseTransformPoint(playerPosition).x, -0.5f, 0.5f), Mathf.Clamp(visual.InverseTransformPoint(playerPosition).y, -0.5f, 0.5f), Mathf.Clamp(visual.InverseTransformPoint(playerPosition).z, -0.5f, 0.5f))) : transform.position;
+        return isActiveAndEnabled && granted && descending && !finished && visual != null;
+    }
+
     public override bool UsesAttackTimeout => false;
     public override bool TryRepel(float power) => false;
     public StatValue GetStat(CrusherStat stat)

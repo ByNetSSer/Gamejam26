@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Corazón de carrera"
+  m_Name: "Coraz\xF3n de carrera"
   m_EditorClassIdentifier: 
-  displayName: "Corazón de carrera"
-  visualDescription: "Un corazón mecánico con alas y agujas que giran sin descanso."
-  effectDescription: "+30 % de velocidad y +15 % de aceleración; pierdes 1 % de vida máxima cada 3 segundos."
+  displayName: "Coraz\xF3n de carrera"
+  visualDescription: "Un coraz\xF3n mec\xE1nico con alas y agujas que giran sin descanso."
+  effectDescription: "+30 % de velocidad y +15 % de aceleraci\xF3n; pierdes 1 % de
+    vida m\xE1xima cada 3 segundos."
   tier: 3
   category: 7
   disposition: 1
   requiredEnemy: 0
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 0}
+  legendaryModel: {fileID: 369121583782558936, guid: f03537b93d59766468d3e14658e41dea, type: 3}

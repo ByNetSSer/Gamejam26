@@ -86,6 +86,12 @@ public sealed class MaskCharger : EnemyAgent
     public override bool CanRequestAttack => (appearance == null || !appearance.IsAppearing) && state == MaskChargerState.Following && attackCooldown <= 0f && Player != null &&
         (PlayerCenter() - transform.position).sqrMagnitude <= Mathf.Pow(Evaluate(MaskChargerStat.AttackRange, attackRange), 2f);
     public override bool CanBeRepelled => false;
+    public override bool TryGetEasyParryPoint(Vector3 playerPosition, out Vector3 point)
+    {
+        point = transform.position;
+        return isActiveAndEnabled && !hitPlayer && (state == MaskChargerState.Telegraph || state == MaskChargerState.Charging || state == MaskChargerState.Braking);
+    }
+
     // The distance is fixed at launch, so a long charge must retain its turn.
     public override bool UsesAttackTimeout => false;
     public override bool TryRepel(float power) => false;

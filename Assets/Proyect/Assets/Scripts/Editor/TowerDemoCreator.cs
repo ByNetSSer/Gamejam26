@@ -91,9 +91,6 @@ public static class TowerDemoCreator
         panel.GetComponent<Renderer>().sharedMaterial = brown;
         var door = root.AddComponent<RoomDoor>();
         door.SetHinge(hinge);
-        var data = new SerializedObject(door);
-        data.FindProperty("openAngle").floatValue = -90f;
-        data.ApplyModifiedPropertiesWithoutUndo();
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, folder + "/Puerta.prefab").GetComponent<RoomDoor>();
         Object.DestroyImmediate(root);
         return prefab;

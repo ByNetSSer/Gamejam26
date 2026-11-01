@@ -2,13 +2,17 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Presentation-only effect for legacy uGUI Text. Digits move independently; changed
-// digits exchange places like a split-flap counter. Other characters stay still.
+// digits exchange places like a split-flap counter. Letter shaking is optional.
 [RequireComponent(typeof(Text))]
 public sealed class CharacterCounterFeedback : BaseMeshEffect
 {
     [SerializeField, Min(0f)] float shake = 0.45f;
     [SerializeField, Min(0.01f)] float flipDuration = 0.22f;
     [SerializeField, Min(0f)] float frequency = 19f;
+    [Tooltip("Mantiene visibles los dígitos cuando cambian varias veces por segundo.")]
+    [SerializeField] bool continuousRoll;
+    [Tooltip("Aplica el temblor también a las letras y símbolos visibles.")]
+    [SerializeField] bool shakeLetters;
     Text label, previousLabel;
     CharacterCounterFeedback previousEffect, owner;
     string previous = "", current = "";
@@ -38,8 +42,11 @@ public sealed class CharacterCounterFeedback : BaseMeshEffect
             previous = current;
             current = label.text;
             elapsed = 0f;
-            if (previousLabel == null) CreatePreviousLabel();
-            previousLabel.text = previous;
+            if (!continuousRoll)
+            {
+                if (previousLabel == null) CreatePreviousLabel();
+                previousLabel.text = previous;
+            }
         }
         else elapsed += Time.deltaTime;
         if (previousLabel != null)
@@ -88,14 +95,22 @@ public sealed class CharacterCounterFeedback : BaseMeshEffect
             float centerY = (a.position.y + b.position.y) * 0.5f;
             float height = Mathf.Abs(a.position.y - b.position.y);
             float scale = 1f, offset = 0f;
-            if (changed && progress < 1f)
+            if (source.continuousRoll && changed && progress < 1f)
+            {
+                // Fast counters cannot wait for a complete old/new split every frame.
+                float rollPhase = Time.time * source.frequency * 2f + i * 0.7f;
+                scale = 0.8f + 0.2f * Mathf.Abs(Mathf.Cos(rollPhase));
+                offset = height * 0.08f * Mathf.Sin(rollPhase);
+            }
+            else if (changed && progress < 1f)
             {
                 // The old number is pressed down as the new one drops in and unfolds.
                 scale = owner != null ? Mathf.Max(0.01f, 1f - progress * 2f) : Mathf.Max(0.01f, progress * 2f - 1f);
                 offset = owner != null ? -height * 0.25f * progress : height * 0.25f * (1f - progress);
             }
             float phase = Time.time * source.frequency + i * 2.37f;
-            Vector2 jitter = digit ? new Vector2(Mathf.Sin(phase * 1.13f), Mathf.Cos(phase)) * source.shake * source.intensity : Vector2.zero;
+            bool shakeCharacter = digit || (source.shakeLetters && !char.IsWhiteSpace(c));
+            Vector2 jitter = shakeCharacter ? new Vector2(Mathf.Sin(phase * 1.13f), Mathf.Cos(phase)) * source.shake * source.intensity : Vector2.zero;
             for (int j = 0; j < 4; j++)
             {
                 UIVertex v = default;
@@ -103,7 +118,7 @@ public sealed class CharacterCounterFeedback : BaseMeshEffect
                 v.position.x += jitter.x;
                 v.position.y = centerY + (v.position.y - centerY) * scale + offset + jitter.y;
                 if (owner != null && (!changed || progress >= 0.5f)) { var color = v.color; color.a = 0; v.color = color; }
-                if (owner == null && changed && progress < 0.5f) { var color = v.color; color.a = 0; v.color = color; }
+                if (!source.continuousRoll && owner == null && changed && progress < 0.5f) { var color = v.color; color.a = 0; v.color = color; }
                 vertices.SetUIVertex(v, start + j);
             }
         }

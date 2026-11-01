@@ -4,6 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerScore))]
 public sealed class ScoreDebugView : MonoBehaviour
 {
+    [SerializeField, Tooltip("Mostrar información de depuración durante las pruebas.")] bool showOverlay;
     PlayerScore score;
     PlayerController player;
     PlayerHealth health;
@@ -24,7 +25,7 @@ public sealed class ScoreDebugView : MonoBehaviour
     void OnAwarded(ScoreAward award) { lastAward = award; displayUntil = Time.time + 2f; }
     void OnGUI()
     {
-        if (score == null) return;
+        if (!showOverlay || score == null) return;
         if (surfaceSensor == null) surfaceSensor = GetComponent<GroundSurfaceSensor>();
         if (enemies == null) enemies = GetComponent<EnemyDirector>();
         GUI.Box(new Rect(12, 12, 330, 240), GUIContent.none);

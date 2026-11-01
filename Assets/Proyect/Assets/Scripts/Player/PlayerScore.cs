@@ -21,6 +21,7 @@ public sealed class PlayerScore : MonoBehaviour
     public float ComboDuration => stats.Evaluate(PlayerStat.ComboDuration, baseComboDuration);
     public float MultiplierGrowth => stats.Evaluate(PlayerStat.ComboMultiplierGrowth, baseMultiplierGrowth);
     public float ScoreAmplification => stats.Evaluate(PlayerStat.ScoreAmplification, baseScoreAmplification);
+    public float ComboWindowDuration => combo.WindowDuration;
     public float ComboRemaining => combo.Count == 0 ? 0f : Mathf.Max(0f, combo.ExpiresAt - Time.time);
     public event Action<ScoreAward> Awarded;
     public event Action ComboEnded;

@@ -21,3 +21,4 @@ MonoBehaviour:
   requiredEnemy: 0
   designNotes: ""
   icon: {fileID: 0}
+  legendaryModel: {fileID: 6137524362223698889, guid: dc2785a9e130a9c4098260c07fc34cf9, type: 3}

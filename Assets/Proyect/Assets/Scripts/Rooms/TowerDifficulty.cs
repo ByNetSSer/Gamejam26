@@ -1,11 +1,9 @@
 using UnityEngine;
 
-// Provisional curve; tower 1 preserves the scene's configured size.
+// Room count follows the selected difficulty; the remaining curves stay configurable.
 [System.Serializable]
 public sealed class TowerDifficulty
 {
-    [SerializeField, Min(0)] int extraRoomsPerTower = 1;
-    [SerializeField, Min(2)] int maximumRooms = 20;
     [Tooltip("Porcentaje adicional de velocidad máxima por cada torre superada. 0,03 = 3 %.")]
     [SerializeField, Range(0f, 0.05f)] float speedPercentPerTower = 0.03f;
     [SerializeField, Min(0f)] float spawnChancePerTower = 0.1f;
@@ -14,7 +12,7 @@ public sealed class TowerDifficulty
     [SerializeField, Min(1)] int mediumRoomsStartTower = 4;
     [SerializeField, Range(0f, 1f)] float initialMediumRoomChance = 0.1f;
     [SerializeField, Range(0f, 1f)] float mediumRoomChancePerTower = 0.07f;
-    public int Rooms(int baseRooms, int tower) => Mathf.Clamp(baseRooms + Mathf.Max(0, tower - 1) * extraRoomsPerTower, 2, Mathf.Max(2, maximumRooms));
+    public int Rooms(int baseRooms, int tower) => Mathf.Clamp(baseRooms + Mathf.Max(0, tower - 1) * MenuUIBase.Core.RunDifficulty.ExtraRooms, 2, MenuUIBase.Core.RunDifficulty.MaximumRooms);
     public float SpeedBonus(int tower) => Mathf.Max(0, tower - 1) * Mathf.Clamp(speedPercentPerTower, 0f, 0.05f);
     public float SpawnMultiplier(int tower) => 1f + Mathf.Max(0, tower - 1) * spawnChancePerTower;
     public float LargeRoomChance(int tower) => Mathf.Clamp01(initialLargeRoomChance + Mathf.Max(0, tower - 1) * largeRoomChancePerTower);

@@ -79,3 +79,19 @@ Los doce prefabs de `Assets/Proyect/Assets/Resources/Props` tienen `ImpactTarget
 Los props usan daño proporcional: `vida máxima × velocidad perpendicular / velocidad de rotura`, más el bono de pisotón, y después se evalúa `ImpactDamage`. Ejemplo sin modificadores ni pisotón: con 100 de vida, umbral 200 m/s e impacto perpendicular de 100 m/s, se pierden 50 puntos de vida. Un objeto ya dañado puede romperse por debajo del umbral. El barrido previo solo aplica impactos que resultarían letales; los demás se aplican al contacto, respetando el intervalo entre impactos y el bloqueo de obstáculos. El modo anterior permanece para cajas y escotillas existentes. Valores con umbral cero no son apropiados para el modo proporcional.
 
 `ReceivePunch(player, damage)` permite que el futuro controlador de puñetazos aplique daño directo y otorgue el combo al destruir; todavía no existe entrada ni animación de puñetazo. `Damaged` y `Broken` son puntos de conexión para futuros efectos. **Audio pendiente:** conectar un controlador de audio a golpe y destrucción, con sonido por defecto cuando el prop no tenga uno específico; aún no hay clips, selección de sonidos ni reproducción. Considerar el ciclo de vida al reproducir sonido de destrucción, pues el objeto se desactiva al romperse. Los impactos de rotura instantánea del modo antiguo y las escotillas no emiten `Damaged`; `Broken` sí se emite al romperlos.
+
+
+## Límite de resistencia para velocidades altas (2026-10-31)
+
+Los destructibles proporcionales conservan su vida y umbral propios. Al comenzar cada torre, la resistencia ahora crece 0,10 por cada múltiplo adicional de la velocidad inicial y se limita a 1,5 veces la vida original (antes 0,25 y máximo 3). El jugador expone ambos parámetros en `Resistencia de destructibles`. Esto también limita el crecimiento del umbral de rotura.
+
+La exigencia adaptativa por velocidad máxima sigue siendo 45 %, pero su contribución se limita a 35 unidades/s por defecto. Nunca reduce un umbral base que el diseñador haya puesto por encima de ese valor. Cada `ImpactTarget` permite ajustar `Maximum Adaptive Break Speed`. A modo de referencia, el cofre de plata (umbral base 11,9), con escala 1,5 y velocidad máxima 170, exige como máximo 35 de velocidad perpendicular; un choque frontal a 70 aplica al menos el doble de su vida máxima antes de modificadores y del bono de velocidad. Un roce lateral o una penalización de daño pueden dar otro resultado. Trampillas y destructibles no proporcionales conservan sus reglas.
+
+Las fórmulas se verificaron con velocidades 70 y 170 y con un umbral especial resistente; falta probar colisiones, objetos apilados, puntuación de combo y tirones en Play Mode. El límite no garantiza que el barrido físico detecte todos los objetos a velocidades extremas.
+
+
+## Golpe y parry contra destructibles
+
+Clic izquierdo realiza un golpe frontal en área con alcance configurable (3,7 por defecto) y un 65 % del daño de colisión calculado para la velocidad y superficie del impacto. Clic derecho conserva el parry y aplica el 30 % del mismo cálculo a los destructibles en un alcance de 3. Los obstáculos sólidos detienen la búsqueda. Las trampillas y los objetos bloqueados conservan sus reglas. Los golpes muestran un corte provisional; en `PlayerRepel` se puede asignar un prefab y ajustar tamaño, color y duración.
+
+El parry mantiene su espera base de 0,65 s. Cada uso rápido añade 0,12 s hasta un máximo adicional de 0,6 s; esperar 1,8 s desde el último uso reinicia la acumulación. Estos valores son configurables en el componente. La ventana del combo y la puntuación siguen las reglas existentes de destrucción. Requiere prueba interactiva de alcance, sensación y balance en Play Mode.

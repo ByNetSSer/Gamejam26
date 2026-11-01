@@ -8,6 +8,7 @@ namespace MenuUIBase.UI
     public sealed class MainMenuController : MonoBehaviour
     {
         [SerializeField] PanelNavigator navigator;
+        [SerializeField] HangingMenuChains menuChains;
         [SerializeField] GameObject optionsPanel;
         [SerializeField] GameObject creditsPanel;
         [SerializeField] string gameplaySceneName = "e";
@@ -30,12 +31,23 @@ namespace MenuUIBase.UI
                 return;
             }
             PlayClick();
+            var chains = menuChains != null ? menuChains : FindFirstObjectByType<HangingMenuChains>();
+            if (chains != null) chains.ShowDifficulties();
+            else Debug.LogError("No se encontró el menú de cadenas.", this);
+        }
+        public void StartDifficulty(GameDifficulty difficulty)
+        {
+            PlayClick();
+            RunDifficulty.Select(difficulty);
             GameSettings.Instance.Save();
             SceneLoader.Instance.LoadScene(gameplaySceneName);
         }
-        public void OpenOptions() { PlayClick(); navigator.Open(optionsPanel); }
-        public void OpenCredits() { PlayClick(); navigator.Open(creditsPanel); }
-        public void Back() { PlayClick(); GameSettings.Instance.Save(); navigator.Back(); }
+        public void StartEasy() => StartDifficulty(GameDifficulty.Easy);
+        public void StartNormal() => StartDifficulty(GameDifficulty.Normal);
+        public void StartImpossible() => StartDifficulty(GameDifficulty.Impossible);
+        public void OpenOptions() { PlayClick(); var chains = menuChains != null ? menuChains : FindFirstObjectByType<HangingMenuChains>(); if (chains != null) chains.ShowOptions(); }
+        public void OpenCredits() { PlayClick(); var chains = menuChains != null ? menuChains : FindFirstObjectByType<HangingMenuChains>(); if (chains != null) chains.ShowCredits(); }
+        public void Back() { PlayClick(); GameSettings.Instance.Save(); var chains = menuChains != null ? menuChains : FindFirstObjectByType<HangingMenuChains>(); if (chains != null) chains.ReturnToMenu(); }
         public void PlayClick() { if (clickSound != null) AudioManager.Instance.Play(clickSound); }
         public void ResetSettings()
         {

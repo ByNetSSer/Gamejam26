@@ -50,7 +50,8 @@ public sealed class RoomFallRecovery : MonoBehaviour
         // cannot be sampled (for example, a custom room without floor colliders).
         Vector3 origin = current.EntryAnchor != null ? current.EntryAnchor.position : current.PlayerStart != null ? current.PlayerStart.position : current.transform.position;
         float distance = Vector3.ProjectOnPlane(player.transform.position - origin, Vector3.up).sqrMagnitude;
-        if (!hasCheckpoint || distance < checkpointDistance)
+        var controller = player.GetComponent<CharacterController>();
+        if ((!hasCheckpoint || distance < checkpointDistance) && controller != null && IsInsideCurrentRoom(player.transform.position, controller))
         {
             checkpoint = player.transform.position;
             checkpointDistance = distance;
@@ -81,8 +82,9 @@ public sealed class RoomFallRecovery : MonoBehaviour
         var controller = player.GetComponent<CharacterController>();
         bool wasEnabled = controller != null && controller.enabled;
         if (wasEnabled) controller.enabled = false;
-        bool found = TryFindGround(room, controller, out Vector3 destination);
-        if (!found && hasCheckpoint) { destination = checkpoint; found = true; }
+        bool found = hasCheckpoint && IsSafeGroundPosition(room, controller, checkpoint);
+        Vector3 destination = found ? checkpoint : default;
+        if (!found) found = TryFindGround(room, controller, out destination);
         if (!found)
         {
             if (wasEnabled) controller.enabled = true;
@@ -101,6 +103,38 @@ public sealed class RoomFallRecovery : MonoBehaviour
         Debug.LogWarning("Jugador recuperado tras caer fuera del mapa en " + room.name, room);
     }
 
+    // The previous exit owns the return blocker; only recover on its forward side.
+    bool IsInsideCurrentRoom(Vector3 position, CharacterController controller)
+    {
+        var exit = rooms.PreviousRoom != null ? rooms.PreviousRoom.Exit : null;
+        if (exit == null || exit.Anchor == null) return true;
+        Vector3 scale = controller.transform.lossyScale;
+        float radius = Mathf.Max(0.1f, controller.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z)));
+        float height = Mathf.Max(radius * 2f, controller.height * Mathf.Abs(scale.y));
+        Vector3 center = position + controller.transform.TransformVector(controller.center);
+        if (exit.Connection == RoomConnection.Door)
+            return exit.Anchor.InverseTransformPoint(center).z >= radius + 0.25f;
+        // A hatch seals the ceiling of the new room; never place the head above it.
+        return center.y + height * 0.5f <= exit.Anchor.position.y - 0.1f;
+    }
+
+    bool IsSafeGroundPosition(RoomDefinition room, CharacterController controller, Vector3 position)
+    {
+        if (controller == null || !IsInsideCurrentRoom(position, controller)) return false;
+        Vector3 scale = controller.transform.lossyScale;
+        float radius = Mathf.Max(0.1f, controller.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z)));
+        float height = Mathf.Max(radius * 2f, controller.height * Mathf.Abs(scale.y));
+        Vector3 center = position + controller.transform.TransformVector(controller.center);
+        float half = Mathf.Max(0f, height * 0.5f - radius);
+        float checkRadius = Mathf.Max(0.01f, radius - controller.skinWidth);
+        if (Physics.CheckCapsule(center + Vector3.up * half, center - Vector3.up * half, checkRadius, ~0, QueryTriggerInteraction.Ignore)) return false;
+        float bottom = center.y - height * 0.5f;
+        var hits = Physics.RaycastAll(new Vector3(center.x, bottom + 0.3f, center.z), Vector3.down, 0.65f, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
+            if (hit.collider.transform.IsChildOf(room.transform) && hit.normal.y >= 0.7f) return true;
+        return false;
+    }
+
     bool TryFindGround(RoomDefinition room, CharacterController controller, out Vector3 destination)
     {
         destination = default;
@@ -109,11 +143,10 @@ public sealed class RoomFallRecovery : MonoBehaviour
         Vector3 scale = controller.transform.lossyScale;
         float radius = Mathf.Max(0.1f, controller.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z)));
         float height = Mathf.Max(radius * 2f, controller.height * Mathf.Abs(scale.y));
-        float centerOffset = controller.center.y * scale.y;
-        float bottomOffset = centerOffset - height * 0.5f;
-        // Search outwards from the entry; the hatch opening itself is deliberately skipped
-        // when it has no floor. The ray only accepts colliders belonging to this room.
-        for (int ring = 0; ring <= 12; ring++)
+        float bottomOffset = controller.transform.TransformVector(controller.center).y - height * 0.5f;
+        // Probe the new room only; the entry-side and capsule tests also reject
+        // floors in the old room, the seal itself, props and obstructed positions.
+        for (int ring = 0; ring <= 24; ring++)
         {
             float distance = ring * 0.75f;
             int steps = ring == 0 ? 1 : 16;
@@ -127,10 +160,7 @@ public sealed class RoomFallRecovery : MonoBehaviour
                 {
                     if (!hit.collider.transform.IsChildOf(room.transform) || hit.normal.y < 0.7f) continue;
                     Vector3 position = hit.point + Vector3.up * (-bottomOffset + 0.08f);
-                    Vector3 center = position + Vector3.up * centerOffset;
-                    float half = Mathf.Max(0f, height * 0.5f - radius);
-                    float checkRadius = Mathf.Max(0.01f, radius - controller.skinWidth);
-                    if (Physics.CheckCapsule(center + Vector3.up * half, center - Vector3.up * half, checkRadius, ~0, QueryTriggerInteraction.Ignore)) continue;
+                    if (!IsSafeGroundPosition(room, controller, position)) continue;
                     destination = position;
                     return true;
                 }

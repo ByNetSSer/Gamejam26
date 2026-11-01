@@ -31,3 +31,14 @@ Las demás fichas que mencionaban frenado se actualizaron como propuestas equiva
 
 
 «Invocar a Guilt» añade una única sombra con retraso de 4 s y drenaje por contacto; se elimina del sorteo una vez seleccionada. Disponible también en modo solo invocaciones/copias. No añade mejoras de Guilt ni reduce su retraso como maldición.
+
+
+## Modelos legendarios y prueba de tienda
+
+Los prefabs de `Items/Modelos legendarios` se asignaron a Ancla del explorador, Botas del vendaval, Botas del meteorito, Corazón de carrera, Corazón de cazador, Corona del espectáculo y Corona del temerario. Los siete están en el pool legendario y sus efectos están conectados; los corazones acumulados suman su efecto, con un único intervalo compartido para curación por repeler. El unicornio no tiene textura ni ficha asignada.
+
+En `TowerRewardStation`, **Debug All Legendary** fuerza las tres ofertas y las renovaciones a rareza legendaria; está activado para la prueba. Desactivarlo devuelve las probabilidades configuradas. No afecta las opciones de maldición. Validar modelos, compras, efectos y comportamiento de la escena en Play Mode.
+
+Los modelos 3D de las ofertas giran lentamente mientras flotan. El aura energética de legendarios se coloca detrás del volumen completo del modelo respecto a la cámara; la velocidad de giro y el margen del aura se ajustan en `TowerRewardStation`. Pendiente validar la apariencia en Play Mode.
+
+En tienda, Alas del halcón reutiliza las botas aladas y Maldición de la torre utiliza Spheretransparent. Monóculo dorado usa provisionalmente la misma esfera. Para las ofertas sin sprite propio se reutilizan ilustraciones existentes: Reloj atrasado usa Impulso, Resorte usa Resorte encantado, y Cupón del mercader y Monóculo de la fortuna usan Moneda de la suerte. Comprobar en Play Mode la esfera transparente y la legibilidad de estos reemplazos.

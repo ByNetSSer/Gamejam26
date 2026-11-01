@@ -18,10 +18,11 @@ public sealed class ComboState
 {
     public int Count { get; private set; }
     public float ExpiresAt { get; private set; }
+    public float WindowDuration { get; private set; }
     public bool Expire(float now)
     {
         if (Count == 0 || now < ExpiresAt) return false;
-        Count = 0; ExpiresAt = 0f; return true;
+        Count = 0; ExpiresAt = 0f; WindowDuration = 0f; return true;
     }
     public ScoreAward Register(string reason, int basePoints, float now, float duration, float growth, float amplification)
     {
@@ -29,11 +30,12 @@ public sealed class ComboState
         if (basePoints < 0) throw new ArgumentOutOfRangeException(nameof(basePoints));
         Expire(now);
         Count++;
-        ExpiresAt = now + Math.Max(0f, duration);
+        WindowDuration = Math.Max(0f, duration);
+        ExpiresAt = now + WindowDuration;
         float multiplier = Math.Max(0f, (1f + (Count - 1) * Math.Max(0f, growth)) * Math.Max(0f, amplification));
         double awarded = Math.Round((double)basePoints * multiplier, MidpointRounding.AwayFromZero);
         int points = awarded >= int.MaxValue ? int.MaxValue : (int)awarded;
         return new ScoreAward(reason, basePoints, points, Count, multiplier);
     }
-    public void Reset() { Count = 0; ExpiresAt = 0f; }
+    public void Reset() { Count = 0; ExpiresAt = 0f; WindowDuration = 0f; }
 }

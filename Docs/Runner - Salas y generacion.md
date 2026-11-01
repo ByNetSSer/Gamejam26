@@ -86,3 +86,22 @@ Al romper un `ImpactTarget`, se rompen también los `ImpactTarget` activos que s
 ## Recuperación de caídas fuera del mapa
 
 RoomManager añade RoomFallRecovery automáticamente. Calcula el límite inferior con los colliders activos de las salas anterior, actual y siguiente, más 8 unidades de margen. Al cruzarlo busca suelo con espacio para la cápsula cerca de la entrada de la sala actual; si no encuentra, usa una posición en suelo registrada en esa sala o el inicio de la sala inicial. Restablece el movimiento, concede 100 puntos base al combo con el motivo Exploiter y muestra el texto temblando. Cada recuperación queda registrada en la consola. Los valores se pueden configurar añadiendo RoomFallRecovery al gestor en el Inspector. El detector es una red de seguridad y no corrige el origen de las caídas. Pendiente validar en Play Mode puertas, trampillas, sala inicial/final, objetos y velocidades altas; también que las superficies de recuperación sean accesibles en todos los prefabs.
+
+
+### Recuperación y cierres visibles (2026-10-31)
+
+La recuperación valida el punto guardado antes de usarlo: debe tener suelo de la sala actual, espacio para la cápsula y quedar del lado correcto del cierre de entrada. En puerta exige distancia por delante del plano; en trampilla, la cabeza queda por debajo del cierre. Si no es válido, busca suelo en la sala actual hasta 18 unidades alrededor de la entrada; si no hay posición válida, no teletransporta ni concede puntos y reintenta. El premio Exploiter sigue otorgándose al recuperar correctamente.
+
+La reja visual sube al abrirse y vuelve a bajar al avanzar; el bloqueo físico se activa al pasar y no permite reabrirla. Al atravesar una trampilla se restaura la baldosa original como cierre visual detrás del jugador, mientras la copia desprendida sigue cayendo; el collider de retorno sigue siendo independiente. Los prefabs genéricos sin baldosa restauran el visual de la trampilla rota. Pendiente comprobar en Play Mode las conexiones reales, posiciones de recuperación, colisiones y animaciones con todos los prefabs.
+
+
+### Presentación de la tienda
+
+Las ofertas permiten apuntar directamente a su sprite o modelo, además del altar, y muestran nombre, efecto, precio y acción cerca del centro de la pantalla. Tras comprar, se ocultan el modelo y su aura; renovar crea nuevas ofertas. Las etiquetas de rareza ya no se escriben en la descripción. Los sprites comunes usan aura blanca y los raros verde; el código reserva azul para una futura categoría adicional, todavía no presente en los pools. Los legendarios conservan sus modelos 3D sin aura. El sprite `Resources/Sprite/ShopAura` utiliza filtro Point y sin mipmaps.
+
+La tienda mantiene solo el pedestal de renovación. `Reroll Prefab` en TowerRewardStation permite asignar su futuro modelo; sin prefab usa el cubo existente. Hasta diseñar el mecanismo de avance, N inicia la siguiente torre desde la tienda. La pantalla final de victoria conserva su interacción. Pendiente probar en Play Mode la selección, los colores y profundidad del aura, compra, renovación y avance con los prefabs reales.
+
+
+### Esfera de renovación de ZonaSegura
+
+La tienda utiliza el objeto hijo `reroll` del prefab de zona segura como interacción de renovación, respetando su esfera, pilar, luz y posición. Apuntar a cualquiera de sus partes visibles permite mostrar el precio y renovar; los colliders adicionales de interacción se crean solo durante la tienda. El conjunto se oculta en las salas iniciales y en la victoria. Si otra sala segura no tiene `reroll`, se conserva la alternativa configurada con `Reroll Prefab` o el cubo provisional. La renovación mantiene su coste acumulado y sus efectos anteriores. Pendiente validar en Play Mode puntería, colisiones y presentación.

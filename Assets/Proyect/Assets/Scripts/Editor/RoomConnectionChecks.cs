@@ -36,6 +36,9 @@ public static class RoomConnectionChecks
             Check(door.HasPassed(exit.TransformPoint(new Vector3(0f, 0f, 1.2f))), "detectar paso de puerta abierta");
             Check(!door.HasPassed(exit.TransformPoint(new Vector3(2f, 0f, 1.2f))), "respetar ancho");
             door.CloseBehind();
+            Check(door.Door.IsSealed && !door.Door.IsOpen, "sellar la puerta después del paso");
+            door.Door.Open();
+            Check(door.Door.IsSealed && !door.Door.IsOpen, "impedir reabrir la puerta sellada");
             var blocker = exit.Find("Cierre de retorno");
             Check(blocker != null && blocker.gameObject.activeSelf && blocker.GetComponent<BoxCollider>() != null, "activar cierre");
             room.ConfigureMarkers(RoomConnection.Door, null, spawn, RoomConnection.Hatch, exit);

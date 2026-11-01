@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,7 +28,73 @@ namespace MenuUIBase.UI
         private RectTransform[,] ends;
         private float[] angles, velocities;
         private float[,] originalLengths;
+        private List<RectTransform>[,] chainPieces;
         private float elapsed;
+
+        [Header("Pantallas editables")]
+        [SerializeField] RectTransform difficultyScreen;
+        [SerializeField] RectTransform optionsScreen;
+        [SerializeField] RectTransform creditsScreen;
+        private RectTransform currentScreen;
+        private Vector2 menuPosition;
+        private bool transitioning;
+
+        public void ShowDifficulties() => ShowScreen(difficultyScreen);
+        public void ShowOptions() => ShowScreen(optionsScreen);
+        public void ShowCredits() => ShowScreen(creditsScreen);
+        public void ReturnToMenu()
+        {
+            if (!transitioning && currentScreen != null) StartCoroutine(ChangeScreen(currentScreen, false));
+        }
+        private void ShowScreen(RectTransform screen)
+        {
+            if (transitioning || currentScreen != null) return;
+            if (screen == null) { Debug.LogError("Falta asignar la pantalla del menú.", this); return; }
+            StartCoroutine(ChangeScreen(screen, true));
+        }
+        private IEnumerator ChangeScreen(RectTransform screen, bool opening)
+        {
+            transitioning = true;
+            var menuButtons = GetComponentsInChildren<Selectable>(true);
+            var screenButtons = screen.GetComponentsInChildren<Selectable>(true);
+            foreach (var control in menuButtons) control.interactable = false;
+            foreach (var control in screenButtons) control.interactable = false;
+            float travel = Mathf.Max(((RectTransform)panel.parent).rect.height, 1080f) + 500f;
+            Vector2 screenPosition = screen.anchoredPosition;
+            if (opening)
+            {
+                menuPosition = panel.anchoredPosition;
+                screen.gameObject.SetActive(true);
+                screen.anchoredPosition = screenPosition + Vector2.up * travel;
+                yield return Move(panel, menuPosition, menuPosition + Vector2.up * travel, 0.55f);
+                yield return Move(screen, screenPosition + Vector2.up * travel, screenPosition, 0.7f);
+                currentScreen = screen;
+                foreach (var control in screenButtons) control.interactable = true;
+            }
+            else
+            {
+                yield return Move(screen, screenPosition, screenPosition + Vector2.up * travel, 0.55f);
+                screen.anchoredPosition = screenPosition;
+                screen.gameObject.SetActive(false);
+                yield return Move(panel, menuPosition + Vector2.up * travel, menuPosition, 0.7f);
+                currentScreen = null;
+                foreach (var control in menuButtons) control.interactable = true;
+            }
+            transitioning = false;
+        }
+        private IEnumerator Move(RectTransform target, Vector2 from, Vector2 to, float duration)
+        {
+            float t = 0f;
+            while (t < duration)
+            {
+                t += Time.unscaledDeltaTime;
+                float k = Mathf.Clamp01(t / duration);
+                float progress = k * k * (3f - 2f * k);
+                target.anchoredPosition = Vector2.LerpUnclamped(from, to, progress);
+                yield return null;
+            }
+            target.anchoredPosition = to;
+        }
 
         private void Awake() => InitializeChains();
 
@@ -44,6 +112,7 @@ namespace MenuUIBase.UI
             starts = new RectTransform[2, count];
             ends = new RectTransform[2, count];
             originalLengths = new float[2, count];
+            chainPieces = new List<RectTransform>[2, count];
             angles = new float[count];
             velocities = new float[count];
             for (int side = 0; side < 2; side++)
@@ -72,6 +141,13 @@ namespace MenuUIBase.UI
                     float length = Vector3.Distance(starts[side, i].position, ends[side, i].position) / panel.lossyScale.y;
                     if (length < 0.001f) { enabled = false; Debug.LogError("Los marcadores de cadena coinciden.", link); return; }
                     originalLengths[side, i] = length;
+                    // The link remains the joint carrier; visible pieces keep the prefab's proportions.
+                    var carrierGraphic = link.GetComponent<Graphic>();
+                    if (carrierGraphic != null) carrierGraphic.enabled = false;
+                    chainPieces[side, i] = new List<RectTransform>();
+                    foreach (Transform child in link)
+                        if (child.name.StartsWith("Tramo visual ") && child is RectTransform piece)
+                            chainPieces[side, i].Add(piece);
                     foreach (Graphic graphic in link.GetComponentsInChildren<Graphic>()) graphic.raycastTarget = false;
                 }
             LayoutChains();
@@ -81,7 +157,7 @@ namespace MenuUIBase.UI
         {
             // Unity cannot serialize multidimensional arrays during a script reload.
             // Reconnect the existing UI objects instead of instantiating duplicates.
-            if (links == null || starts == null || ends == null || originalLengths == null ||
+            if (links == null || starts == null || ends == null || originalLengths == null || chainPieces == null ||
                 angles == null || velocities == null || buttons == null ||
                 links.GetLength(1) != buttons.Length || angles.Length != buttons.Length)
             {
@@ -106,6 +182,33 @@ namespace MenuUIBase.UI
             LayoutChains();
         }
 
+        private void LayoutPieces(int side, int index, float length)
+        {
+            var carrier = links[side, index];
+            var pieces = chainPieces[side, index];
+            int required = Mathf.Max(1, Mathf.CeilToInt(length / originalLengths[side, index]));
+            while (pieces.Count < required)
+            {
+                var piece = Instantiate(side == 0 ? leftLinkPrefab : rightLinkPrefab, carrier);
+                piece.name = "Tramo visual " + (pieces.Count + 1);
+                piece.anchorMin = piece.anchorMax = new Vector2(0.5f, 0.5f);
+                piece.localRotation = Quaternion.identity;
+                foreach (Graphic graphic in piece.GetComponentsInChildren<Graphic>()) graphic.raycastTarget = false;
+                pieces.Add(piece);
+            }
+            Vector3 start = starts[side, index].localPosition;
+            Vector3 end = ends[side, index].localPosition;
+            for (int n = 0; n < pieces.Count; n++)
+            {
+                var piece = pieces[n];
+                piece.gameObject.SetActive(n < required);
+                if (n >= required) continue;
+                piece.localPosition = Vector3.Lerp(start, end, (n + 0.5f) / required);
+                // Cancel the carrier's vertical stretching and divide it evenly among pieces.
+                piece.localScale = new Vector3(1f, 1f / required, 1f);
+            }
+        }
+
         private void LayoutChains()
         {
             float height = Mathf.Max(1f, panel.rect.height - verticalMargin * 2f);
@@ -122,6 +225,7 @@ namespace MenuUIBase.UI
                     float sideLength = linkLength + (side == 0 ? -drop : drop);
                     link.localScale = new Vector3(linkWidthScale, sideLength / originalLengths[side, i], 1f);
                     link.localRotation = Quaternion.Euler(0f, 0f, angles[i]);
+                    LayoutPieces(side, i, sideLength);
                     Vector2 currentStart = panel.InverseTransformPoint(starts[side, i].position);
                     link.anchoredPosition += top[side] - currentStart;
                     Vector2 end = panel.InverseTransformPoint(ends[side, i].position);

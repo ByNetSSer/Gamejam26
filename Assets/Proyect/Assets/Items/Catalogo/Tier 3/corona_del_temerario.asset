@@ -10,14 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Corona del temerario"
+  m_Name: Corona del temerario
   m_EditorClassIdentifier: 
-  displayName: "Corona del temerario"
-  visualDescription: "Una corona con una gema roja suspendida sobre una grieta."
-  effectDescription: "+30 % de puntos y −20 % de duración del combo."
+  displayName: Corona del temerario
+  visualDescription: Una corona con una gema roja suspendida sobre una grieta.
+  effectDescription: "+30 % de puntos y \u221220 % de duraci\xF3n del combo."
   tier: 3
   category: 7
   disposition: 1
   requiredEnemy: 0
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 0}
+  legendaryModel: {fileID: 2592674903872602010, guid: b54213c90165abc448378500e248b3e6, type: 3}

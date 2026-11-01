@@ -1,4 +1,4 @@
-﻿# Menú, audio y ajustes
+# Menú, audio y ajustes
 
 Implementación inicial, 2026-10-30. Revisión visual y pruebas interactivas en Play Mode pendientes.
 
@@ -38,7 +38,7 @@ El master controla el audio de este manager. AudioSources externos y audio FEEL 
 - Agotar la vida y, en otra partida, activar el botón de victoria: comprobar la pantalla, el cursor, volver a jugar y regresar al menú en ambos casos.
 - Asignar clips y lanzar más de 24 efectos: la jerarquía del manager debe mantener 24 voces. Cambiar el volumen durante su reproducción y probar master 0.
 - Probar interrupción de fades y destrucción de objetos emisores; los efectos deben terminar desde el manager.
-- Completar créditos antes de publicar. La pantalla de resultado es provisional; el menú no añade pausa al gameplay.
+- Completar créditos antes de publicar. La pantalla de resultado es provisional. La pausa actual de gameplay se describe en `Docs/Runner - Pausa.md`.
 
 
 ## Tiempo y pantalla de muerte (2026-10-30)
@@ -134,7 +134,7 @@ Mientras TimerRunning y TimeRemaining <= Urgent Seconds (60), solicita LastMinut
 
 API: `MusicPlaylistPlayer.Instance.SetBase(playlist)` actualiza la base; `RequestOverride("clave", playlist, priority)` solicita música temporal; `ClearOverride("clave")` la retira. En estas peticiones, mayor prioridad gana y, a igualdad, gana la petición más reciente. No se apilan melodías indefinidamente: la prioridad reemplaza la selección por fundido cruzado. Solo se superponen las dos canciones durante la transición. La política de listas vive separada de las fuentes de AudioManager.
 
-Master × Música × volumen del cue se aplica a ambas fuentes durante el cruce; SFX mantiene su categoría. Se conservan preferencias y opciones existentes del menú. No se añadió HUD de volumen ni menú de pausa. Configurar listas, umbrales y transición desde assets del inspector; crear nuevos AudioCues de canal Music y añadirlos a Tracks.
+Master × Música × volumen del cue se aplica a ambas fuentes durante el cruce; SFX mantiene su categoría. Se conservan preferencias y opciones existentes del menú. En esa integración no se añadió HUD de volumen; para el estado actual de pausa, ver `Docs/Runner - Pausa.md`. Configurar listas, umbrales y transición desde assets del inspector; crear nuevos AudioCues de canal Music y añadirlos a Tracks.
 
 Validación: compilación runtime y MenuUIBase actuales sin errores ni advertencias. Arnés de selección con cinco casos: lista vacía, una canción, 1000 selecciones sin repetición con alternativas, cues duplicados del mismo clip y descarte de SFX/clips vacíos. Pendiente escucha en Unity: ciclo de una canción, varias canciones, menú→partida, tercera sala, último minuto, zona segura, muerte y reinicio, cambios repetidos de prioridad y volúmenes en pleno cruce.
 
@@ -178,3 +178,10 @@ Esta regla sustituye las referencias anteriores a «tercera sala»: la lista int
 GroundSurfaceSensor ya no silencia los pasos por sprint, deslizamiento o ausencia de input si hay desplazamiento sobre el suelo. Los pasos requieren jugador/controlador activos, contacto con suelo, tiempo avanzando y velocidad horizontal real mínima de 0,15 m/s. Se mantiene menor volumen al agacharse y fallback a pasos normales cuando falta clip de superficie.
 
 El bucle ajusta pitch/cadencia según raíz cuadrada de velocidad / 6 m/s, limitado a 0,65–1,8 para evitar extremos, con transición suave sin reiniciar el clip al cambiar de velocidad. El pitch altera también el tono. Guilt conserva el estado y pitch históricos y emite los pasos normales invertidos como pista espacial con 4 s de retraso. El original no se altera; el clip invertido se genera en memoria y se libera al destruir el encuentro. Compilación verificada; falta escucha en Play Mode caminando/corriendo, frenando, saltando, pausando y con los ajustes de volumen.
+
+
+### Dificultad y economía de partida (2026-10-31)
+
+Jugar eleva el menú y presenta tres botones de dificultad. La selección dura la partida y por defecto es Normal al arrancar directamente la escena. Fácil: 8 torres, +2 pisos por torre y máximo 25; Normal: 13, +4 y máximo 32; Imposible: 25, +4 y máximo 50. El primer tamaño sigue configurado en la escena y cuenta salas inicial y final. Las rutas deben permitir una longitud compatible dentro del máximo.
+
+Los precios base se multiplican linealmente desde 100 % en la primera tienda hasta 450 %, 670 % o 1300 % en la última tienda anterior a la victoria (torres 7, 12 o 24). Se conservan el incremento previo del 15 % por compra y el descuento; cada renovación añade 10 % acumulativo a ese incremento. Renovar cuesta inicialmente 3 monedas y sube 1 moneda por uso, sin reiniciarse entre torres. Los valores de renovación son configurables en TowerRewardStation. Estos porcentajes describen multiplicadores finales de la curva de torre, antes de compras, renovaciones y descuentos. Pendiente validar presentación y balance en Play Mode.

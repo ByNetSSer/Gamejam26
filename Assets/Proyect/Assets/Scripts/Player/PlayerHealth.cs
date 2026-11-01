@@ -10,6 +10,16 @@ public sealed class PlayerHealth : MonoBehaviour
     public event Action Died;
     public RunLossReason LastDamageReason { get; private set; }
     PlayerEvents events;
+    float enemyParryProtectionUntil;
+    public bool EnemyParryProtected => Time.time < enemyParryProtectionUntil;
+    public void GrantEnemyParryProtection(float seconds)
+    {
+        if (MenuUIBase.Core.RunDifficulty.Selected != MenuUIBase.Core.GameDifficulty.Easy || seconds <= 0f) return;
+        enemyParryProtectionUntil = Mathf.Max(enemyParryProtectionUntil, Time.time + seconds);
+    }
+    static bool IsEnemyDamage(RunLossReason reason) => reason == RunLossReason.Flupin || reason == RunLossReason.Dontsee ||
+        reason == RunLossReason.MaskCharger || reason == RunLossReason.Crusher || reason == RunLossReason.CorridorChaser || reason == RunLossReason.Guilt;
+
     void Awake()
     {
         CurrentHealth = maxHealth;
@@ -28,7 +38,7 @@ public sealed class PlayerHealth : MonoBehaviour
     }
     public bool TakeDamage(float amount, RunLossReason reason = RunLossReason.PlayerHealthDepleted)
     {
-        if (amount <= 0f || CurrentHealth <= 0f) return false;
+        if (amount <= 0f || CurrentHealth <= 0f || (EnemyParryProtected && IsEnemyDamage(reason))) return false;
         float actual = Mathf.Min(CurrentHealth, amount);
         LastDamageReason = reason;
         CurrentHealth -= actual;

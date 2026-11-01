@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Ancla del explorador"
+  m_Name: Ancla del explorador
   m_EditorClassIdentifier: 
-  displayName: "Ancla del explorador"
-  visualDescription: "Una pequeña ancla dorada que se arrastra en el aire detrás del portador."
-  effectDescription: "+30 % de control lateral en suelo."
+  displayName: Ancla del explorador
+  visualDescription: "Una peque\xF1a ancla dorada que se arrastra en el aire detr\xE1s
+    del portador."
+  effectDescription: +30 % de control lateral en suelo.
   tier: 3
   category: 7
   disposition: 0
   requiredEnemy: 0
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 0}
+  legendaryModel: {fileID: 8464237352350479150, guid: ffb4c15d8355e80469bac5960cde2c99, type: 3}

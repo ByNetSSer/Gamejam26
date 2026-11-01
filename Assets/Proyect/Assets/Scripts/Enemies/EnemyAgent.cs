@@ -13,6 +13,8 @@ public abstract class EnemyAgent : MonoBehaviour
     public abstract bool CanRequestAttack { get; }
     public virtual bool CanBeRepelled => isActiveAndEnabled;
     public virtual bool UsesAttackTimeout => true;
+    // Optional easy-mode contact point; traps and non-attacking encounters opt out.
+    public virtual bool TryGetEasyParryPoint(Vector3 playerPosition, out Vector3 point) { point = default; return false; }
     public abstract void AttackGranted();
     public abstract void AttackCancelled();
     public abstract bool TryRepel(float power);

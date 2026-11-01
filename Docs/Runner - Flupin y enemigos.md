@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [gamejam, enemigos, flupin, feel, combate]
 estado: prototipo
 ---
@@ -283,3 +283,13 @@ Retraso por defecto reducido a 4 s. Cada muestra registra también si el jugador
 `SpawnScaleFeedback` reproduce `MMF_Scale` desde el 8 % hasta la escala original durante 0,3 s, con entrada/salida suave. Lo usan Flupin y máscaras al activarse, Guilt al mostrarse después del historial, corredor al aparecer/recolocarse y aplanadora al preparar su visual. Dontsee mantiene su entrada existente de 0,25 s. El reproductor de aparición es independiente de los otros feedbacks. El componente restaura escala al desactivarse y conserva la escala completa al clonar un enemigo que aún esté apareciendo.
 
 Flupin, máscaras y aplanadora no solicitan ataque hasta completar la entrada; Guilt no drena durante ella. Corredor conserva su margen de recolocación (mínimo 0,3 s). Duración y escala inicial son editables agregando/configurando SpawnScaleFeedback en el objetivo antes de ejecutar. Compilación comprobada; pendiente verificar visualmente nuevas copias, cambios de torre, cancelación durante aparición y materiales/animaciones en Play Mode.
+
+
+## Parry de dificultad fácil
+
+En fácil, un parry confirmado con clic derecho concede 0,55 s de protección frente al daño de enemigos, configurable en `PlayerRepel`. Flupin conserva su repulsión; Dontsee, máscara, aplanadora, perseguidor y Guilt pueden activar el mismo feedback cuando están cerca y representan una amenaza. No se cancela ni desplaza a los enemigos que antes no eran repelibles: la ventana permite esquivarlos. La lava y otras superficies siguen causando daño. En normal e imposible se conserva el comportamiento anterior. La espera y penalización por uso repetido del parry siguen vigentes. Pendiente probar distancias, tiempos y feedback en Play Mode.
+
+
+## Láminas de tutorial
+
+Al recibir por primera vez en una partida a Flupin, la máscara, Dontsee, el perseguidor o Guilt, `RoomEnemyRoster` solicita su lámina al prefab `Tutorial enemigos` en la cámara. La cola muestra cada tipo una sola vez por partida. `PlayerController.IsReadingTutorial` expone el estado para futuras animaciones; mientras está activo se bloquean golpes, parry, compras, interacciones, salto y pisotón. E retira la hoja hacia abajo y muestra la siguiente, si existe. Se puede seguir caminando. Las imágenes incluidas son provisionales; sprites, posiciones, tamaño y duraciones se ajustan desde el prefab. Pendiente prueba en Play Mode de selección, presentación, bloqueo y cola.

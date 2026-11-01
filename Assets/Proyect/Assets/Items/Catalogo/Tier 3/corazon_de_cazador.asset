@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Corazón de cazador"
+  m_Name: "Coraz\xF3n de cazador"
   m_EditorClassIdentifier: 
-  displayName: "Corazón de cazador"
-  visualDescription: "Un corazón de rubí engarzado en una trampa de plata abierta."
-  effectDescription: "Al repeler a Flupin, recuperas 5 % de vida máxima. Máximo una vez cada 10 segundos."
+  displayName: "Coraz\xF3n de cazador"
+  visualDescription: "Un coraz\xF3n de rub\xED engarzado en una trampa de plata abierta."
+  effectDescription: "Al repeler a Flupin, recuperas 5 % de vida m\xE1xima. M\xE1ximo
+    una vez cada 10 segundos."
   tier: 3
   category: 7
   disposition: 0
   requiredEnemy: 1
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 0}
+  legendaryModel: {fileID: 369121583782558936, guid: f03537b93d59766468d3e14658e41dea, type: 3}

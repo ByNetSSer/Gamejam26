@@ -11,6 +11,8 @@ public sealed class ImpactTarget : MonoBehaviour
     [SerializeField, Min(0f)] float damagePerSpeed = 0.5f;
     [Tooltip("El daño es vida máxima × velocidad perpendicular / velocidad de rotura.")]
     [SerializeField] bool proportionalSpeedDamage;
+    [Tooltip("Límite de la resistencia añadida por la velocidad del jugador; no reduce el umbral base del objeto.")]
+    [SerializeField, Min(1f)] float maximumAdaptiveBreakSpeed = 35f;
     [SerializeField, Min(0f)] float poundBonusDamage = 3f;
     [SerializeField, Min(0.01f)] float impactCooldown = 0.25f;
     [SerializeField] bool hatch;
@@ -60,12 +62,23 @@ public sealed class ImpactTarget : MonoBehaviour
         // Pound speed is vertical and must not be compared to horizontal sprint.
         float requiredSpeed = breakSpeed;
         if (proportionalSpeedDamage && !downwardPound)
-            requiredSpeed = Mathf.Max(requiredSpeed, player.MaximumRunSpeed * 0.45f);
+            requiredSpeed = CalculateRequiredImpactSpeed(requiredSpeed, player.MaximumRunSpeed, maximumAdaptiveBreakSpeed);
         float damage = proportionalSpeedDamage
             ? maxHealth * speed / Mathf.Max(0.01f, requiredSpeed)
             : speed * damagePerSpeed;
         if (downwardPound) damage += poundBonusDamage;
         return player.Stats.Evaluate(PlayerStat.ImpactDamage, damage) * SpeedDamageMultiplier(player);
+    }
+
+    public static float CalculateRequiredImpactSpeed(float objectSpeed, float maximumPlayerSpeed, float adaptiveCap)
+    {
+        // The authored threshold remains authoritative for deliberately tough props.
+        return Mathf.Max(objectSpeed, Mathf.Min(Mathf.Max(0f, maximumPlayerSpeed) * 0.45f, Mathf.Max(1f, adaptiveCap)));
+    }
+
+    public static float CalculateScaledBreakSpeed(float authoredSpeed, float resistanceScale, float adaptiveCap)
+    {
+        return Mathf.Min(authoredSpeed * Mathf.Max(1f, resistanceScale), Mathf.Max(authoredSpeed, Mathf.Max(1f, adaptiveCap)));
     }
 
     float SpeedDamageMultiplier(PlayerController player)
@@ -82,7 +95,8 @@ public sealed class ImpactTarget : MonoBehaviour
         float scale = player.DestructibleTowerScale;
         maxHealth *= scale;
         health *= scale;
-        breakSpeed *= scale;
+        // Limit added resistance, but never weaken a deliberately high authored threshold.
+        breakSpeed = CalculateScaledBreakSpeed(breakSpeed, scale, maximumAdaptiveBreakSpeed);
     }
 
     // The same damage stat affects axe strikes and collisions.
@@ -95,6 +109,24 @@ public sealed class ImpactTarget : MonoBehaviour
         ApplyDamage(player, damage, direction);
         if (!broken) { SurvivedHit?.Invoke(direction, damage); PlayDamageFeel(); PlayHitFeedback(direction); }
     }
+    // Mouse strikes use the actual collision formula once, including stat and speed bonuses.
+    // An instant-break collision represents at least the target's full remaining health.
+    public bool ReceiveSpeedStrike(PlayerController player, Vector3 velocity, Vector3 normal, float fraction)
+    {
+        if (broken || breakLocked || hatch || player == null || fraction <= 0f) return false;
+        float speed = Mathf.Max(0f, -Vector3.Dot(velocity, normal));
+        if (speed <= 0f) return false;
+        ApplyTowerScale(player);
+        float collisionDamage = ImpactDamage(player, speed, false);
+        if (!proportionalSpeedDamage && speed >= breakSpeed)
+            collisionDamage = Mathf.Max(collisionDamage, health);
+        float damage = collisionDamage * Mathf.Clamp01(fraction);
+        if (damage <= 0f || float.IsNaN(damage)) return false;
+        ApplyDamage(player, damage, -normal);
+        if (!broken) { SurvivedHit?.Invoke(-normal, speed); PlayDamageFeel(); PlayHitFeedback(-normal); }
+        return true;
+    }
+
     void ApplyDamage(PlayerController player, float damage, Vector3 direction)
     {
         if (damage <= 0f || float.IsNaN(damage)) return;

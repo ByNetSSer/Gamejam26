@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d3daac37ae344b8bc8f246986084559, type: 3}
-  m_Name: "Botas del meteorito"
+  m_Name: Botas del meteorito
   m_EditorClassIdentifier: 
-  displayName: "Botas del meteorito"
-  visualDescription: "Botas de roca oscura con grietas encendidas y una estela de chispas."
-  effectDescription: "+30 % de velocidad y −20 % de control lateral en suelo."
+  displayName: Botas del meteorito
+  visualDescription: Botas de roca oscura con grietas encendidas y una estela de
+    chispas.
+  effectDescription: "+30 % de velocidad y \u221220 % de control lateral en suelo."
   tier: 3
   category: 7
   disposition: 1
   requiredEnemy: 0
-  designNotes: ""
+  designNotes: 
   icon: {fileID: 21300000, guid: 32517cc7fc4dfaa41840d1d237f10262, type: 3}
+  legendaryModel: {fileID: 1904466819881110138, guid: cc456665247f46643aabf5386edf46a4, type: 3}

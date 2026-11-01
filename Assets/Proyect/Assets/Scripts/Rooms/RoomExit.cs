@@ -104,5 +104,26 @@ public sealed class RoomExit : MonoBehaviour
             return hatch != null && hatch.IsBroken && p.y <= -clearance && Mathf.Abs(p.x) <= width * 0.5f && Mathf.Abs(p.z) <= heightOrDepth * 0.5f;
         return door != null && door.IsOpen && p.z >= clearance && Mathf.Abs(p.x) <= width * 0.5f && Mathf.Abs(p.y) <= heightOrDepth * 0.5f;
     }
-    public void CloseBehind() { if (oneWayBlocker != null) oneWayBlocker.SetActive(true); }
+    public void CloseBehind()
+    {
+        if (oneWayBlocker != null) oneWayBlocker.SetActive(true);
+        if (connection == RoomConnection.Door)
+        {
+            if (door != null) door.CloseBehind();
+            return;
+        }
+        // The falling tile is a detached copy. Restore the original room tile only
+        // after the player has cleared the opening; collision stays on the blocker.
+        var visual = Anchor.GetComponent<RoomHatchVisual>();
+        if (visual != null && visual.Tile != null)
+        {
+            foreach (var part in visual.Tile.GetComponentsInChildren<Collider>(true)) part.enabled = false;
+            visual.Tile.gameObject.SetActive(true);
+        }
+        else if (hatch != null)
+        {
+            // Generic hatch prefabs have no authored room tile to restore.
+            hatch.gameObject.SetActive(true);
+        }
+    }
 }

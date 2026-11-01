@@ -89,6 +89,12 @@ public sealed class Dontsee : EnemyAgent
     public override AttackRequirement Requirement => AttackRequirement.Any;
     public override bool CanRequestAttack => roomEntered && !ended && !attacking && Time.time >= appearanceReadyAt && (roster == null || roster.EnemiesReady);
     public override bool CanBeRepelled => false;
+    public override bool TryGetEasyParryPoint(Vector3 playerPosition, out Vector3 point)
+    {
+        point = transform.position;
+        return isActiveAndEnabled && attacking && !ended;
+    }
+
     public override bool UsesAttackTimeout => false;
     public override bool TryRepel(float power) => false;
     void Awake() { visual = GetComponentInChildren<Renderer>(); if (visual != null) visual.enabled = false; }
