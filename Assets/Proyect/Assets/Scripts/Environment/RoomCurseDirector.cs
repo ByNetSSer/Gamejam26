@@ -32,6 +32,8 @@ public sealed class RoomCurseDirector : MonoBehaviour
     RoomCurseKind kind;
     float elapsed;
     bool active;
+    public bool IsActive => active;
+    public RoomCurseKind ActiveCurse => kind;
     void Awake() { manager = GetComponent<RoomManager>(); }
     void OnEnable()
     {

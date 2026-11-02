@@ -13,6 +13,8 @@ public sealed class RewardItemEffects : MonoBehaviour
     float racingTimer, nextHunterHeal;
     float regenTimer, phaseTimer;
     bool boost, earnedDuringBoost;
+    public float RegenerationFractionPerTenSeconds => 0.01f * dew + 0.02f * moss;
+    public float PassiveDrainFractionPerThreeSeconds => 0.01f * racingHearts;
 
     void Awake()
     {
@@ -21,25 +23,25 @@ public sealed class RewardItemEffects : MonoBehaviour
         score = GetComponent<PlayerScore>();
         if (score != null) score.Awarded += OnAwarded;
     }
-    public void Acquire(string name, RoomManager rooms)
+    public void Acquire(string name, RoomManager rooms, object source)
     {
         if (name == "Gota de rocío") dew++;
         else if (name == "Musgo vital") moss++;
         else if (name == "Botas del meteorito")
         {
-            stats.AddModifier(new object(), PlayerStat.MoveSpeed, StatModifierType.Percent, 0.30f);
-            stats.AddModifier(new object(), PlayerStat.GroundControl, StatModifierType.Percent, -0.20f);
+            stats.AddModifier(source, PlayerStat.MoveSpeed, StatModifierType.Percent, 0.30f);
+            stats.AddModifier(source, PlayerStat.GroundControl, StatModifierType.Percent, -0.20f);
         }
         else if (name == "Corona del temerario")
         {
-            stats.AddModifier(new object(), PlayerStat.ScoreAmplification, StatModifierType.Percent, 0.30f);
-            stats.AddModifier(new object(), PlayerStat.ComboDuration, StatModifierType.Percent, -0.20f);
+            stats.AddModifier(source, PlayerStat.ScoreAmplification, StatModifierType.Percent, 0.30f);
+            stats.AddModifier(source, PlayerStat.ComboDuration, StatModifierType.Percent, -0.20f);
         }
         else if (name == "Corazón de carrera")
         {
             racingHearts++;
-            stats.AddModifier(new object(), PlayerStat.MoveSpeed, StatModifierType.Percent, 0.30f);
-            stats.AddModifier(new object(), PlayerStat.Acceleration, StatModifierType.Percent, 0.15f);
+            stats.AddModifier(source, PlayerStat.MoveSpeed, StatModifierType.Percent, 0.30f);
+            stats.AddModifier(source, PlayerStat.Acceleration, StatModifierType.Percent, 0.15f);
         }
         else if (name == "Corazón de cazador")
         {

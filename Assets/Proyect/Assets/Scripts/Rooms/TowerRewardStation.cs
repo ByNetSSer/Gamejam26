@@ -492,6 +492,8 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         Reward reward = choices.Count > 0 ? choices[UnityEngine.Random.Range(0, choices.Count)] : curses[UnityEngine.Random.Range(0, curses.Length)];
 
+        object modifierSource = null;
+
         if (reward.enemy != EnemyCurse.None)
 
         {
@@ -500,11 +502,16 @@ public sealed class TowerRewardStation : MonoBehaviour
 
         }
 
-        else rooms.Player.Stats.AddModifier(new object(), reward.stat, reward.type, reward.amount);
+        else
+        {
+            modifierSource = new object();
+            rooms.Player.Stats.AddModifier(modifierSource, reward.stat, reward.type, reward.amount);
+        }
 
         lastAutomaticCurseTower = tower;
 
-        NotifyReward(reward.name, reward.description, ItemAcquisitionSource.Tower);
+        NotifyReward(reward.name, reward.description, ItemAcquisitionSource.Tower,
+            reward.stat, reward.amount, reward.type, reward.enemy, modifierSource);
 
     }
 
@@ -612,14 +619,46 @@ public sealed class TowerRewardStation : MonoBehaviour
 
     }
 
-    void NotifyReward(string name, string description, ItemAcquisitionSource source)
+    void NotifyReward(string name, string description, ItemAcquisitionSource source,
+        PlayerStat stat = default, float amount = 0f, StatModifierType type = StatModifierType.Flat,
+        EnemyCurse enemy = EnemyCurse.None, object modifierSource = null)
 
     {
 
         var definition = catalog != null ? catalog.Find(name) : null;
 
-        ItemAcquisitionHud.Show(rooms.Player, name, description, definition != null && definition.Icon != null ? definition.Icon : commonSprite, source);
+        Sprite icon = definition != null && definition.Icon != null ? definition.Icon :
+            enemy != EnemyCurse.None ? CurseIcon(enemy) : commonSprite;
+        var kind = source == ItemAcquisitionSource.Curse || source == ItemAcquisitionSource.Tower ||
+            (definition != null && definition.Disposition == ItemDisposition.Curse) ? RunLoadoutKind.Curse : RunLoadoutKind.Item;
+        RunLoadout.Ensure(rooms.Player)?.Record(name, description, icon,
+            definition != null ? definition.Tier : ItemTier.Tier1, kind, source, modifierSource,
+            TrackedEffects(name, stat, amount, type), enemy);
+        ItemAcquisitionHud.Show(rooms.Player, name, description, icon, source);
 
+    }
+
+    static RunStatEffect[] TrackedEffects(string name, PlayerStat stat, float amount, StatModifierType type)
+    {
+        if (amount != 0f)
+        {
+            if (stat == PlayerStat.SpeedPerRoom)
+                return new[] { new RunStatEffect(stat, type, amount), new RunStatEffect(PlayerStat.MoveSpeed, type, amount) };
+            return new[] { new RunStatEffect(stat, type, amount) };
+        }
+        return name switch
+        {
+            "Botas del meteorito" => new[] {
+                new RunStatEffect(PlayerStat.MoveSpeed, StatModifierType.Percent, 0.30f),
+                new RunStatEffect(PlayerStat.GroundControl, StatModifierType.Percent, -0.20f) },
+            "Corona del temerario" => new[] {
+                new RunStatEffect(PlayerStat.ScoreAmplification, StatModifierType.Percent, 0.30f),
+                new RunStatEffect(PlayerStat.ComboDuration, StatModifierType.Percent, -0.20f) },
+            "Corazón de carrera" => new[] {
+                new RunStatEffect(PlayerStat.MoveSpeed, StatModifierType.Percent, 0.30f),
+                new RunStatEffect(PlayerStat.Acceleration, StatModifierType.Percent, 0.15f) },
+            _ => Array.Empty<RunStatEffect>()
+        };
     }
 
     void CreateStage(string name)
@@ -1221,7 +1260,7 @@ public sealed class TowerRewardStation : MonoBehaviour
     {
 
         if (stage == null || view == null || rooms.Player == null || !rooms.Player.enabled) return;
-        if (rooms.Player.TutorialBlocksActions || GameplayPauseMenu.IsPaused) { focused = null; return; }
+        if (rooms.Player.TutorialBlocksActions || GameplayPauseMenu.IsPaused || RunOverviewPanel.IsOpen) { focused = null; return; }
 
         focused = null;
 
@@ -1263,6 +1302,8 @@ public sealed class TowerRewardStation : MonoBehaviour
 
             {
 
+                object curseSource = null;
+
                 if (focused.Enemy != EnemyCurse.None)
 
                 {
@@ -1273,9 +1314,14 @@ public sealed class TowerRewardStation : MonoBehaviour
 
                 }
 
-                else rooms.Player.Stats.AddModifier(new object(), focused.Stat, focused.Type, focused.Amount);
+                else
+                {
+                    curseSource = new object();
+                    rooms.Player.Stats.AddModifier(curseSource, focused.Stat, focused.Type, focused.Amount);
+                }
 
-                NotifyReward(focused.RewardName, focused.Description, ItemAcquisitionSource.Curse);
+                NotifyReward(focused.RewardName, focused.Description, ItemAcquisitionSource.Curse,
+                    focused.Stat, focused.Amount, focused.Type, focused.Enemy, curseSource);
 
                 rooms.SetStartingExitLocked(false);
 
@@ -1297,7 +1343,7 @@ public sealed class TowerRewardStation : MonoBehaviour
 
                     if (effects == null) effects = rooms.Player.gameObject.AddComponent<RewardItemEffects>();
 
-                    effects.Acquire(focused.RewardName, rooms);
+                    effects.Acquire(focused.RewardName, rooms, source);
 
                 }
 
@@ -1305,7 +1351,8 @@ public sealed class TowerRewardStation : MonoBehaviour
 
                 focused.MarkPurchased();
 
-                NotifyReward(focused.RewardName, focused.Description, ItemAcquisitionSource.Shop);
+                NotifyReward(focused.RewardName, focused.Description, ItemAcquisitionSource.Shop,
+                    focused.Stat, focused.Amount, focused.Type, focused.Enemy, source);
 
                 purchases++;
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,6 +13,25 @@ public sealed class PlayerCamera : MonoBehaviour
     [SerializeField, Min(0f)] float baseControl = 1f;
     [SerializeField, Range(1f, 89f)] float pitchLimit = 85f;
     float pitch;
+    public bool TryEvaluateDisplayStat(PlayerStat stat, IReadOnlyList<object> excludedSources, out float value)
+    {
+        if (player == null) { value = 0f; return false; }
+        switch (stat)
+        {
+            case PlayerStat.CameraControl:
+                value = player.Stats.EvaluateExcluding(stat, baseControl, excludedSources); return true;
+            case PlayerStat.CameraSensitivity:
+                value = player.Stats.EvaluateExcluding(stat, mouseSensitivity, excludedSources); return true;
+            case PlayerStat.CameraPenaltySpeed:
+                value = player.Stats.EvaluateExcluding(stat, speedForMaxPenalty, excludedSources); return true;
+            case PlayerStat.CameraMinimumControl:
+                value = player.Stats.EvaluateExcluding(stat, minimumControl, excludedSources); return true;
+            case PlayerStat.CameraPitchLimit:
+                value = player.Stats.EvaluateExcluding(stat, pitchLimit, excludedSources); return true;
+            default:
+                value = 0f; return false;
+        }
+    }
     void Awake() { if (GetComponent<DoorInteractor>() == null) gameObject.AddComponent<DoorInteractor>(); }
     public void SetPlayer(PlayerController target) => player = target;
     void OnEnable() { if (Application.isPlaying) LockCursor(true); }
@@ -19,7 +39,7 @@ public sealed class PlayerCamera : MonoBehaviour
     static void LockCursor(bool locked) { Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None; Cursor.visible = !locked; }
     void Update()
     {
-        if (GameplayPauseMenu.IsPaused) return;
+        if (GameplayPauseMenu.IsPaused || RunOverviewPanel.BlocksGameplayInput) return;
         if (gameObject.scene.name != "e" && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) LockCursor(false);
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked) LockCursor(true);
         if (player == null || Mouse.current == null || Cursor.lockState != CursorLockMode.Locked) return;

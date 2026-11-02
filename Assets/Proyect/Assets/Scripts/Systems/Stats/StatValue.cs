@@ -12,12 +12,17 @@ public sealed class StatValue
         if (source == null) throw new ArgumentNullException(nameof(source));
         modifiers.Add(new Modifier { source = source, type = type, value = value });
     }
-    public void RemoveSource(object source) => modifiers.RemoveAll(m => ReferenceEquals(m.source, source));
+    public bool RemoveSource(object source) => modifiers.RemoveAll(m => ReferenceEquals(m.source, source)) > 0;
     public float Calculate(float baseValue)
+    {
+        return CalculateExcluding(baseValue, null);
+    }
+    public float CalculateExcluding(float baseValue, IReadOnlyList<object> excludedSources)
     {
         float flat = 0f, additive = 0f, multiplicative = 1f;
         foreach (var modifier in modifiers)
         {
+            if (ContainsReference(excludedSources, modifier.source)) continue;
             switch (modifier.type)
             {
                 case StatModifierType.Flat: flat += modifier.value; break;
@@ -26,5 +31,12 @@ public sealed class StatValue
             }
         }
         return Mathf.Max(0f, (baseValue + flat) * (1f + additive) * multiplicative);
+    }
+    static bool ContainsReference(IReadOnlyList<object> sources, object candidate)
+    {
+        if (sources == null) return false;
+        for (int i = 0; i < sources.Count; i++)
+            if (ReferenceEquals(sources[i], candidate)) return true;
+        return false;
     }
 }

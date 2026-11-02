@@ -465,8 +465,8 @@ MonoBehaviour:
   slowRunFramesPerSecond: 9
   fastRunFramesPerSecond: 22
   minimumVisibleRunSpeed: 0.35
-  minimumBaseSpeed: 6
-  maximumBaseSpeed: 1000
+  minimumTargetSpeed: 6
+  maximumTargetSpeed: 60
   planeDistance: 0.4
   screenWidthFraction: 1
   bottomMarginFraction: 0

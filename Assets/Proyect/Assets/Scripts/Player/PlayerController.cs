@@ -207,6 +207,34 @@ public sealed class PlayerController : MonoBehaviour
 
     public float TargetSpeed => stats.Evaluate(PlayerStat.MoveSpeed, baseSpeed + stats.Evaluate(PlayerStat.SpeedPerRoom, speedPerRoom) * roomsCleared);
 
+    public bool TryEvaluateDisplayStat(PlayerStat stat, IReadOnlyList<object> excludedSources, out float value)
+    {
+        float Evaluate(PlayerStat target, float baseValue) => stats.EvaluateExcluding(target, baseValue, excludedSources);
+        switch (stat)
+        {
+            case PlayerStat.MoveSpeed:
+                value = Evaluate(PlayerStat.MoveSpeed, baseSpeed + Evaluate(PlayerStat.SpeedPerRoom, speedPerRoom) * roomsCleared); return true;
+            case PlayerStat.Acceleration: value = Evaluate(stat, acceleration); return true;
+            case PlayerStat.Braking: value = Evaluate(stat, braking); return true;
+            case PlayerStat.AirControl: value = Evaluate(stat, airControl); return true;
+            case PlayerStat.JumpSpeed: value = Evaluate(stat, jumpSpeed); return true;
+            case PlayerStat.PoundSpeed:
+                value = Evaluate(stat, poundSpeed + Evaluate(PlayerStat.PoundSpeedPerRoom, poundSpeedPerRoom) * roomsCleared); return true;
+            case PlayerStat.ImpactDamage: value = Evaluate(stat, 1f); return true;
+            case PlayerStat.TurnAcceleration: value = Evaluate(stat, turnAcceleration); return true;
+            case PlayerStat.Gravity: value = Evaluate(stat, gravity); return true;
+            case PlayerStat.MaxFallSpeed: value = Evaluate(stat, maxFallSpeed); return true;
+            case PlayerStat.SpeedPerRoom: value = Evaluate(stat, speedPerRoom); return true;
+            case PlayerStat.PoundSpeedPerRoom: value = Evaluate(stat, poundSpeedPerRoom); return true;
+            case PlayerStat.CoyoteTime: value = Evaluate(stat, coyoteTime); return true;
+            case PlayerStat.JumpBufferTime: value = Evaluate(stat, jumpBufferTime); return true;
+            case PlayerStat.GroundStickSpeed: value = Evaluate(stat, groundStickSpeed); return true;
+            case PlayerStat.ShopDiscount: value = Mathf.Clamp(Evaluate(stat, 0f), 0f, 0.2f); return true;
+            case PlayerStat.GroundControl: value = Evaluate(stat, 1f); return true;
+            default: value = 0f; return false;
+        }
+    }
+
     // Conservative starting point for encounter timing; actual travel depends on input and surfaces.
 
     public float GroundAcceleration => Mathf.Min(stats.Evaluate(PlayerStat.Acceleration, acceleration), stats.Evaluate(PlayerStat.TurnAcceleration, turnAcceleration));
@@ -261,6 +289,8 @@ public sealed class PlayerController : MonoBehaviour
 
         if (GetComponent<FirstPersonHandAnimation>() == null) gameObject.AddComponent<FirstPersonHandAnimation>();
 
+        if (GetComponent<RunOverviewPanel>() == null) gameObject.AddComponent<RunOverviewPanel>();
+
     }
 
 
@@ -299,6 +329,7 @@ public sealed class PlayerController : MonoBehaviour
 
     {
 
+        if (RunOverviewPanel.BlocksGameplayInput) return;
         if (Time.deltaTime <= 0f) return;
         if (GameplayPauseMenu.IsPaused)
         {

@@ -55,6 +55,7 @@ public sealed class GameplayPauseMenu : MonoBehaviour
     }
     void Update()
     {
+        if (RunOverviewPanel.IsOpen) return;
         if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame || transitioning) return;
         if (IsPaused) { if (optionsOpen) CloseOptions(); else Resume(); }
         else if (Time.timeScale > 0f) Pause();
@@ -133,6 +134,7 @@ public sealed class GameplayPauseMenu : MonoBehaviour
     }
     public static void AbortForEnd()
     {
+        RunOverviewPanel.AbortForEnd();
         if (current == null || !IsPaused) return;
         if (current.transition != null) current.StopCoroutine(current.transition);
         current.transition = null; current.transitioning = false;

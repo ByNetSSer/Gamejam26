@@ -25,6 +25,10 @@ public sealed class StatPickup : MonoBehaviour
         string effect = !string.IsNullOrWhiteSpace(effectDescription) ? effectDescription : ItemAcquisitionHud.Describe(stat, type, value);
         Sprite image = definition != null && definition.Icon != null ? definition.Icon : icon;
         if (image == null) { var renderer = GetComponentInChildren<SpriteRenderer>(); if (renderer != null) image = renderer.sprite; }
+        var kind = acquisitionSource == ItemAcquisitionSource.Curse || acquisitionSource == ItemAcquisitionSource.Tower ||
+            (definition != null && definition.Disposition == ItemDisposition.Curse) ? RunLoadoutKind.Curse : RunLoadoutKind.Item;
+        RunLoadout.Ensure(player)?.Record(title, effect, image, definition != null ? definition.Tier : ItemTier.Tier1,
+            kind, acquisitionSource, this, new[] { new RunStatEffect(stat, type, value) });
         ItemAcquisitionHud.Show(player, title, effect, image, acquisitionSource);
         gameObject.SetActive(false);
     }

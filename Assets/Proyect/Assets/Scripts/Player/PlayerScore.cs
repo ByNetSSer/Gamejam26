@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum ComboEndReason { Expired, Damage }
@@ -21,6 +22,20 @@ public sealed class PlayerScore : MonoBehaviour
     public float ComboDuration => stats.Evaluate(PlayerStat.ComboDuration, baseComboDuration);
     public float MultiplierGrowth => stats.Evaluate(PlayerStat.ComboMultiplierGrowth, baseMultiplierGrowth);
     public float ScoreAmplification => stats.Evaluate(PlayerStat.ScoreAmplification, baseScoreAmplification);
+    public bool TryEvaluateDisplayStat(PlayerStat stat, IReadOnlyList<object> excludedSources, out float value)
+    {
+        switch (stat)
+        {
+            case PlayerStat.ComboDuration:
+                value = stats.EvaluateExcluding(stat, baseComboDuration, excludedSources); return true;
+            case PlayerStat.ComboMultiplierGrowth:
+                value = stats.EvaluateExcluding(stat, baseMultiplierGrowth, excludedSources); return true;
+            case PlayerStat.ScoreAmplification:
+                value = stats.EvaluateExcluding(stat, baseScoreAmplification, excludedSources); return true;
+            default:
+                value = 0f; return false;
+        }
+    }
     public float ComboWindowDuration => combo.WindowDuration;
     public float ComboRemaining => combo.Count == 0 ? 0f : Mathf.Max(0f, combo.ExpiresAt - Time.time);
     public event Action<ScoreAward> Awarded;

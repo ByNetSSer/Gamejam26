@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 public enum PlayerHandAction
 {
@@ -41,11 +42,13 @@ public sealed class FirstPersonHandAnimation : MonoBehaviour
     [Tooltip("Oculta las manos solo cuando no hay input y la inercia cae por debajo de esta velocidad.")]
     [SerializeField, Min(0f)] float minimumVisibleRunSpeed = 0.35f;
 
-    [Header("Respuesta a Base Speed")]
-    [Tooltip("Target Speed calculada desde Base Speed a la que se usan Walking Hand Distance y Slow Run Frames Per Second.")]
-    [SerializeField, Min(0f)] float minimumBaseSpeed = 6f;
-    [Tooltip("Target Speed calculada desde Base Speed a la que se alcanzan la distancia mínima y Fast Run Frames Per Second. Los valores superiores quedan limitados a este máximo.")]
-    [SerializeField, Min(0f)] float maximumBaseSpeed = 1000f;
+    [Header("Respuesta a velocidad objetivo")]
+    [Tooltip("Velocidad objetivo final a la que se usan Walking Hand Distance y Slow Run Frames Per Second.")]
+    [FormerlySerializedAs("minimumBaseSpeed")]
+    [SerializeField, Min(0f)] float minimumTargetSpeed = 6f;
+    [Tooltip("Velocidad objetivo final a la que se alcanzan la distancia mínima y Fast Run Frames Per Second. Los valores superiores quedan limitados a este máximo.")]
+    [FormerlySerializedAs("maximumBaseSpeed")]
+    [SerializeField, Min(0f)] float maximumTargetSpeed = 60f;
 
     [Header("Presentación delante de cámara")]
     [SerializeField, Min(0.01f)] float planeDistance = 0.4f;
@@ -60,7 +63,7 @@ public sealed class FirstPersonHandAnimation : MonoBehaviour
     [Header("Previsualización en Edit Mode")]
     [Tooltip("Muestra las manos antes de pulsar Play. Solo afecta a la vista previa.")]
     [SerializeField] bool previewInEditMode = true;
-    [Tooltip("Valor de Target Speed usado para probar separación y cadencia sin entrar en Play Mode.")]
+    [Tooltip("Velocidad objetivo usada para probar separación y cadencia sin entrar en Play Mode. De 6 a 60 cubre toda la transición predeterminada.")]
     [SerializeField, Min(0f)] float previewSpeed = 6f;
     [Tooltip("Fotograma de HandAnimation mostrado durante la previsualización.")]
     [SerializeField, Range(0f, 1f)] float previewAnimationPhase = 0.25f;
@@ -124,7 +127,7 @@ public sealed class FirstPersonHandAnimation : MonoBehaviour
 
     void OnValidate()
     {
-        maximumBaseSpeed = Mathf.Max(minimumBaseSpeed, maximumBaseSpeed);
+        maximumTargetSpeed = Mathf.Max(minimumTargetSpeed, maximumTargetSpeed);
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)
@@ -219,8 +222,8 @@ public sealed class FirstPersonHandAnimation : MonoBehaviour
             return;
         }
 
-        // TargetSpeed is derived from baseSpeed and its stat/progression modifiers. Unlike the
-        // instantaneous velocity, it does not collapse when CharacterController touches a wall.
+        // TargetSpeed is the same final value exposed by the run overview: it includes room
+        // progression and stat modifiers, but does not collapse when touching a wall.
         float speed = player.TargetSpeed;
         float speedProgress = SpeedProgress(speed);
         float fps = Mathf.Lerp(slowRunFramesPerSecond, fastRunFramesPerSecond, speedProgress);
@@ -275,10 +278,10 @@ public sealed class FirstPersonHandAnimation : MonoBehaviour
 
     float SpeedProgress(float speed)
     {
-        if (maximumBaseSpeed <= minimumBaseSpeed)
-            return speed >= maximumBaseSpeed ? 1f : 0f;
+        if (maximumTargetSpeed <= minimumTargetSpeed)
+            return speed >= maximumTargetSpeed ? 1f : 0f;
 
-        return Mathf.InverseLerp(minimumBaseSpeed, maximumBaseSpeed, speed);
+        return Mathf.InverseLerp(minimumTargetSpeed, maximumTargetSpeed, speed);
     }
 
     void EnsureInitialized()

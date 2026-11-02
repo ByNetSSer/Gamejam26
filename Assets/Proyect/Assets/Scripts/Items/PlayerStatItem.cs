@@ -15,7 +15,16 @@ public sealed class PlayerStatItem : ScriptableObject
         if (effects.Length == 0) return;
         var descriptions = new System.Collections.Generic.List<string>();
         foreach (var effect in effects) descriptions.Add(ItemAcquisitionHud.Describe(effect.stat, effect.type, effect.value));
-        ItemAcquisitionHud.Show(stats.GetComponent<PlayerController>(), definition != null ? definition.DisplayName : name,
+        var trackedEffects = new RunStatEffect[effects.Length];
+        for (int i = 0; i < effects.Length; i++)
+            trackedEffects[i] = new RunStatEffect(effects[i].stat, effects[i].type, effects[i].value);
+        var player = stats.GetComponent<PlayerController>();
+        var kind = acquisitionSource == ItemAcquisitionSource.Curse || acquisitionSource == ItemAcquisitionSource.Tower ||
+            (definition != null && definition.Disposition == ItemDisposition.Curse) ? RunLoadoutKind.Curse : RunLoadoutKind.Item;
+        RunLoadout.Ensure(player)?.Record(definition != null ? definition.DisplayName : name,
+            string.Join("\n", descriptions), definition != null ? definition.Icon : null,
+            definition != null ? definition.Tier : ItemTier.Tier1, kind, acquisitionSource, source, trackedEffects);
+        ItemAcquisitionHud.Show(player, definition != null ? definition.DisplayName : name,
             string.Join("\n", descriptions), definition != null ? definition.Icon : null, acquisitionSource);
     }
     public void Remove(PlayerStats stats, object source) { if (stats != null) stats.RemoveModifiers(source); }
