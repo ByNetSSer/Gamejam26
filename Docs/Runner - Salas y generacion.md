@@ -92,6 +92,14 @@ RoomManager añade RoomFallRecovery automáticamente. Calcula el límite inferio
 
 La recuperación valida el punto guardado antes de usarlo: debe tener suelo de la sala actual, espacio para la cápsula y quedar del lado correcto del cierre de entrada. En puerta exige distancia por delante del plano; en trampilla, la cabeza queda por debajo del cierre. Si no es válido, busca suelo en la sala actual hasta 18 unidades alrededor de la entrada; si no hay posición válida, no teletransporta ni concede puntos y reintenta. El premio Exploiter sigue otorgándose al recuperar correctamente.
 
+### Ojos del vacío
+
+`VoidEyeField` presenta el exterior prohibido sin depender del instante tardío de `RoomFallRecovery`. Está colocado en los gestores de `Gameplay` y `e`, y también en la cámara de `SkyboxTesting` para ajuste aislado. Al iniciar configura la cámara principal con un fondo casi negro y crea un único mesh transparente con todos los ojos alrededor de las salas anterior, actual y siguiente. Cuando cambia ese conjunto recalcula sus límites y vuelve a distribuir el campo fuera de la geometría; no sigue la cabeza del jugador frame a frame.
+
+El mesh usa un solo `MeshRenderer`, material Unlit y draw call. El shader `Runner/VoidEyes` orienta cada quad hacia la cámara y reproduce los 12 fotogramas de `OjoVer1` hacia delante y atrás, con periodos y fases distintos por ojo. No crea `Animator`, collider, sombra, luz ni `Update` individual. El spritesheet usa filtro Point, no genera forma física, no tiene mipmaps y desactiva compresión para conservar el pixel art.
+
+En el Inspector, `Eye Count`, `Depth Layers`, `Minimum Radius`, `Geometry Clearance`, `Layer Spacing`, `Radius Jitter` y `Eye Height Range` controlan densidad y profundidad. `Blink Interval Range` y `Blink Duration` controlan los parpadeos; `Background Color` y `Global Tint` controlan la presentación. Los valores iniciales son 36 ojos en tres profundidades. El sistema permanece visible detrás de la geometría y los muros lo ocultan por profundidad, por lo que una salida lateral o vertical revela los ojos aunque Exploiter todavía no se haya activado.
+
 La reja visual sube al abrirse y vuelve a bajar al avanzar; el bloqueo físico se activa al pasar y no permite reabrirla. Al atravesar una trampilla se restaura la baldosa original como cierre visual detrás del jugador, mientras la copia desprendida sigue cayendo; el collider de retorno sigue siendo independiente. Los prefabs genéricos sin baldosa restauran el visual de la trampilla rota. Pendiente comprobar en Play Mode las conexiones reales, posiciones de recuperación, colisiones y animaciones con todos los prefabs.
 
 

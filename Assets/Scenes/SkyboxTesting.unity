@@ -258,6 +258,7 @@ GameObject:
   - component: {fileID: 1540564018}
   - component: {fileID: 1540564017}
   - component: {fileID: 1540564020}
+  - component: {fileID: 1540564021}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -383,6 +384,31 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1540564021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1540564016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e4b61e5a9fd4b7b8e4b1cf1b5c90a21, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::VoidEyeField
+  eyeCount: 36
+  depthLayers: 3
+  minimumRadius: 48
+  geometryClearance: 18
+  layerSpacing: 34
+  radiusJitter: 7
+  eyeHeightRange: {x: 5, y: 11}
+  randomSeed: 7319
+  blinkIntervalRange: {x: 4, y: 13}
+  blinkDuration: 0.75
+  configureMainCamera: 1
+  backgroundColor: {r: 0.004, g: 0.006, b: 0.005, a: 1}
+  globalTint: {r: 0.82, g: 0.84, b: 0.74, a: 0.92}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
