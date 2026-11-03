@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 0
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 021de7a56be370b4491dccaa8b6892d7, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -634,7 +634,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ddb2f2b9bb614de6ba4939b03715d996, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCopiesMode
-  enemyCopiesOnly: 0
+  enemyCopiesOnly: 1
 --- !u!1 &290027363
 GameObject:
   m_ObjectHideFlags: 0
