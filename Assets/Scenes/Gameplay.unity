@@ -1972,7 +1972,8 @@ MonoBehaviour:
   eyeHeightRange: {x: 5, y: 11}
   randomSeed: 7319
   blinkIntervalRange: {x: 4, y: 13}
-  blinkDuration: 0.75
+  blinkDuration: 1.8
+  guaranteedVisibleBlinks: 2
   configureMainCamera: 1
   backgroundColor: {r: 0.004, g: 0.006, b: 0.005, a: 1}
   globalTint: {r: 0.82, g: 0.84, b: 0.74, a: 0.92}

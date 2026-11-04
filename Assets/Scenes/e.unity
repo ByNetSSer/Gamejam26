@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 0
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 021de7a56be370b4491dccaa8b6892d7, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: f70640537293d0441bc3c28ea174f289, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -502,9 +502,16 @@ MonoBehaviour:
   radiusJitter: 7
   eyeHeightRange: {x: 5, y: 11}
   randomSeed: 7319
+  followOutsideRooms: 1
+  outsideRoomMargin: 12
+  recenterSmoothTime: 0.75
+  followTargetOverride: {fileID: 0}
+  staticGeometryRoots: []
   blinkIntervalRange: {x: 4, y: 13}
-  blinkDuration: 0.75
+  blinkDuration: 2.5
+  guaranteedVisibleBlinks: 2
   configureMainCamera: 1
+  useSceneSkybox: 1
   backgroundColor: {r: 0.004, g: 0.006, b: 0.005, a: 1}
   globalTint: {r: 0.82, g: 0.84, b: 0.74, a: 0.92}
 --- !u!4 &280264450

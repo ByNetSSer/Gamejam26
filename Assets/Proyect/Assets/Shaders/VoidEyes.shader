@@ -5,8 +5,11 @@ Shader "Runner/VoidEyes"
         [MainTexture] _MainTex ("Atlas del ojo", 2D) = "white" {}
         [MainColor] _Color ("Tinte", Color) = (1, 1, 1, 1)
         _FrameCount ("Fotogramas", Float) = 12
-        _BlinkDuration ("Duración del parpadeo", Float) = 0.75
+        _BlinkDuration ("Duración del parpadeo", Float) = 1.8
         _AlphaClip ("Recorte alfa", Range(0, 1)) = 0.04
+        [HideInInspector] _AnimationTime ("Tiempo de animación", Float) = 0
+        [HideInInspector] _ForcedEyeIndices ("Ojos forzados", Vector) = (-1, -1, -1, -1)
+        [HideInInspector] _ForcedBlinkStarts ("Inicios forzados", Vector) = (-1000, -1000, -1000, -1000)
     }
 
     SubShader
@@ -42,6 +45,9 @@ Shader "Runner/VoidEyes"
                 float _FrameCount;
                 float _BlinkDuration;
                 float _AlphaClip;
+                float _AnimationTime;
+                float4 _ForcedEyeIndices;
+                float4 _ForcedBlinkStarts;
             CBUFFER_END
 
             struct Attributes
@@ -58,6 +64,7 @@ Shader "Runner/VoidEyes"
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float2 timing : TEXCOORD1;
+                float eyeIndex : TEXCOORD2;
                 half4 color : COLOR;
             };
 
@@ -86,6 +93,7 @@ Shader "Runner/VoidEyes"
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = input.uv;
                 output.timing = input.timing;
+                output.eyeIndex = input.eyeData.w;
                 output.color = input.color * _Color;
                 return output;
             }
@@ -94,13 +102,25 @@ Shader "Runner/VoidEyes"
             {
                 float frameCount = max(1.0, floor(_FrameCount + 0.5));
                 float period = max(_BlinkDuration + 0.01, input.timing.y);
-                float localTime = fmod(_Time.y + input.timing.x, period);
+                float localTime = fmod(_AnimationTime + input.timing.x, period);
                 float closing = 0.0;
                 if (localTime < _BlinkDuration)
                 {
                     float progress = saturate(localTime / max(0.01, _BlinkDuration));
                     closing = 1.0 - abs(progress * 2.0 - 1.0);
                 }
+
+                // El controlador escoge estos ojos entre los que realmente están dentro
+                // de la cámara. Las cuatro ranuras permiten solapar parpadeos lentos.
+                float forcedDuration = max(0.01, _BlinkDuration);
+                float4 forcedProgress = (_AnimationTime.xxxx - _ForcedBlinkStarts) / forcedDuration;
+                float4 matchingEye = 1.0 - step(0.25, abs(_ForcedEyeIndices - input.eyeIndex.xxxx));
+                float4 activeBlink = step(0.0, forcedProgress) * step(forcedProgress, 1.0);
+                float4 forcedClosing = (1.0 - abs(saturate(forcedProgress) * 2.0 - 1.0))
+                    * matchingEye * activeBlink;
+                closing = max(closing, max(
+                    max(forcedClosing.x, forcedClosing.y),
+                    max(forcedClosing.z, forcedClosing.w)));
                 float frame = min(frameCount - 1.0, floor(closing * (frameCount - 1.0) + 0.5));
                 float2 atlasUV = float2((frame + input.uv.x) / frameCount, input.uv.y);
                 half4 sampled = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, atlasUV) * input.color;
