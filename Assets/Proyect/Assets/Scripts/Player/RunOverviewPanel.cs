@@ -27,6 +27,7 @@ public sealed class RunOverviewPanel : MonoBehaviour
     RunLoadout loadout;
     RoomManager rooms;
     RoomCurseDirector roomCurse;
+    GroundSurfaceSensor surfaceSensor;
 
     GameObject canvasObject;
     RectTransform canvasRect, itemContent, curseContent, statusContent, tooltip;
@@ -51,6 +52,7 @@ public sealed class RunOverviewPanel : MonoBehaviour
         health = GetComponent<PlayerHealth>();
         score = GetComponent<PlayerScore>();
         playerCamera = GetComponentInChildren<PlayerCamera>(true);
+        surfaceSensor = GetComponent<GroundSurfaceSensor>();
         loadout = RunLoadout.Ensure(player);
         loadout.Changed += OnLoadoutChanged;
         stats.Changed += OnStatsChanged;
@@ -147,6 +149,7 @@ public sealed class RunOverviewPanel : MonoBehaviour
         if (health == null) health = GetComponent<PlayerHealth>();
         if (score == null) score = GetComponent<PlayerScore>();
         if (playerCamera == null) playerCamera = GetComponentInChildren<PlayerCamera>(true);
+        if (surfaceSensor == null) surfaceSensor = GetComponent<GroundSurfaceSensor>();
         rewardEffects = GetComponent<RewardItemEffects>();
         if (rooms == null) rooms = FindFirstObjectByType<RoomManager>();
         if (rooms != null) roomCurse = rooms.GetComponent<RoomCurseDirector>();
@@ -394,26 +397,27 @@ public sealed class RunOverviewPanel : MonoBehaviour
     void ShowEnvironmentTooltip()
     {
         ResolveWorldReferences();
-        if (roomCurse == null || !roomCurse.IsActive)
+        var environment = CurrentEnvironment();
+        if (environment == SurfaceAudioKind.Normal)
         {
             ShowTooltip(LanguageOptions.Choose("Normal", "Normal"), LanguageOptions.Choose(
                 "No hay una maldición ambiental activa en esta sala.",
                 "There is no active environmental curse in this room."));
             return;
         }
-        switch (roomCurse.ActiveCurse)
+        switch (environment)
         {
-            case RoomCurseKind.Ice:
+            case SurfaceAudioKind.Ice:
                 ShowTooltip(LanguageOptions.Choose("Hielo", "Ice"), LanguageOptions.Choose(
                     "El suelo reduce 45 % el frenado y 35 % la aceleración de giro mientras lo pisas.",
                     "The floor reduces braking by 45% and turn acceleration by 35% while touched."));
                 break;
-            case RoomCurseKind.Tar:
+            case SurfaceAudioKind.Tar:
                 ShowTooltip(LanguageOptions.Choose("Brea", "Tar"), LanguageOptions.Choose(
                     "El suelo reduce 30 % la velocidad y 25 % la aceleración mientras lo pisas.",
                     "The floor reduces speed by 30% and acceleration by 25% while touched."));
                 break;
-            case RoomCurseKind.Lava:
+            case SurfaceAudioKind.Lava:
                 ShowTooltip(LanguageOptions.Choose("Lava", "Lava"), LanguageOptions.Choose(
                     "Recibes 1 punto de daño por segundo mientras permaneces sobre la lava.",
                     "You take 1 damage per second while standing on lava."));
@@ -502,14 +506,28 @@ public sealed class RunOverviewPanel : MonoBehaviour
 
     string EnvironmentName()
     {
-        if (roomCurse == null || !roomCurse.IsActive) return LanguageOptions.Choose("Normal", "Normal");
-        return roomCurse.ActiveCurse switch
+        return CurrentEnvironment() switch
         {
-            RoomCurseKind.Ice => LanguageOptions.Choose("Hielo", "Ice"),
-            RoomCurseKind.Tar => LanguageOptions.Choose("Brea", "Tar"),
-            RoomCurseKind.Lava => "Lava",
+            SurfaceAudioKind.Ice => LanguageOptions.Choose("Hielo", "Ice"),
+            SurfaceAudioKind.Tar => LanguageOptions.Choose("Brea", "Tar"),
+            SurfaceAudioKind.Lava => "Lava",
             _ => LanguageOptions.Choose("Normal", "Normal")
         };
+    }
+
+    SurfaceAudioKind CurrentEnvironment()
+    {
+        if (roomCurse != null && roomCurse.IsActive)
+        {
+            return roomCurse.ActiveCurse switch
+            {
+                RoomCurseKind.Ice => SurfaceAudioKind.Ice,
+                RoomCurseKind.Tar => SurfaceAudioKind.Tar,
+                RoomCurseKind.Lava => SurfaceAudioKind.Lava,
+                _ => SurfaceAudioKind.Normal
+            };
+        }
+        return surfaceSensor != null ? surfaceSensor.FootstepSurface : SurfaceAudioKind.Normal;
     }
 
     void SetEvaluated(string key, PlayerStat stat)

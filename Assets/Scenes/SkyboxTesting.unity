@@ -1090,6 +1090,7 @@ GameObject:
   - component: {fileID: 470018830}
   - component: {fileID: 470018829}
   - component: {fileID: 470018828}
+  - component: {fileID: 470018831}
   m_Layer: 0
   m_Name: Campo de ojos - Prueba
   m_TagString: Untagged
@@ -1164,6 +1165,31 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &470018831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 470018827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407633bdb0c6477282bf92cb1d122278, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LavaFloorPreviewToggle
+  legacyLavaOverlayMaterial: {fileID: 2100000, guid: 6c5fd4e54e5e4f16b2bc46657b447c2a, type: 2}
+  iceOverlayMaterial: {fileID: 2100000, guid: 9621d7c17c8ae85478fdb4c4d14bec8f, type: 2}
+  tarOverlayMaterial: {fileID: 2100000, guid: 052e0b31d2f097f40aeae9344aae2daf, type: 2}
+  lavaOverlayMaterial: {fileID: 2100000, guid: dd66041feed6aa04893eadc4e493d14e, type: 2}
+  activeSeconds: 30
+  transitionSeconds: 2
+  previewKind: 3
+  pixelationMode: 0
+  damagePerTick: 1
+  groundedGraceSeconds: 1.25
+  damageRepeatSeconds: 1
+  includeNamedFloorRenderers: 1
+  showDiagnostics: 1
 --- !u!1 &475860985
 GameObject:
   m_ObjectHideFlags: 0
@@ -2359,6 +2385,7 @@ GameObject:
   - component: {fileID: 1731129063}
   - component: {fileID: 1731129062}
   - component: {fileID: 1731129061}
+  - component: {fileID: 1731129074}
   m_Layer: 0
   m_Name: "Jugador - Prueba ca\xEDda"
   m_TagString: Untagged
@@ -2802,6 +2829,23 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1731129074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1731129057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 285addc29a7a80847b804f7157c32d76, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GroundSurfaceSensor
+  probeRadius: 0.2
+  probeHeight: 0.1
+  minFootstepSpeed: 0.15
+  crouchFootstepVolume: 0.55
+  footstepReferenceSpeed: 6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

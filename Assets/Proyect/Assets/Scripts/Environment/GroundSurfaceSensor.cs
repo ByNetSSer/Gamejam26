@@ -60,13 +60,14 @@ public sealed class GroundSurfaceSensor : MonoBehaviour
         if (lavaNow != touchingLava && player.enabled && Time.deltaTime > 0f)
             GameSfx.PlayAt(lavaNow ? "surface.lava.enter" : "surface.lava.exit", controller.bounds.center - Vector3.up * controller.bounds.extents.y);
         touchingLava = lavaNow;
+        // Register the new tile before leaving the previous one. Continuous
+        // surface groups (notably lava) then preserve their grace timer while
+        // the player crosses a seam instead of briefly dropping to zero contacts.
+        foreach (var surface in current)
+            surface.Enter(player); // Idempotent; also restores contact if a surface was re-enabled.
         foreach (var surface in active)
             if (surface != null && !current.Contains(surface)) surface.Exit(player);
-        foreach (var surface in current)
-        {
-            surface.Enter(player); // Idempotent; also restores contact if a surface was re-enabled.
-            surface.Stay(player);
-        }
+        foreach (var surface in current) surface.Stay(player);
         active.Clear();
         foreach (var surface in current) active.Add(surface);
         Vector3 position = transform.position;
